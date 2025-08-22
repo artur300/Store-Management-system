@@ -1,5 +1,4 @@
 package com.myshopnet.app;
-
 import com.myshopnet.branches.DefaultBranches;
 import com.myshopnet.branches.Branch;
 import com.myshopnet.branches.BranchDirectory;
@@ -25,6 +24,7 @@ public class Main {
     private static final String ADMIN_PASS = "admin";
 
     public static void main(String[] args) {
+        DefaultBranches.registerAll(branches);
         seedSampleUser(); // כדי שאפשר יהיה להדגים כניסה כ"משתמש"
 
         try (Scanner sc = new Scanner(System.in)) {
