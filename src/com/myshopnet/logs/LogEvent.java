@@ -1,4 +1,4 @@
-package com.myshopnet.models.logs;
+package com.myshopnet.logs;
 
 import java.time.Instant;
 

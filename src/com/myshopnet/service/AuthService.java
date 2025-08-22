@@ -3,10 +3,10 @@ package com.myshopnet.service;
 import com.myshopnet.auth.PasswordPolicy;
 import com.myshopnet.auth.SessionRegistry;
 import com.myshopnet.auth.UserAccount;
-import com.myshopnet.models.employees.Role;
-import com.myshopnet.models.logs.LogEvent;
-import com.myshopnet.models.logs.LogType;
-import com.myshopnet.models.logs.Logger;
+import com.myshopnet.models.Role;
+import com.myshopnet.logs.LogEvent;
+import com.myshopnet.logs.LogType;
+import com.myshopnet.logs.Logger;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;

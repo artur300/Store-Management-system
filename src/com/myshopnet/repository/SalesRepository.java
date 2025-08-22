@@ -1,6 +1,6 @@
 package com.myshopnet.repository;
 
-import com.myshopnet.sales.Sale;
+import com.myshopnet.models.Sale;
 
 import java.util.ArrayList;
 import java.util.Collections;

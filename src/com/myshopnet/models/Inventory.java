@@ -1,4 +1,4 @@
-package com.myshopnet.models.inventory;
+package com.myshopnet.models;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;

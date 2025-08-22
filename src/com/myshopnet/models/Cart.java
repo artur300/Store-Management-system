@@ -1,4 +1,4 @@
-package com.myshopnet.sales;
+package com.myshopnet.models;
 
 import java.util.ArrayList;
 import java.util.Collections;

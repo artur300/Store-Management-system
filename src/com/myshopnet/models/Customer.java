@@ -1,4 +1,4 @@
-package com.myshopnet.models.customers;
+package com.myshopnet.models;
 
 public abstract class Customer {
     private final String id;       // ת"ז/מזהה

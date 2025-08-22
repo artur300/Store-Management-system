@@ -1,4 +1,4 @@
-package com.myshopnet.sales;
+package com.myshopnet.models;
 public class CartItem {
     private final String sku;
     private final int qty;

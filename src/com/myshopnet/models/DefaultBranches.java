@@ -1,4 +1,4 @@
-package com.myshopnet.models.branches;
+package com.myshopnet.models;
 
 import com.myshopnet.repository.BranchRepository;
 

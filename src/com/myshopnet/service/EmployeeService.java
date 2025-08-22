@@ -1,7 +1,7 @@
 package com.myshopnet.service;
 
-import com.myshopnet.models.employees.Employee;
-import com.myshopnet.models.logs.*;
+import com.myshopnet.models.Employee;
+import com.myshopnet.logs.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;

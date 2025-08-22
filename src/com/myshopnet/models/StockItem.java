@@ -1,4 +1,4 @@
-package com.myshopnet.models.inventory;
+package com.myshopnet.models;
 
 public class StockItem {
     private final Product product;

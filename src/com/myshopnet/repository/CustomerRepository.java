@@ -1,6 +1,6 @@
 package com.myshopnet.repository;
 
-import com.myshopnet.models.customers.Customer;
+import com.myshopnet.models.Customer;
 
 import java.util.Collection;
 import java.util.Map;

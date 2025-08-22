@@ -1,8 +1,8 @@
 package com.myshopnet.service;
 
-import com.myshopnet.models.inventory.Category;
+import com.myshopnet.models.Category;
 import com.myshopnet.repository.SalesRepository;
-import com.myshopnet.sales.Sale;
+import com.myshopnet.models.Sale;
 
 import java.time.LocalDate;
 import java.time.ZoneId;

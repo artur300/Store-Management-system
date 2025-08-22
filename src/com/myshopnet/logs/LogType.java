@@ -1,4 +1,4 @@
-package com.myshopnet.models.logs;
+package com.myshopnet.logs;
 
 public enum LogType {
     EMPLOYEE_REGISTERED, CUSTOMER_REGISTERED,

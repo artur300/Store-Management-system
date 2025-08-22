@@ -1,6 +1,5 @@
-package com.myshopnet.sales;
+package com.myshopnet.models;
 
-import com.myshopnet.models.inventory.Category;
 import java.time.Instant;
 import java.util.List;
 

@@ -1,4 +1,4 @@
-package com.myshopnet.models.customers;
+package com.myshopnet.models;
 
 public class NewCustomer extends Customer {
     public NewCustomer(String id, String fullName, String phone) { super(id, fullName, phone); }

@@ -1,9 +1,9 @@
 package com.myshopnet.service;
 
-import com.myshopnet.models.inventory.Inventory;
-import com.myshopnet.models.logs.LogEvent;
-import com.myshopnet.models.logs.LogType;
-import com.myshopnet.models.logs.Logger;
+import com.myshopnet.models.Inventory;
+import com.myshopnet.logs.LogEvent;
+import com.myshopnet.logs.LogType;
+import com.myshopnet.logs.Logger;
 
 public class InventoryService {
     public void restock(Inventory inv, String branchId, String sku, int qty) {

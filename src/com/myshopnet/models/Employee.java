@@ -1,4 +1,4 @@
-package com.myshopnet.models.employees;
+package com.myshopnet.models;
 
 public class Employee {
     private final String id;

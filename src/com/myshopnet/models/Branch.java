@@ -1,7 +1,5 @@
-package com.myshopnet.models.branches;
+package com.myshopnet.models;
 
-import com.myshopnet.models.inventory.Inventory;
-import com.myshopnet.models.employees.Employee;
 import java.util.HashSet;
 import java.util.Set;
 

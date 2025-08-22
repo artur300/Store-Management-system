@@ -1,15 +1,15 @@
 package com.myshopnet.service;
 
-import com.myshopnet.models.branches.Branch;
-import com.myshopnet.models.customers.Customer;
-import com.myshopnet.models.inventory.Product;
-import com.myshopnet.models.logs.LogEvent;
-import com.myshopnet.models.logs.LogType;
-import com.myshopnet.models.logs.Logger;
+import com.myshopnet.models.Branch;
+import com.myshopnet.models.Customer;
+import com.myshopnet.models.Product;
+import com.myshopnet.logs.LogEvent;
+import com.myshopnet.logs.LogType;
+import com.myshopnet.logs.Logger;
 import com.myshopnet.repository.SalesRepository;
-import com.myshopnet.sales.Cart;
-import com.myshopnet.sales.CartItem;
-import com.myshopnet.sales.Sale;
+import com.myshopnet.models.Cart;
+import com.myshopnet.models.CartItem;
+import com.myshopnet.models.Sale;
 
 import java.util.ArrayList;
 import java.util.List;

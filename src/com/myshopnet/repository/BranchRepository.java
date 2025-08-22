@@ -1,6 +1,6 @@
 package com.myshopnet.repository;
 
-import com.myshopnet.models.branches.Branch;
+import com.myshopnet.models.Branch;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
