@@ -1,6 +1,6 @@
 package com.myshopnet.auth;
 
-import com.myshopnet.employees.Role;
+import com.myshopnet.models.employees.Role;
 
 public class UserAccount {
     private final String username;
