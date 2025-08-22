@@ -1,13 +1,39 @@
 package com.myshopnet.repository;
 
+import com.myshopnet.data.Data;
 import com.myshopnet.models.Branch;
+import java.util.List;
 
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+public class BranchRepository implements Repository<Branch> {
+    @Override
+    public Branch create(Branch branch) {
+        return Data.getBranches().put(branch.getId(), branch);
+    }
 
-public class BranchRepository {
-    private final Map<String, Branch> byId = new ConcurrentHashMap<>();
-    public void register(Branch b) { byId.put(b.getId(), b); }
-    public Branch get(String id) { return byId.get(id); }
+    @Override
+    public Branch update(String id, Branch branch) {
+        Branch branchToReturn = null;
+
+        if (Data.getBranches().containsKey(id)) {
+            branchToReturn = Data.getBranches().put(id, branch);
+        }
+
+        return branch;
+    }
+
+    @Override
+    public void delete(String id) {
+        Data.getBranches().remove(id);
+    }
+
+    @Override
+    public Branch get(String id) {
+        return null;
+    }
+
+    @Override
+    public List<Branch> getAll() {
+        return Data.getBranches().values().stream().toList();
+    }
 }
 

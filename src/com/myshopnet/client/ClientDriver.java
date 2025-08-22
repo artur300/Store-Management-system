@@ -11,7 +11,7 @@ import com.myshopnet.auth.*;
 import java.util.List;
 import java.util.Scanner;
 
-public class Main {
+public class ClientDriver {
 
     // --- Services & State ---
     private static final BranchRepository branches = new BranchRepository();
@@ -24,7 +24,7 @@ public class Main {
     private static final String ADMIN_PASS = "admin";
 
     public static void main(String[] args) {
-        DefaultBranches.registerAll(branches);
+        DefaultBranches.createAll(branches);
         seedSampleUser(); // כדי שאפשר יהיה להדגים כניסה כ"משתמש"
 
         try (Scanner sc = new Scanner(System.in)) {
@@ -176,7 +176,7 @@ public class Main {
     }
 
     private static void adminListAll() {
-        List<Employee> list = empSvc.listAll();
+        List<Employee> list = empSvc.getAll();
         System.out.println("כל העובדים:");
         for (Employee e : list) {
             System.out.println(" - " + e.getId() + " | " + e.getFullName() +

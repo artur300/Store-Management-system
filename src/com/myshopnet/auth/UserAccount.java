@@ -1,27 +1,27 @@
 package com.myshopnet.auth;
 
-import com.myshopnet.models.Role;
-
 public class UserAccount {
     private final String username;
     private final String password;   // בפועל עדיף hash
-    private final String employeeId;
-    private final String branchId;
-    private final Role role;
+    private final String userId;
 
     public UserAccount(String username, String password,
-                       String employeeId, String branchId, Role role) {
+                       String userId) {
         this.username = username;
         this.password = password;
-        this.employeeId = employeeId;
-        this.branchId = branchId;
-        this.role = role;
+        this.userId = userId;
     }
 
-    public String getUsername() { return username; }
-    public String getPassword() { return password; }
-    public String getEmployeeId() { return employeeId; }
-    public String getBranchId() { return branchId; }
-    public Role getRole() { return role; }
+    public String getUsername() {
+        return username;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public String getUserId() {
+        return userId;
+    }
 }
 

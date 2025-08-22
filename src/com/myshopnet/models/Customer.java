@@ -1,6 +1,7 @@
 package com.myshopnet.models;
 
-public abstract class Customer {
+public abstract class Customer implements User {
+    private final Role role = Role.CUSTOMER;
     private final String id;       // ת"ז/מזהה
     private final String fullName;
     private final String phone;
@@ -10,10 +11,8 @@ public abstract class Customer {
     }
 
     public String getId() { return id; }
-    public String getFullName() { return fullName; }
-    public String getPhone() { return phone; }
 
     /** מחיר סופי לפי סוג הלקוח */
-    public abstract double calcPrice(double baseTotal);
+    public abstract double calcBuyingStrategy(double baseTotal);
 }
 

@@ -1,3 +1,7 @@
 package com.myshopnet.models;
-public enum Role { SHIFT_MANAGER, CASHIER, SELLER }
+public enum Role {
+    SELLER,
+    ADMIN,
+    CUSTOMER
+}
 

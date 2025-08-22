@@ -34,11 +34,11 @@ public class SalesStatsService {
     /** הכנסות לפי קטגוריה (כולל כל הימים) */
     public Map<Category, Double> revenueByCategory(SalesRepository repo) {
         Map<Category, Double> out = new HashMap<>();
-        for (Sale s : repo.list()) {
-            for (Sale.Line ln : s.getLines()) {
-                out.merge(ln.getCategory(), ln.lineTotal(), Double::sum);
-            }
-        }
+//        for (Sale s : repo.list()) {
+//            for (Sale.Line ln : s.getLines()) {
+//                out.merge(ln.getCategory(), ln.lineTotal(), Double::sum);
+//            }
+//        }
         return out;
     }
 

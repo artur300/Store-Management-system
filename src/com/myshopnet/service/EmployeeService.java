@@ -1,41 +1,51 @@
 package com.myshopnet.service;
 
+import com.myshopnet.errors.EntityAlreadyExistsException;
 import com.myshopnet.models.Employee;
 import com.myshopnet.logs.*;
+import com.myshopnet.repository.EmployeeRepository;
+
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 public class EmployeeService {
-    private final Map<String, Employee> byId = new ConcurrentHashMap<>();
+    private final EmployeeRepository employeeRepository;
 
-    /** יצירה בלבד; ייכשל אם כבר קיים */
-    public void add(Employee e) {
-        if (byId.putIfAbsent(e.getId(), e) != null)
-            throw new IllegalArgumentException("Employee exists: " + e.getId());
-        Logger.getInstance().log(new LogEvent(
-                LogType.EMPLOYEE_REGISTERED, "employeeId=" + e.getId() +
-                ", branch=" + e.getBranchId() + ", role=" + e.getRole()));
+    public EmployeeService(EmployeeRepository employeeRepository) {
+        this.employeeRepository = employeeRepository;
+    }
+
+    public Employee addEmployee(Employee e) {
+        if (employeeRepository.get(e.getId()) != null)
+        {
+            Logger.getInstance().log(new LogEvent(
+                    LogType.EMPLOYEE_REGISTERED, "employeeId=" + e.getId() +
+                    ", branch=" + e.getBranchId()));
+            throw new EntityAlreadyExistsException(Employee.class.getName());
+        }
+        else {
+           return employeeRepository.create(e);
+        }
     }
 
     /** יצירה או החלפה (לעריכה) */
     public void upsert(Employee e) {
-        byId.put(e.getId(), e);
+        userSessions.put(e.getId(), e);
         Logger.getInstance().log(new LogEvent(
                 LogType.EMPLOYEE_REGISTERED, "employeeId=" + e.getId() +
-                " (upsert), branch=" + e.getBranchId() + ", role=" + e.getRole()));
+                " (upsert), branch=" + e.getBranchId()));
     }
 
     public Employee get(String id) { return byId.get(id); }
 
     public List<Employee> listByBranch(String branchId) {
-        return byId.values().stream()
+        return employeeRepository.getAll().stream()
                 .filter(e -> e.getBranchId().equals(branchId))
                 .collect(Collectors.toList());
     }
 
-    public List<Employee> listAll() {
-        return new ArrayList<>(byId.values());
+    public List<Employee> getAll() {
+        return employeeRepository.getAll();
     }
 }
 

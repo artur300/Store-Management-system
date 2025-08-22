@@ -1,4 +1,4 @@
 package com.myshopnet.server;
 
-public class MainServer {
+public class Server {
 }

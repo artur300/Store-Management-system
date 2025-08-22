@@ -10,9 +10,9 @@ public final class DefaultBranches {
     private DefaultBranches() {}
 
     /** רושם את שלושת הסניפים הקבועים לתוך ה-Directory */
-    public static void registerAll(BranchRepository dir) {
-        dir.register(new Branch(TLV, "Tel-Aviv"));
-        dir.register(new Branch(JRS, "Jerusalem"));
-        dir.register(new Branch(HFA, "Haifa"));
+    public static void createAll(BranchRepository dir) {
+        dir.create(new Branch(TLV, "Tel-Aviv"));
+        dir.create(new Branch(JRS, "Jerusalem"));
+        dir.create(new Branch(HFA, "Haifa"));
     }
 }

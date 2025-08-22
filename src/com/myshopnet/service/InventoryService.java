@@ -1,6 +1,5 @@
 package com.myshopnet.service;
 
-import com.myshopnet.models.Inventory;
 import com.myshopnet.logs.LogEvent;
 import com.myshopnet.logs.LogType;
 import com.myshopnet.logs.Logger;

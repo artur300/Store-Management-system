@@ -9,7 +9,6 @@ import com.myshopnet.logs.Logger;
 import com.myshopnet.repository.SalesRepository;
 import com.myshopnet.models.Cart;
 import com.myshopnet.models.CartItem;
-import com.myshopnet.models.Sale;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,7 +17,9 @@ import java.util.UUID;
 public class SalesService {
     private final SalesRepository repo;
 
-    public SalesService(SalesRepository repo) { this.repo = repo; }
+    public SalesService(SalesRepository repo) {
+        this.repo = repo;
+    }
 
     public double sell(Branch branch, Cart cart, Customer customer) {
         double base = 0.0;
@@ -27,7 +28,7 @@ public class SalesService {
         // לבנות שורות כולל קטגוריה
         for (CartItem it : cart.items()) {
             Product p = branch.getInventory().getProduct(it.getSku());
-            double unitPrice = p.getBasePrice();
+            double unitPrice = p.getPrice();
             base += unitPrice * it.getQty();
             lines.add(new Sale.Line(it.getSku(), it.getQty(), unitPrice, p.getCategory()));
         }
@@ -37,7 +38,7 @@ public class SalesService {
             branch.getInventory().sell(it.getSku(), it.getQty());
         }
 
-        double finalPrice = customer.calcPrice(base);
+        double finalPrice = customer.calcBuyingStrategy(base);
 
         // לשמור מכירה
         String saleId = UUID.randomUUID().toString();
