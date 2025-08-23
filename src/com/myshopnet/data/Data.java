@@ -12,7 +12,7 @@ public class Data {
     private static final Map<String, Branch> branches = new ConcurrentHashMap<>();
     private static final Map<String, ? extends User> users = new ConcurrentHashMap<>();
     private static final Map<String, Product> products = new ConcurrentHashMap<>();
-    private static final Map<String, Stock> stocks = new ConcurrentHashMap<>();
+    private static final Map<String, Order> orders = new ConcurrentHashMap<>();
 
     private Data() { }
 
@@ -29,6 +29,14 @@ public class Data {
     }
 
     public static Map<String, Customer> getCustomers() {
+        Map<String, Customer> customers = new ConcurrentHashMap<>();
+
+        users.forEach((key, user) -> {
+              if (user instanceof Customer) {
+                   customers.put(key, (Customer) user);
+              }
+        });
+
         return customers;
     }
 
@@ -37,10 +45,18 @@ public class Data {
     }
 
     public static Map<String, Employee> getEmployees() {
+        Map<String, Employee> employees = new ConcurrentHashMap<>();
+
+        users.forEach((key, user) -> {
+            if (user instanceof Employee) {
+                employees.put(key, (Employee) user);
+            }
+        });
+
         return employees;
     }
 
-    public static Map<String, Stock> getStocks() {
-        return stocks;
+    public static Map<String, Order> getOrders() {
+        return orders;
     }
 }

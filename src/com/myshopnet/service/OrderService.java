@@ -1,27 +1,22 @@
 package com.myshopnet.service;
 
-import com.myshopnet.models.Branch;
-import com.myshopnet.models.Customer;
 import com.myshopnet.models.Product;
 import com.myshopnet.logs.LogEvent;
 import com.myshopnet.logs.LogType;
 import com.myshopnet.logs.Logger;
-import com.myshopnet.repository.SalesRepository;
-import com.myshopnet.models.Cart;
-import com.myshopnet.models.CartItem;
+import com.myshopnet.repository.OrderRepository;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.UUID;
 
-public class SalesService {
-    private final SalesRepository repo;
+public class OrderService {
+    private final OrderRepository repo;
 
-    public SalesService(SalesRepository repo) {
+    public OrderService(OrderRepository repo) {
         this.repo = repo;
     }
 
-    public double sell(Branch branch, Cart cart, Customer customer) {
+    public double performOrder() {
         double base = 0.0;
         List<Sale.Line> lines = new ArrayList<>();
 

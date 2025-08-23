@@ -6,6 +6,7 @@ import com.myshopnet.auth.UserAccount;
 import com.myshopnet.logs.LogEvent;
 import com.myshopnet.logs.LogType;
 import com.myshopnet.logs.Logger;
+import com.myshopnet.models.Role;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;

@@ -28,15 +28,9 @@ public class EmployeeService {
         }
     }
 
-    /** יצירה או החלפה (לעריכה) */
-    public void upsert(Employee e) {
-        userSessions.put(e.getId(), e);
-        Logger.getInstance().log(new LogEvent(
-                LogType.EMPLOYEE_REGISTERED, "employeeId=" + e.getId() +
-                " (upsert), branch=" + e.getBranchId()));
+    public Employee get(String id) {
+        return employeeRepository.get(id);
     }
-
-    public Employee get(String id) { return byId.get(id); }
 
     public List<Employee> listByBranch(String branchId) {
         return employeeRepository.getAll().stream()

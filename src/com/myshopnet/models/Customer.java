@@ -7,7 +7,9 @@ public abstract class Customer implements User {
     private final String phone;
 
     protected Customer(String id, String fullName, String phone) {
-        this.id = id; this.fullName = fullName; this.phone = phone;
+        this.id = id;
+        this.fullName = fullName;
+        this.phone = phone;
     }
 
     public String getId() { return id; }

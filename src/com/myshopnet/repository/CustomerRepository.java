@@ -1,6 +1,42 @@
 package com.myshopnet.repository;
 
-public class CustomerRepository {
+import com.myshopnet.data.Data;
+import com.myshopnet.models.Customer;
+import com.myshopnet.models.User;
 
+import java.util.List;
+
+public class CustomerRepository implements Repository<Customer> {
+
+    @Override
+    public Customer create(Customer customer) {
+        return Data.getCustomers().put(customer.getId(), customer);
+    }
+
+    @Override
+    public Customer update(String id, Customer customer) {
+        Customer updatedCustomer = null;
+
+        if(Data.getCustomers().containsKey(id)) {
+            updatedCustomer = Data.getCustomers().put(id, customer);
+        }
+
+        return updatedCustomer;
+    }
+
+    @Override
+    public void delete(String id) {
+        Data.getCustomers().remove(id);
+    }
+
+    @Override
+    public Customer get(String id) {
+        return Data.getCustomers().get(id);
+    }
+
+    @Override
+    public List<Customer> getAll() {
+        return Data.getCustomers().values().stream().toList();
+    }
 }
 

@@ -1,7 +1,9 @@
 package com.myshopnet.models;
 
 public class Admin extends Employee {
-    public Admin(String id, String fullName, String nationalId, String phone, String accountNumber, String branchId) {
-        super(id, fullName, nationalId, phone, accountNumber, branchId);
+    private final Role role = Role.ADMIN;
+
+    public Admin(String id, Long accountNumber, String branchId, EmployeeType employeeType, Long employeeNumber) {
+        super(id, accountNumber, branchId, employeeType, employeeNumber);
     }
 }
