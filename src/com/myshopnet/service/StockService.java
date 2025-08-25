@@ -11,6 +11,22 @@ public class StockService {
     private BranchRepository branchRepository = new BranchRepository();
     private ProductRepository productRepository = new ProductRepository();
 
+    public void addProductToAllBranches(String productId) {
+        Product product = productRepository.get(productId);
+
+        if (product == null) {
+            throw new EntityNotFoundException("Product");
+        }
+
+        List<Branch> allBranches = branchRepository.getAll();
+
+        for (Branch branch : allBranches) {
+            branch.getProductsStock().getStockOfProducts().put(product, 0L);
+
+            branchRepository.update(branch.getId(), branch);
+        }
+    }
+
     public void updateProductStock(String branchId, String productId, Long quantity) {
         Branch branch = branchRepository.get(branchId);
         Product product = productRepository.get(productId);
@@ -27,14 +43,14 @@ public class StockService {
     }
 
     public void removeProductStockFromBranch(String productId) {
-        List<Branch> allBranch = branchRepository.getAll();
+        List<Branch> allBranches = branchRepository.getAll();
         Product product = productRepository.get(productId);
 
         if (product == null) {
             throw new EntityNotFoundException("Product");
         }
 
-        for (Branch branch : allBranch) {
+        for (Branch branch : allBranches) {
             branch.getProductsStock().getStockOfProducts().remove(productId);
 
             branchRepository.update(branch.getId(), branch);
