@@ -12,7 +12,13 @@ public abstract class Customer implements User {
         this.phone = phone;
     }
 
-    public String getId() { return id; }
+    public Customer(Customer customer) {
+        this(customer.id, customer.fullName, customer.phone);
+    }
+
+    public String getId() {
+        return id;
+    }
 
     /** מחיר סופי לפי סוג הלקוח */
     public abstract double calcBuyingStrategy(double baseTotal);

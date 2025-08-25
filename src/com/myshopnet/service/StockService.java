@@ -40,6 +40,7 @@ public class StockService {
         }
 
         branch.getProductsStock().getStockOfProducts().replace(product, quantity);
+        branchRepository.update(branch.getId(), branch);
     }
 
     public void removeProductStockFromBranch(String productId) {
