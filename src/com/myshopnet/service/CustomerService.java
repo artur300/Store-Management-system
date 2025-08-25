@@ -11,6 +11,30 @@ public class CustomerService {
     private OrderRepository orderRepository = new OrderRepository();
     private CustomerRepository customerRepository = new CustomerRepository();
 
+    public Customer createCustomer(Customer customer) {
+        customerRepository.create(customer);
+        return customer;
+    }
+    public Customer getCustomer(String customerId) {
+        Customer customer = customerRepository.get(customerId);
+        if (customer == null) {
+            throw new EntityNotFoundException("Customer");
+        }
+        return customer;
+    }
+    public List<Customer> getAllCustomers() {
+        return customerRepository.getAll();
+    }
+    public Customer updateCustomer(String customerId, Customer updatedCustomer) {
+        Customer existingCustomer = customerRepository.get(customerId);
+        if (existingCustomer == null) {
+            throw new EntityNotFoundException("Customer");
+        }
+        customerRepository.update(customerId, updatedCustomer);
+        return updatedCustomer;
+    }
+
+
     public void checkCustomerStatus(String customerId) {
         Customer customer = customerRepository.get(customerId);
 
