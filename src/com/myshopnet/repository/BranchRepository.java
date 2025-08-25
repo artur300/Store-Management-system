@@ -28,7 +28,7 @@ public class BranchRepository implements Repository<Branch> {
 
     @Override
     public Branch get(String id) {
-        return null;
+        return Data.getBranches().get(id);
     }
 
     @Override
