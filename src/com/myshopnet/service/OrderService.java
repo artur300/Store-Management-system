@@ -3,16 +3,11 @@ package com.myshopnet.service;
 import com.myshopnet.errors.EntityNotFoundException;
 import com.myshopnet.errors.StockException;
 import com.myshopnet.models.*;
-import com.myshopnet.logs.LogEvent;
-import com.myshopnet.logs.LogType;
-import com.myshopnet.logs.Logger;
 import com.myshopnet.repository.BranchRepository;
 import com.myshopnet.repository.CustomerRepository;
 import com.myshopnet.repository.OrderRepository;
 import com.myshopnet.repository.ProductRepository;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 

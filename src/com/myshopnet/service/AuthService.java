@@ -5,7 +5,7 @@ import com.myshopnet.auth.SessionRegistry;
 import com.myshopnet.auth.UserAccount;
 import com.myshopnet.logs.LogEvent;
 import com.myshopnet.logs.LogType;
-import com.myshopnet.logs.Logger;
+import com.myshopnet.logs.LoggerImpl;
 import com.myshopnet.models.Role;
 
 import java.util.Map;
@@ -29,7 +29,7 @@ public class AuthService {
             throw new IllegalArgumentException("Weak password");
         if (accounts.putIfAbsent(acc.getUsername(), acc) != null)
             throw new IllegalArgumentException("Username already exists");
-        Logger.getInstance().log(new LogEvent(
+        LoggerImpl.getInstance().log(new LogEvent(
                 LogType.EMPLOYEE_REGISTERED,
                 "user=" + acc.getUsername() + ", role=" + acc.getRole() + ", branch=" + acc.getBranchId()));
     }
@@ -40,7 +40,7 @@ public class AuthService {
         if (acc == null || !acc.getPassword().equals(password))
             throw new SecurityException("Bad credentials");
         SessionRegistry.SessionInfo s = sessions.create(username);
-        Logger.getInstance().log(new LogEvent(LogType.LOGIN, "user=" + username));
+        LoggerImpl.getInstance().log(new LogEvent(LogType.LOGIN, "user=" + username));
         return s.getToken();
     }
 
@@ -49,7 +49,7 @@ public class AuthService {
         SessionRegistry.SessionInfo s = sessions.get(token);
         if (s != null) {
             sessions.end(token);
-            Logger.getInstance().log(new LogEvent(LogType.LOGOUT, "user=" + s.getUsername()));
+            LoggerImpl.getInstance().log(new LogEvent(LogType.LOGOUT, "user=" + s.getUsername()));
         }
     }
 

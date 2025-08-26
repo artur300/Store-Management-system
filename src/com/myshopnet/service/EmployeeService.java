@@ -18,7 +18,7 @@ public class EmployeeService {
     public Employee addEmployee(Employee e) {
         if (employeeRepository.get(e.getId()) != null)
         {
-            Logger.getInstance().log(new LogEvent(
+            LoggerImpl.getInstance().log(new LogEvent(
                     LogType.EMPLOYEE_REGISTERED, "employeeId=" + e.getId() +
                     ", branch=" + e.getBranchId()));
             throw new EntityAlreadyExistsException(Employee.class.getName());

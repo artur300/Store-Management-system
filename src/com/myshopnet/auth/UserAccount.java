@@ -1,5 +1,7 @@
 package com.myshopnet.auth;
 
+import com.google.gson.Gson;
+
 public class UserAccount {
     private final String username;
     private final String password;   // בפועל עדיף hash
