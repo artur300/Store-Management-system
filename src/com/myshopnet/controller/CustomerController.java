@@ -7,19 +7,17 @@ import com.myshopnet.errors.EntityNotFoundException;
 public class CustomerController {
     private CustomerService customerService = new CustomerService();
 
-
-    public Customer createCustomer(Customer customer) {
+    public Customer createCustomer(String fullName, String passportId, String phoneNumber) {
         try {
-            return customerService.createCustomer(customer);
+            return customerService.createCustomer(fullName, passportId, phoneNumber);
         } catch (Exception e) {
             throw new RuntimeException("Failed to create customer");
         }
     }
 
-
     public Customer getCustomer(String customerId) {
         try {
-            return customerService.readCustomer(customerId);
+            return customerService.getCustomer(customerId);
         } catch (EntityNotFoundException e) {
             throw new EntityNotFoundException("Customer not found with ID: " + customerId);
         } catch (Exception e) {
@@ -27,34 +25,11 @@ public class CustomerController {
         }
     }
 
-
     public List<Customer> getAllCustomers() {
         try {
-            return customerService.readAllCustomers();
+            return customerService.getAllCustomers();
         } catch (Exception e) {
             throw new RuntimeException("Failed to get customers");
-        }
-    }
-
-
-    public Customer updateCustomer(String customerId, Customer updatedCustomer) {
-        try {
-            return customerService.updateCustomer(customerId, updatedCustomer);
-        } catch (EntityNotFoundException e) {
-            throw new EntityNotFoundException("Customer not found with ID");
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to update customer");
-        }
-    }
-
-
-
-    public boolean customerExists(String customerId) {
-        try {
-            customerService.readCustomer(customerId);
-            return true;
-        } catch (EntityNotFoundException e) {
-            return false;
         }
     }
 }

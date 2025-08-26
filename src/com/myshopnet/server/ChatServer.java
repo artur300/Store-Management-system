@@ -1,4 +1,9 @@
-package com.myshopnet.chat;
+package com.myshopnet.server;
+
+import com.myshopnet.chat.ChatColors;
+import com.myshopnet.models.Chat;
+import com.myshopnet.chat.SocketData;
+import com.myshopnet.chat.UserSession;
 
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -28,12 +33,8 @@ public class ChatServer {
     private static final List<String> ALLOWED = Arrays.asList("BOB","JACK","ALICE","EVA","MIKE","ADMIN");
     private static final ConcurrentMap<String, UserSession> sessionsByName = new ConcurrentHashMap<>();
     private static final CopyOnWriteArrayList<UserSession> allSessions     = new CopyOnWriteArrayList<>();
-    private static final ConcurrentMap<String, ChatRoom> rooms             = new ConcurrentHashMap<>();
+    private static final ConcurrentMap<String, Chat> rooms             = new ConcurrentHashMap<>();
     private static final ConcurrentMap<String, Queue<String>> pendingByTarget = new ConcurrentHashMap<>();
-
-
-
-
 
 // This is the main entry point of the server:
 // - Opens a server socket on the given PORT.
@@ -92,7 +93,7 @@ public class ChatServer {
                     if (us.activeRoomId() == null) {
                         us.out().println(sys("No active chat. Use /chat <USER> first."));
                     } else {
-                        ChatRoom room = rooms.get(us.activeRoomId());
+                        Chat room = rooms.get(us.activeRoomId());
                         if (room != null) {
                             room.say(us, line);
                         } else {
@@ -306,7 +307,7 @@ public class ChatServer {
             return;
         }
 
-        ChatRoom room = ChatRoom.create(caller, target);
+        Chat room = Chat.create(caller, target);
         rooms.put(room.id(), room);
         caller.setActiveRoomId(room.id());
         target.setActiveRoomId(room.id());
@@ -332,7 +333,7 @@ public class ChatServer {
         String rid = us.activeRoomId();
         if (rid == null) { us.out().println(sys("No active chat.")); return; }
 
-        ChatRoom room = rooms.get(rid);
+        Chat room = rooms.get(rid);
         if (room == null) {
             us.setActiveRoomId(null);
             us.setBusy(false);
@@ -384,7 +385,7 @@ public class ChatServer {
     private static void listRooms(UserSession us) {
         if (rooms.isEmpty()) { us.out().println(sys("No active rooms.")); return; }
         StringBuilder sb = new StringBuilder("Active rooms:\n");
-        for (ChatRoom r : rooms.values()) {
+        for (Chat r : rooms.values()) {
             sb.append("- ").append(r.id()).append(" : ").append(r.participantsSummary()).append("\n");
         }
         us.out().println(sys(sb.toString().trim()));
@@ -408,7 +409,7 @@ public class ChatServer {
             sup.out().println(sys(ChatColors.RED+"✖ You are already in " + sup.activeRoomId() + ". Use /leave first."+ChatColors.RESET));
             return;
         }
-        ChatRoom r = rooms.get(roomId);
+        Chat r = rooms.get(roomId);
         if (r == null) { sup.out().println(sys(ChatColors.RED+"✖ No such room."+ChatColors.RESET)); return; }
 
         r.addSupervisor(sup);
@@ -496,7 +497,7 @@ public class ChatServer {
             allSessions.remove(us);
 
             if (us.activeRoomId() != null) {
-                ChatRoom r = rooms.get(us.activeRoomId());
+                Chat r = rooms.get(us.activeRoomId());
                 if (r != null) {
                     r.system((name != null ? name : us.addr()) + " disconnected.");
                     r.remove(us);

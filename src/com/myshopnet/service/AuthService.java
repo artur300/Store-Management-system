@@ -3,6 +3,7 @@ package com.myshopnet.service;
 import com.myshopnet.auth.PasswordPolicy;
 import com.myshopnet.auth.SessionRegistry;
 import com.myshopnet.auth.UserAccount;
+import com.myshopnet.data.Data;
 import com.myshopnet.logs.LogEvent;
 import com.myshopnet.logs.LogType;
 import com.myshopnet.logs.LoggerImpl;
@@ -19,7 +20,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class AuthService {
 
-    private final Map<String, UserAccount> accounts = new ConcurrentHashMap<>();
+    private final Map<String, UserAccount> accounts = Data.getAccounts();
     private final SessionRegistry sessions = new SessionRegistry();
     private final PasswordPolicy policy = new PasswordPolicy();
 

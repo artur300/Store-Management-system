@@ -6,14 +6,17 @@ import com.myshopnet.repository.CustomerRepository;
 import com.myshopnet.repository.OrderRepository;
 
 import java.util.List;
+import java.util.UUID;
 
 public class CustomerService {
     private OrderRepository orderRepository = new OrderRepository();
     private CustomerRepository customerRepository = new CustomerRepository();
 
-    public Customer createCustomer(Customer customer) {
-        customerRepository.create(customer);
-        return customer;
+    public Customer createCustomer(String fullName, String passportId, String phoneNumber) {
+        Customer newCustomer = new NewCustomer(UUID.randomUUID().toString(), passportId, phoneNumber, fullName);
+
+        customerRepository.create(newCustomer);
+        return newCustomer;
     }
     public Customer getCustomer(String customerId) {
         Customer customer = customerRepository.get(customerId);

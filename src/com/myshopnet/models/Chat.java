@@ -1,4 +1,7 @@
-package com.myshopnet.chat;
+package com.myshopnet.models;
+
+import com.myshopnet.chat.ChatColors;
+import com.myshopnet.chat.UserSession;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -9,41 +12,30 @@ import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.atomic.AtomicInteger;
 
 
-public class ChatRoom {
-
-// These are settings and variables for the chat room system.
-// TS formats timestamps as "HH:mm" (e.g., 14:05).
-// Colors define how names/messages appear for senders, receivers, and system messages.
-// Each chat room has a unique ID, a set of participants, and supervisors.
-// SEQ is a counter that auto-increments to give each new room a unique ID (room 1, room 2, etc.).
-
+public class Chat {
     private static final SimpleDateFormat TS = new SimpleDateFormat("HH:mm");
-    private static final String SENDER_NAME_COLOR = ChatColors.PURPLE;
-    private static final String SENDER_MSG_COLOR  = ChatColors.PURPLE;
-    private static final String RECV_NAME_COLOR   = ChatColors.WHITE;
-    private static final String RECV_MSG_COLOR    = ChatColors.CYAN;
-    private static final String SYSTEM_COLOR      = ChatColors.CYAN;
+//    private static final String SENDER_NAME_COLOR = ChatColors.PURPLE;
+//    private static final String SENDER_MSG_COLOR  = ChatColors.PURPLE;
+//    private static final String RECV_NAME_COLOR   = ChatColors.WHITE;
+//    private static final String RECV_MSG_COLOR    = ChatColors.CYAN;
+//    private static final String SYSTEM_COLOR      = ChatColors.CYAN;
     private final String id;
-    private final Set<UserSession> participants = new CopyOnWriteArraySet<>();
-    private final Set<UserSession> supervisors = new CopyOnWriteArraySet<>();
-    private ChatRoom(String id) { this.id = id; }
+    private final Set<User> usersInChat = new CopyOnWriteArraySet<>();
     private static final AtomicInteger SEQ = new AtomicInteger(1);
 
-// Creates a new chat room with a unique ID (room 1, room 2, …).
-// Adds the two users (a and b) as participants in this room.
-// Returns the newly created ChatRoom object.
+    private Chat(String id) {
+        this.id = id;
+    }
 
-    public static ChatRoom create(UserSession a, UserSession b) {
+    public static Chat createChat(User a, User b) {
         String id = "room " + SEQ.getAndIncrement();
-        ChatRoom r = new ChatRoom(id);
-        r.participants.add(a);
-        r.participants.add(b);
+        Chat r = new Chat(id);
+        r.usersInChat.add(a);
+        r.usersInChat.add(b);
         return r;
     }
 
-// Returns the unique ID of this chat room (e.g., "room 1").
-
-    public String id() { return id; }
+    public String getId() { return id; }
 
 // Sends a system message (with timestamp and color) to all users in the room.
 
@@ -53,15 +45,11 @@ public class ChatRoom {
         sendToAll(line);
     }
 
-// Sends a chat message to all room members.
-// If the user is the sender, their message is shown in one color;
-// for others, it is shown in a different color.
-// Supervisors see all messages in blue.
 
     public void say(UserSession from, String msg) {
         String ts = "[" + TS.format(new Date()) + "] ";
 
-        for (UserSession u : participants) {
+        for (UserSession u : usersInChat) {
             boolean isSenderView = (u == from);
 
             String namePart = (isSenderView ? SENDER_NAME_COLOR : RECV_NAME_COLOR)
@@ -93,7 +81,7 @@ public class ChatRoom {
 // ensuring they no longer belong to this chat room.
 
     public void remove(UserSession u) {
-        participants.remove(u);
+        usersInChat.remove(u);
         supervisors.remove(u);
     }
 
@@ -105,7 +93,7 @@ public class ChatRoom {
 
     public String participantsSummary() {
         List<String> p = new ArrayList<>();
-        for (UserSession u : participants) p.add(u.name());
+        for (UserSession u : usersInChat) p.add(u.name());
         for (UserSession s : supervisors) p.add("SUP:" + s.name());
         return String.join(", ", p);
     }
@@ -116,7 +104,7 @@ public class ChatRoom {
 // and prints the message to each user's output stream.
 
     private void sendToAll(String line) {
-        for (UserSession u : participants) u.out().println(line);
+        for (UserSession u : usersInChat) u.out().println(line);
         for (UserSession s : supervisors) s.out().println(line);
     }
 
@@ -124,7 +112,7 @@ public class ChatRoom {
 // (Does not include supervisors, only regular participants.)
 
     public int participantsCount() {
-        return participants.size();
+        return usersInChat.size();
     }
 
 // Returns a new list of all current participants in the chat room.
@@ -132,7 +120,7 @@ public class ChatRoom {
 // without directly modifying the original set.
 
     public List<UserSession> participantsList() {
-        return new ArrayList<>(participants);
+        return new ArrayList<>(usersInChat);
     }
 
 // Returns a new list of all supervisors in the chat room.
