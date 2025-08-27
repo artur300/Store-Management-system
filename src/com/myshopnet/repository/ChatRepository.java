@@ -8,26 +8,32 @@ import java.util.List;
 public class ChatRepository implements Repository<Chat> {
     @Override
     public Chat create(Chat chat) {
-        return Data.getOngoingChats().put(chat.);
+        return Data.getOngoingChats().put(chat.getId(), chat);
     }
 
     @Override
     public Chat update(String id, Chat chat) {
-        return null;
+        Chat chatToReturn = null;
+
+        if (Data.getOngoingChats().containsKey(id)) {
+            chatToReturn = Data.getOngoingChats().put(id, chat);
+        }
+
+        return chatToReturn;
     }
 
     @Override
     public void delete(String id) {
-
+        Data.getOngoingChats().remove(id);
     }
 
     @Override
     public Chat get(String id) {
-        return null;
+        return Data.getOngoingChats().get(id);
     }
 
     @Override
     public List<Chat> getAll() {
-        return List.of();
+        return Data.getOngoingChats().values().stream().toList();
     }
 }

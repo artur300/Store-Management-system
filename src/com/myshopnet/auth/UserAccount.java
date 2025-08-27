@@ -1,17 +1,22 @@
 package com.myshopnet.auth;
 
 import com.google.gson.Gson;
+import com.myshopnet.models.User;
 
 public class UserAccount {
     private final String username;
     private final String password;   // בפועל עדיף hash
-    private final String userId;
+    private User user;
 
-    public UserAccount(String username, String password,
-                       String userId) {
+    public UserAccount(String username, String password) {
         this.username = username;
         this.password = password;
-        this.userId = userId;
+    }
+    
+    public UserAccount(String username, String password, User user) {
+        this.username = username;
+        this.password = password;
+        this.user = user;
     }
 
     public String getUsername() {
@@ -22,8 +27,12 @@ public class UserAccount {
         return password;
     }
 
-    public String getUserId() {
-        return userId;
+    public User getUser() {
+        return user;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
     }
 }
 

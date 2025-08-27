@@ -1,4 +1,6 @@
-package com.myshopnet.chat;
+package com.myshopnet.client;
+
+import com.myshopnet.models.ChatColors;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;

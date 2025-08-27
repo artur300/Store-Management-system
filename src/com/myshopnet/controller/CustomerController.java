@@ -1,35 +1,61 @@
 package com.myshopnet.controller;
+import com.google.gson.Gson;
+import com.myshopnet.server.Response;
 import com.myshopnet.service.CustomerService;
 import com.myshopnet.models.Customer;
 import java.util.List;
 import com.myshopnet.errors.EntityNotFoundException;
+import com.myshopnet.utils.GsonSingleton;
 
 public class CustomerController {
+    private Gson gson = GsonSingleton.getInstance();
     private CustomerService customerService = new CustomerService();
 
-    public Customer createCustomer(String fullName, String passportId, String phoneNumber) {
+    public String createCustomer(String fullName, String passportId, String phoneNumber) {
+        Response response = new Response();
+
         try {
-            return customerService.createCustomer(fullName, passportId, phoneNumber);
+            Customer customer = customerService.createCustomer(fullName, passportId, phoneNumber);
+
+            response.setSuccess(true);
+            response.setMessage(gson.toJson(customer));
         } catch (Exception e) {
-            throw new RuntimeException("Failed to create customer");
+            response.setSuccess(false);
+            response.setMessage(e.getMessage());
         }
+
+        return gson.toJson(response);
     }
 
-    public Customer getCustomer(String customerId) {
+    public String getCustomer(String customerId) {
+        Response response = new Response();
+
         try {
-            return customerService.getCustomer(customerId);
-        } catch (EntityNotFoundException e) {
-            throw new EntityNotFoundException("Customer not found with ID: " + customerId);
+            Customer customer = customerService.getCustomer(customerId);
+
+            response.setSuccess(true);
+            response.setMessage(gson.toJson(customer));
         } catch (Exception e) {
-            throw new RuntimeException("Failed to get customer");
+            response.setSuccess(false);
+            response.setMessage(e.getMessage());
         }
+
+        return gson.toJson(response);
     }
 
-    public List<Customer> getAllCustomers() {
+    public String getAllCustomers() {
+        Response response = new Response();
+
         try {
-            return customerService.getAllCustomers();
+            List<Customer> customers = customerService.getAllCustomers();
+
+            response.setSuccess(true);
+            response.setMessage(gson.toJson(customers));
         } catch (Exception e) {
-            throw new RuntimeException("Failed to get customers");
+            response.setSuccess(false);
+            response.setMessage(e.getMessage());
         }
+
+        return gson.toJson(response);
     }
 }

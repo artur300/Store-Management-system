@@ -1,41 +1,46 @@
 package com.myshopnet.service;
 
-import com.myshopnet.errors.EntityAlreadyExistsException;
+import com.myshopnet.auth.UserAccount;
+import com.myshopnet.errors.EntityNotFoundException;
+import com.myshopnet.models.Branch;
 import com.myshopnet.models.Employee;
-import com.myshopnet.logs.*;
+import com.myshopnet.models.EmployeeStatus;
+import com.myshopnet.models.EmployeeType;
+import com.myshopnet.repository.BranchRepository;
 import com.myshopnet.repository.EmployeeRepository;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class EmployeeService {
-    private final EmployeeRepository employeeRepository;
+    private final EmployeeRepository employeeRepository = new EmployeeRepository();
+    private final BranchRepository branchRepository = new BranchRepository();
+    private final BranchService branchService = new BranchService();
 
-    public EmployeeService(EmployeeRepository employeeRepository) {
-        this.employeeRepository = employeeRepository;
+    public Employee addEmployee(Long accountNumber, String branchId, String employeeType, Long employeeNumber) {
+        Branch branch = branchRepository.get(branchId);
+
+        if (branch == null) {
+            throw new EntityNotFoundException("Branch not found");
+        }
+
+        Employee employee = new Employee(UUID.randomUUID().toString(),
+                accountNumber, branchId, EmployeeType.valueOf(employeeType), employeeNumber);
+
+        return employeeRepository.create(employee);
     }
 
-    public Employee addEmployee(Employee e) {
-        if (employeeRepository.get(e.getId()) != null)
-        {
-            LoggerImpl.getInstance().log(new LogEvent(
-                    LogType.EMPLOYEE_REGISTERED, "employeeId=" + e.getId() +
-                    ", branch=" + e.getBranchId()));
-            throw new EntityAlreadyExistsException(Employee.class.getName());
+    public void changeStatus(UserAccount userAccount, EmployeeStatus status) {
+        // going from busy -> available
+        if (((Employee)(userAccount.getUser())).getEmployeeStatus() == EmployeeStatus.BUSY &&
+                status == EmployeeStatus.AVAILABLE) {
+            branchService.notifyAndPollWaitingEmployeeToChat(userAccount);
         }
-        else {
-           return employeeRepository.create(e);
-        }
+
+        ((Employee)(userAccount.getUser())).setEmployeeStatus(status);
     }
 
     public Employee get(String id) {
         return employeeRepository.get(id);
-    }
-
-    public List<Employee> listByBranch(String branchId) {
-        return employeeRepository.getAll().stream()
-                .filter(e -> e.getBranchId().equals(branchId))
-                .collect(Collectors.toList());
     }
 
     public List<Employee> getAll() {

@@ -1,4 +1,4 @@
-package com.myshopnet.chat;
+package com.myshopnet.models;
 
 // This class defines ANSI color codes for console output.
 // Each constant represents a different text color (red, green, yellow, etc.).

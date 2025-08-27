@@ -168,7 +168,7 @@ public class ClientDriver {
     private static void adminListByBranch() {
         Scanner sc = new Scanner(System.in);
         String branchId = chooseBranch(sc);
-        List<Employee> list = empSvc.listByBranch(branchId);
+        List<Employee> list = empSvc.getAllEmployeesInBranch(branchId);
         System.out.println("עובדים בסניף " + branchId + ":");
         for (Employee e : list) {
             System.out.println(" - " + e.getId() + " | " + e.getFullName() + " | " + e.getRole());
@@ -197,7 +197,7 @@ public class ClientDriver {
         String p = sc.nextLine().trim();
 
         try {
-            userToken = auth.login(u, p);
+            userToken = auth.loginUser(u, p);
         } catch (Exception e) {
             System.out.println("כניסה נכשלה: " + e.getMessage());
             return;

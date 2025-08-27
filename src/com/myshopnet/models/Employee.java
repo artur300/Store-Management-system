@@ -7,6 +7,7 @@ public class Employee implements User {
     private String branchId;
     private EmployeeType employeeType;
     private Long employeeNumber;
+    private EmployeeStatus employeeStatus;
 
     public Employee(String id, Long accountNumber, String branchId, EmployeeType employeeType, Long employeeNumber) {
         this.id = id;
@@ -14,11 +15,20 @@ public class Employee implements User {
         this.branchId = branchId;
         this.employeeType = employeeType;
         this.employeeNumber = employeeNumber;
+        this.employeeStatus = EmployeeStatus.AVAILABLE;
     }
 
     @Override
     public String getId() {
         return id;
+    }
+
+    public EmployeeStatus getEmployeeStatus() {
+        return employeeStatus;
+    }
+
+    public void setEmployeeStatus(EmployeeStatus employeeStatus) {
+        this.employeeStatus = employeeStatus;
     }
 
     public void setId(String id) {
