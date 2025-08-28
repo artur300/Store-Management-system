@@ -1,4 +1,5 @@
 package com.myshopnet.server;
 
-public class ClientHandler {
+public class RequestHandler {
+
 }

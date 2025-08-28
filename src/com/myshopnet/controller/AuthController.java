@@ -28,10 +28,12 @@ public class AuthController {
     }
 
     public String register(String username, String password) {
-
+        return "Registered";
     }
 
     public String logout() {
         Response response = new Response();
+
+        return "Hey";
     }
 }

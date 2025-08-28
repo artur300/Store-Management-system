@@ -1,13 +1,11 @@
 package com.myshopnet.data;
 
-import com.myshopnet.auth.SessionInfo;
 import com.myshopnet.auth.UserAccount;
 import com.myshopnet.models.Chat;
 import com.myshopnet.models.*;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 
 public class Data {
     private static final Map<String, Branch> branches = new ConcurrentHashMap<>();

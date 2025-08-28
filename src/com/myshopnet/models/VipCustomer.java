@@ -1,8 +1,8 @@
 package com.myshopnet.models;
 
 public class VipCustomer extends Customer {
-    public VipCustomer(String id, String fullName, String phone) {
-        super(id, fullName, phone);
+    public VipCustomer(String id, String passpoortId, String fullName, String phone) {
+        super(id, passpoortId,fullName, phone);
     }
 
     public VipCustomer(Customer customer) {

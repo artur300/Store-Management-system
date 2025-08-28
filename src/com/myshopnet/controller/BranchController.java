@@ -37,10 +37,10 @@ public class BranchController {
     }
 
     public String updateBranchStock(String branchId, String userId, String productId, Long stock) {
-
+        return "Updated";
     }
 
     public String buyProductFromBranch(String branchId, String userId, String productId) {
-
+        return "Buy Product";
     }
 }
