@@ -1,6 +1,7 @@
 package com.myshopnet.service;
 
 import com.myshopnet.auth.UserAccount;
+import com.myshopnet.data.Data;
 import com.myshopnet.errors.AuthException;
 import com.myshopnet.errors.EntityNotFoundException;
 import com.myshopnet.models.*;
@@ -21,6 +22,10 @@ public class ChatService {
     private final BranchRepository branchRepository = new BranchRepository();
     private final BranchService branchService = new BranchService();
     private final EmployeeService employeeService = new EmployeeService();
+
+    public Chat getChat(String chatId) {
+        return chatRepository.get(chatId);
+    }
 
     public Chat createChat(UserAccount employeeRequesting, UserAccount employeeAvailableToChat) {
         Chat chat = null;
@@ -108,7 +113,7 @@ public class ChatService {
         chatRepository.update(chatId, chat);
     }
 
-    public void sendMessage(String chatId, UserAccount fromUser, UserAccount toUser, String message) {
+    public Chat sendMessage(String chatId, UserAccount fromUser, UserAccount toUser, String message) {
         Chat chat = chatRepository.get(chatId);
 
         if (verifyChat(chatId, fromUser, toUser, message)) {
@@ -116,6 +121,8 @@ public class ChatService {
 
             chatRepository.update(chatId, chat);
         }
+
+        return chat;
     }
 
     private boolean verifyChat(String chatId, UserAccount fromUser, UserAccount toUser, String message) {
@@ -132,6 +139,8 @@ public class ChatService {
                 !toBranch.getId().equals(fromBranch.getId()) &&
                 chat.getUsersInChat().containsKey(fromUser.getUser().getId()) &&
                 chat.getUsersInChat().containsKey(toUser.getUser().getId()) &&
+                Data.getOnlineAccounts().containsKey(fromUser.getUser().getId()) &&
+                Data.getOnlineAccounts().containsKey(toUser.getUser().getId()) &&
                 !message.isBlank();
     }
 

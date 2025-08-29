@@ -1,7 +1,6 @@
 package com.myshopnet.models;
 
 import com.myshopnet.auth.UserAccount;
-import com.myshopnet.chat.UserSession;
 
 import java.text.SimpleDateFormat;
 import java.util.*;

@@ -30,7 +30,7 @@ public class ChatController {
                     response.setMessage(gson.toJson(chatToReturn));
                 }
                 else {
-                    response.setMessage("All employes are busy, you are inside the queue");
+                    response.setMessage("All employes are busy, you are inside the queue of the branch");
                 }
             }
             else {
@@ -46,8 +46,27 @@ public class ChatController {
     }
 
     // sendMessage
+    public String sendMessage(String chatId, String userIdRequesting, String userIdToSend, String message) {
+        Response response = new Response();
+        UserAccount userRequesting = userAccountService.getUserAccount(userIdRequesting);
+        UserAccount userToSend = userAccountService.getUserAccount(userIdToSend);
 
+        try {
+            Chat chat = chatService.sendMessage(chatId, userRequesting, userToSend, message);
+
+            response.setSuccess(true);
+            response.setMessage(gson.toJson(chat));
+        }
+        catch (Exception e) {
+            response.setSuccess(false);
+            response.setMessage(e.getMessage());
+        }
+
+        return gson.toJson(response);
+    }
 
     // endChat
+    public String endChat(String chatId) {
 
+    }
 }

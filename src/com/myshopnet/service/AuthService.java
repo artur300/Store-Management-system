@@ -20,10 +20,10 @@ public class AuthService {
             throw new IllegalStateException("Username already in use, please try again with a different one");
         }
 
-        UserAccount userAccount = null;
+        UserAccount userAccount = userAccountRepository.get(user.getId());;
 
-        if(PasswordPolicy.isValid(password)) {
-            userAccount = new UserAccount(username, PasswordUtil.hashPassword(password), user);
+        if(userAccount != null && PasswordPolicy.isValid(password)) {
+            userAccount = new UserAccount(username, password, user);
 
             userAccountRepository.create(userAccount);
         }

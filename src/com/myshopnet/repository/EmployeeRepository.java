@@ -11,7 +11,8 @@ import java.util.List;
 public class EmployeeRepository implements Repository<Employee> {
     @Override
     public Employee create(Employee employee) {
-        Data.getAllAccounts().get(employee.getId()).setUser(employee);
+        UserAccount employeeUserAccount = new UserAccount(employee);
+        Data.getAllAccounts().put(employee.getId(), employeeUserAccount);
 
         return employee;
     }
