@@ -1,0 +1,32 @@
+package com.myshopnet.service;
+
+import com.myshopnet.errors.EntityNotFoundException;
+import com.myshopnet.models.Branch;
+import com.myshopnet.models.Product;
+import com.myshopnet.repository.BranchRepository;
+import com.myshopnet.repository.ProductRepository;
+
+import java.util.List;
+
+public class ProductService {
+    private ProductRepository productRepository = new ProductRepository();
+    private BranchRepository branchRepository = new BranchRepository();
+    private StockService stockService = new StockService();
+
+    public void addProductToAllBranches(String productId) {
+        Product product = productRepository.get(productId);
+
+        if (product == null) {
+            throw new EntityNotFoundException("Product");
+        }
+
+        List<Branch> allBranches = branchRepository.getAll();
+
+        for (Branch branch : allBranches) {
+            branch.getProductsStock().getStockOfProducts().put(product, 0L);
+
+            branchRepository.update(branch.getId(), branch);
+        }
+    }
+
+}
