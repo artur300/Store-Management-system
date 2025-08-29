@@ -144,7 +144,7 @@ public class ChatService {
                 !message.isBlank();
     }
 
-    private void endChat(String chatId) {
+    public void endChat(String chatId) {
         Chat chat = chatRepository.get(chatId);
 
         if (chat == null) {

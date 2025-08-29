@@ -67,6 +67,19 @@ public class ChatController {
 
     // endChat
     public String endChat(String chatId) {
+        Response response = new Response();
 
+        try {
+            chatService.endChat(chatId);
+
+            response.setSuccess(true);
+            response.setMessage("Chat ended");
+        }
+        catch (Exception e) {
+            response.setSuccess(false);
+            response.setMessage(e.getMessage());
+        }
+
+        return gson.toJson(response);
     }
 }
