@@ -29,4 +29,49 @@ public class ProductService {
         }
     }
 
+    public void removeProductFromAllBranches(String productId) {
+        Product product = productRepository.get(productId);
+        if (product == null) {
+            throw new EntityNotFoundException("Product");
+        }
+
+        List<Branch> allBranches = branchRepository.getAll();
+        for (Branch branch : allBranches) {
+            branch.getProductsStock().getStockOfProducts().remove(product);
+            branchRepository.update(branch.getId(), branch);
+        }
+    }
+    public void updateProductInAllBranches(String productId) {
+        Product product = productRepository.get(productId);
+        if (product == null) {
+            throw new EntityNotFoundException("Product");
+        }
+
+        List<Branch> allBranches = branchRepository.getAll();
+        for (Branch branch : allBranches) {
+            if (branch.getProductsStock().getStockOfProducts().containsKey(product)) {
+                Long currentStock = branch.getProductsStock().getStockOfProducts().get(product);
+                branch.getProductsStock().getStockOfProducts().remove(product);
+                branch.getProductsStock().getStockOfProducts().put(product, currentStock);
+                branchRepository.update(branch.getId(), branch);
+            }
+        }
+    }
+    public void deleteProduct(String productId) {
+        Product product = productRepository.get(productId);
+        if (product == null) {
+            throw new EntityNotFoundException("Product");
+        }
+
+
+        productRepository.delete(productId);
+
+
+        List<Branch> allBranches = branchRepository.getAll();
+        for (Branch branch : allBranches) {
+            branch.getProductsStock().getStockOfProducts().remove(product);
+            branchRepository.update(branch.getId(), branch);
+        }
+    }
+
 }
