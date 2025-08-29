@@ -10,7 +10,6 @@ import com.myshopnet.errors.EntityNotFoundException;
 import com.myshopnet.utils.GsonSingleton;
 
 public class ProductController {
-
     private Gson gson = GsonSingleton.getInstance();
     private ProductService productService = new ProductService();
     private UserAccountService userAccountService = new UserAccountService();
@@ -107,7 +106,8 @@ public class ProductController {
         } catch (EntityNotFoundException e) {
             response.setSuccess(false);
             response.setMessage("Failed to delete product");
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             response.setSuccess(false);
             response.setMessage("Failed to delete product");
         }
