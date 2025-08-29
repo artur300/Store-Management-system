@@ -8,12 +8,14 @@ import com.myshopnet.models.EmployeeStatus;
 import com.myshopnet.models.EmployeeType;
 import com.myshopnet.repository.BranchRepository;
 import com.myshopnet.repository.EmployeeRepository;
+import com.myshopnet.repository.UserAccountRepository;
 
 import java.util.*;
 
 public class EmployeeService {
     private final EmployeeRepository employeeRepository = new EmployeeRepository();
     private final BranchRepository branchRepository = new BranchRepository();
+    private final UserAccountRepository userAccountRepository = new UserAccountRepository();
     private final BranchService branchService = new BranchService();
 
     public Employee addEmployee(Long accountNumber, String branchId, String employeeType, Long employeeNumber) {
@@ -37,6 +39,7 @@ public class EmployeeService {
         }
 
         ((Employee)(userAccount.getUser())).setEmployeeStatus(status);
+        userAccountRepository.update(userAccount.getUser().getId(), userAccount);
     }
 
     public Employee get(String id) {

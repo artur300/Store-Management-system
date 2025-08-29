@@ -11,6 +11,7 @@ import com.myshopnet.repository.EmployeeRepository;
 import com.myshopnet.repository.UserAccountRepository;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 import java.util.UUID;
 
 public class ChatService {
@@ -20,7 +21,6 @@ public class ChatService {
     private final BranchRepository branchRepository = new BranchRepository();
     private final BranchService branchService = new BranchService();
     private final EmployeeService employeeService = new EmployeeService();
-    private final EmployeeRepository employeeRepository = new EmployeeRepository();
 
     public Chat createChat(UserAccount employeeRequesting, UserAccount employeeAvailableToChat) {
         Chat chat = null;
@@ -40,7 +40,8 @@ public class ChatService {
         return chat;
     }
 
-    public synchronized void requestToChatWithBranchEmployee(UserAccount employeeRequesting, String branchId) {
+    public synchronized Optional<Chat> requestToChatWithBranchEmployee(UserAccount employeeRequesting, String branchId) {
+        Chat chatToInitiate = null;
         Branch branch = branchRepository.get(branchId);
 
         if(userAccountRepository.get(employeeRequesting.getUsername()) == null) {
@@ -62,8 +63,10 @@ public class ChatService {
             branchService.addEmployeeToWaitingBranchQueue(branch.getId(), employeeRequesting);
         }
         else {
-           createChat(employeeRequesting, employeeAvailableToChat);
+           chatToInitiate =  createChat(employeeRequesting, employeeAvailableToChat);
         }
+
+        return Optional.ofNullable(chatToInitiate);
     }
 
     private boolean canCreateChat(UserAccount employeeRequesting, UserAccount employeeAvailableToChat) {
@@ -90,12 +93,19 @@ public class ChatService {
         return true;
     }
 
-    public void addShiftManagerToChat(UserAccount userAccount, String chatId) {
+    public void addShiftManagerToChat(String shiftManagerId, String chatId) {
         Chat chat = chatRepository.get(chatId);
+        UserAccount userAccount = userAccountRepository.get(shiftManagerId);
+
+        if (shiftManagerId == null || shiftManagerId.isEmpty() || userAccount == null) {
+            throw new EntityNotFoundException("Shift manager not found");
+        }
 
         if (chat != null) {
             chat.getUsersInChat().put(userAccount.getUser().getId(), userAccount);
         }
+
+        chatRepository.update(chatId, chat);
     }
 
     public void sendMessage(String chatId, UserAccount fromUser, UserAccount toUser, String message) {
@@ -111,10 +121,32 @@ public class ChatService {
     private boolean verifyChat(String chatId, UserAccount fromUser, UserAccount toUser, String message) {
         Chat chat = chatRepository.get(chatId);
 
-        return chat != null && fromUser != null && toUser != null && chat.getUsersInChat().containsKey(fromUser.getUser().getId()) && chat.getUsersInChat().containsKey(toUser.getUser().getId()) && !message.isBlank();
+        if (fromUser == null || toUser == null || chat == null) {
+            throw new EntityNotFoundException("Chat/Users not found");
+        }
+
+        Branch fromBranch = branchRepository.get(((Employee)(fromUser.getUser())).getBranchId());
+        Branch toBranch = branchRepository.get(((Employee)(toUser.getUser())).getBranchId());
+
+        return fromBranch != null && toBranch != null &&
+                !toBranch.getId().equals(fromBranch.getId()) &&
+                chat.getUsersInChat().containsKey(fromUser.getUser().getId()) &&
+                chat.getUsersInChat().containsKey(toUser.getUser().getId()) &&
+                !message.isBlank();
     }
 
     private void endChat(String chatId) {
+        Chat chat = chatRepository.get(chatId);
+
+        if (chat == null) {
+            throw new EntityNotFoundException("Chat");
+        }
+
+        chat.getUsersInChat().values()
+                .forEach(userAccount -> {
+                    employeeService.changeStatus(userAccount, EmployeeStatus.AVAILABLE);
+        });
+
         chatRepository.delete(chatId);
     }
 }

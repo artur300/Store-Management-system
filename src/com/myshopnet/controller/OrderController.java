@@ -10,16 +10,15 @@ import com.myshopnet.utils.GsonSingleton;
 import java.util.Map;
 
 public class OrderController {
-
     private Gson gson = GsonSingleton.getInstance();
     private OrderService orderService = new OrderService();
-
 
     public String performOrder(Map<String, Long> mapOfProductsAndQuantities, String branchId, String customerId) {
         Response response = new Response();
 
         try {
             Order order = orderService.performOrder(mapOfProductsAndQuantities, branchId, customerId);
+
             response.setSuccess(true);
             response.setMessage(gson.toJson(order));
         } catch (EntityNotFoundException e) {
