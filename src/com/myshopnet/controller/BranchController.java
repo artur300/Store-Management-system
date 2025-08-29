@@ -23,10 +23,14 @@ public class BranchController {
 
             if (userAccount != null && userAccount.getUser() instanceof Admin) {
                 branch = branchService.createNewBranch(branchName);
-            }
 
-            response.setSuccess(true);
-            response.setMessage(gson.toJson(branch));
+                response.setSuccess(true);
+                response.setMessage(gson.toJson(branch));
+            }
+            else {
+                response.setSuccess(false);
+                response.setMessage("No permission");
+            }
         }
         catch (Exception e) {
             response.setSuccess(false);
