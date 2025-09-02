@@ -4,6 +4,7 @@ import com.myshopnet.auth.UserAccount;
 import com.myshopnet.data.Data;
 import com.myshopnet.errors.AuthException;
 import com.myshopnet.errors.EntityNotFoundException;
+import com.myshopnet.errors.InsufficientPermissionsException;
 import com.myshopnet.models.*;
 import com.myshopnet.chat.UserSession;
 import com.myshopnet.repository.BranchRepository;
@@ -144,18 +145,24 @@ public class ChatService {
                 !message.isBlank();
     }
 
-    public void endChat(String chatId) {
+    public void endChat(UserAccount userEndingChat, String chatId) {
         Chat chat = chatRepository.get(chatId);
 
         if (chat == null) {
             throw new EntityNotFoundException("Chat");
         }
 
-        chat.getUsersInChat().values()
-                .forEach(userAccount -> {
-                    employeeService.changeStatus(userAccount, EmployeeStatus.AVAILABLE);
-        });
+        if (chat.getUsersInChat().containsKey(userEndingChat.getUser().getId())) {
+            chat.getUsersInChat().values()
+                    .forEach(userAccount -> {
+                        employeeService.changeStatus(userAccount, EmployeeStatus.AVAILABLE);
+                    });
 
-        chatRepository.delete(chatId);
+            chatRepository.delete(chatId);
+
+            return;
+        }
+
+        throw new InsufficientPermissionsException("You are not an part of this chat!");
     }
 }

@@ -1,6 +1,9 @@
 package com.myshopnet.controller;
 
 import com.google.gson.Gson;
+import com.myshopnet.models.Category;
+import com.myshopnet.models.Product;
+import com.myshopnet.models.User;
 import com.myshopnet.service.ProductService;
 import com.myshopnet.service.UserAccountService;
 import com.myshopnet.models.Admin;
@@ -14,12 +17,39 @@ public class ProductController {
     private ProductService productService = new ProductService();
     private UserAccountService userAccountService = new UserAccountService();
 
+    public String createProduct(String currentLoggedInUser,String productSku, String productName, String productCategory, String price) {
+        Response response = new Response();
+
+        try {
+            User user = userAccountService.getUserAccount(currentLoggedInUser).getUser();
+
+            if (!(user instanceof Admin)) {
+                throw new SecurityException("User is not an Admin");
+            }
+
+            Category category = Category.valueOf(productCategory);
+            Double priceDouble = Double.valueOf(price);
+            Product product = productService.createProduct(productSku, productName, category, priceDouble);
+
+            addProductToAllBranches(currentLoggedInUser, product.getSku());
+
+            response.setSuccess(true);
+            response.setMessage(gson.toJson(product));
+        }
+        catch (Exception e) {
+            response.setSuccess(false);
+            response.setMessage(e.getMessage());
+        }
+
+        return gson.toJson(response);
+    }
 
     public String addProductToAllBranches(String currentUserId, String productId) {
         Response response = new Response();
 
         try {
             UserAccount currentUserAccount = userAccountService.getUserAccount(currentUserId);
+
             if (currentUserAccount == null || !(currentUserAccount.getUser() instanceof Admin)) {
                 response.setSuccess(false);
                 response.setMessage("Only admin can add products to branches");
@@ -45,6 +75,7 @@ public class ProductController {
 
         try {
             UserAccount currentUserAccount = userAccountService.getUserAccount(currentUserId);
+
             if (currentUserAccount == null || !(currentUserAccount.getUser() instanceof Admin)) {
                 response.setSuccess(false);
                 response.setMessage("Only admin can remove products from branches");
@@ -70,6 +101,7 @@ public class ProductController {
 
         try {
             UserAccount currentUserAccount = userAccountService.getUserAccount(currentUserId);
+
             if (currentUserAccount == null || !(currentUserAccount.getUser() instanceof Admin)) {
                 response.setSuccess(false);
                 response.setMessage("Only admin can update products in branches");
@@ -95,6 +127,7 @@ public class ProductController {
 
         try {
             UserAccount currentUserAccount = userAccountService.getUserAccount(currentUserId);
+
             if (currentUserAccount == null || !(currentUserAccount.getUser() instanceof Admin)) {
                 response.setSuccess(false);
                 response.setMessage("Only admin can delete products");

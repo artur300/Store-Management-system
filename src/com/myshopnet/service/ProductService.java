@@ -2,6 +2,7 @@ package com.myshopnet.service;
 
 import com.myshopnet.errors.EntityNotFoundException;
 import com.myshopnet.models.Branch;
+import com.myshopnet.models.Category;
 import com.myshopnet.models.Product;
 import com.myshopnet.repository.BranchRepository;
 import com.myshopnet.repository.ProductRepository;
@@ -12,6 +13,16 @@ public class ProductService {
     private ProductRepository productRepository = new ProductRepository();
     private BranchRepository branchRepository = new BranchRepository();
     private StockService stockService = new StockService();
+
+    public Product createProduct(String productSku, String productName, Category productCategory, Double price) {
+        if (price <= 0) {
+            throw new ArithmeticException("Product Price must be greater than 0");
+        }
+
+        Product product = new Product(productSku, productName, productCategory, price);
+
+        return productRepository.create(product);
+    }
 
     public void addProductToAllBranches(String productId) {
         Product product = productRepository.get(productId);

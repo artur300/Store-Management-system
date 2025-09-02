@@ -30,10 +30,11 @@ public class AuthController {
         return gson.toJson(response);
     }
 
-    public String register(String username, String password, User user) {
+    public String register(String username, String password, String userId) {
         Response response = new Response();
 
         try {
+            User user = userAccountService.getUserAccount(userId).getUser();
             authService.registerAccount(username, password, user);
 
             response.setSuccess(true);

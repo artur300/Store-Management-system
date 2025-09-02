@@ -16,6 +16,7 @@ import java.util.stream.Collectors;
 public class BranchService {
     private UserAccountRepository userAccountRepository = new UserAccountRepository();
     private EmployeeRepository employeeRepository = new EmployeeRepository();
+    private AuthService authService = new AuthService();
     private BranchRepository branchRepository = new BranchRepository();
     private ChatService chatService = new ChatService();
 

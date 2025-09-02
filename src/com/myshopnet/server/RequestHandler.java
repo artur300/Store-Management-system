@@ -22,86 +22,69 @@ public class RequestHandler {
     private final ProductController productController = new ProductController();
     private final ChatController chatController = new ChatController();
 
-    public String HandleRequest(Request request){
+    public String HandleRequest(Request request) {
+        String response = "";
         String action = request.getAction();
         String data = request.getData();
 
         try {
-            JsonObject json = data != null && !data.isEmpty()?
-                    gson.fromJson(data, JsonObject.class)
-                    : new JsonObject();
+            JsonObject json = data != null && !data.isEmpty() ? gson.fromJson(data, JsonObject.class) : new JsonObject();
 
-            switch (action){
-
-                //Auth:
-                case "login":{
+            switch (action) {
+                case "login": {
                     String username = json.get("username").getAsString();
                     String password = json.get("password").getAsString();
-                    return authController.login(username,password);
+
+                    response = authController.login(username,password);
                 }
 
                 case "register":{
                     String username = json.get("username").getAsString();
                     String password = json.get("password").getAsString();
-                    String type = json.get("type").getAsString();
-
-                    User user;
-                    switch (type) {
-                        case "Admin":
-                            user = gson.fromJson(json.get("user"), Admin.class);
-                            break;
-                        case "Employee":
-                            user = gson.fromJson(json.get("user"), Employee.class);
-                            break;
-                        case "Customer":
-                        default:
-                            user = gson.fromJson(json.get("user"), Customer.class);
-                            break;
-                    }
-                    return authController.register(username,password,user);
-                }
-
-                case "logout":{
                     String userId = json.get("userId").getAsString();
-                    return authController.logout(userId);
+
+                    response = authController.register(username,password, userId);
                 }
 
+                case "logout": {
+                    String userId = json.get("userId").getAsString();
 
+                    response = authController.logout(userId);
+                }
 
-                //Branch:
-                case "createBranch":{
+                case "createBranch": {
                     String userId = json.get("userId").getAsString();
                     String branchName = json.get("branchName").getAsString();
-                    return branchController.createBranch(userId,branchName);
+
+                    response = branchController.createBranch(userId, branchName);
                 }
 
-                case "updateBranchStock":{
+                case "updateBranchStock": {
                     String branchId = json.get("branchId").getAsString();
                     String userId = json.get("userId").getAsString();
                     String productId = json.get("productId").getAsString();
                     Long stock = json.get("stock").getAsLong();
-                    return branchController.updateBranchStock(branchId, userId, productId, stock);
+
+                    response = branchController.updateBranchStock(branchId, userId, productId, stock);
                 }
 
-                //Customer:
-                case "createCustomer":{
+                case "createCustomer": {
                     String fullName = json.get("fullName").getAsString();
                     String passportId = json.get("passportId").getAsString();
                     String phoneNumber = json.get("phoneNumber").getAsString();
-                    return customerController.createCustomer(fullName, passportId, phoneNumber);
+                    response = customerController.createCustomer(fullName, passportId, phoneNumber);
                 }
 
-                case "getCustomer":{
+                case "getCustomer": {
                     String customerId = json.get("customerId").getAsString();
-                    return customerController.getCustomer(customerId);
+
+                    response = customerController.getCustomer(customerId);
                 }
 
-                case "getAllCustomers":{
-                    return customerController.getAllCustomers();
+                case "getAllCustomers": {
+                    response = customerController.getAllCustomers();
                 }
 
-
-                //Employee:
                 case "addEmployee": {
                     String currentUserId = json.get("currentUserId").getAsString();
                     Long accountNumber = json.get("accountNumber").getAsLong();
@@ -110,47 +93,66 @@ public class RequestHandler {
                     Long employeeNumber = json.get("employeeNumber").getAsLong();
                     String username = json.get("username").getAsString();
                     String password = json.get("password").getAsString();
-                    return employeeController.addEmployee(currentUserId, accountNumber, branchId,employeeType, employeeNumber, username, password);
+
+                    response = employeeController.addEmployee(currentUserId, accountNumber, branchId,employeeType, employeeNumber, username, password);
                 }
 
-                case "getEmployee":{
+                case "getEmployee": {
                     String employeeId = json.get("employeeId").getAsString();
-                    return employeeController.getEmployee(employeeId);
+
+                    response = employeeController.getEmployee(employeeId);
                 }
 
-                case "getAllEmployeesByBranch":{
+                case "getAllEmployeesByBranch": {
                     String branchId = json.get("branchId").getAsString();
-                    return employeeController.getAllEmployeesByBranch(branchId);
+
+                    response = employeeController.getAllEmployeesByBranch(branchId);
                 }
 
-
-                //Order:
                 case "performOrder": {
                     String branchId = json.get("branchId").getAsString();
                     String customerId = json.get("customerId").getAsString();
                     JsonObject productsJson = json.getAsJsonObject("products");
                     Map<String, Long> productsMap = new HashMap<>();
+
                     for (String key : productsJson.keySet()) {
                         productsMap.put(key, productsJson.get(key).getAsLong());
                     }
 
-                    return orderController.performOrder(productsMap, branchId, customerId);
+                    response = orderController.performOrder(productsMap, branchId, customerId);
                 }
 
-
-                //Chat:
-                case "startChat":{
+                case "startChat": {
                     String userIdRequesting = json.get("userIdRequesting").getAsString();
                     String branchId = json.get("branchId").getAsString();
-                    return chatController.startChat(userIdRequesting, branchId);
+
+                    response = chatController.startChat(userIdRequesting, branchId);
                 }
 
-                //Default:
+                case "endChat": {
+                    String userId = json.get("userId").getAsString();
+                    String chatId = json.get("chatId").getAsString();
+
+                    response = chatController.endChat(userId, chatId);
+                }
+
+                case "createProduct": {
+                    String userId = json.get("userId").getAsString();
+                    String productSku = json.get("productSku").getAsString();
+                    String productName = json.get("productName").getAsString();
+                    String productCategory = json.get("productCategory").getAsString();
+                    String price = json.get("price").getAsString();
+
+                    response = productController.createProduct(userId, productSku, productName, productCategory, price);
+                }
+
                 default:
-                    return gson.toJson(new Response(false, "Unknown action: " + action));
+                    response = gson.toJson(new Response(false, "Unknown action: " + action));
             }
 
-        } catch (Exception e){
+            return response;
+        }
+        catch (Exception e) {
             return gson.toJson(new Response(false, "Error: " + e.getMessage()));
         }
     }

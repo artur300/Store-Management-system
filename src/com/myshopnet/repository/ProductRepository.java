@@ -1,6 +1,7 @@
 package com.myshopnet.repository;
 
 import com.myshopnet.data.Data;
+import com.myshopnet.errors.EntityAlreadyExistsException;
 import com.myshopnet.errors.EntityNotFoundException;
 import com.myshopnet.models.Order;
 import com.myshopnet.models.Product;
@@ -10,6 +11,10 @@ import java.util.List;
 public class ProductRepository implements Repository<Product> {
     @Override
     public Product create(Product product) {
+        if (Data.getAllAccounts().containsKey(product.getSku())) {
+            throw new EntityAlreadyExistsException("Product");
+        }
+
         return Data.getProducts().put(product.getSku(), product);
     }
 

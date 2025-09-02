@@ -6,6 +6,7 @@ import com.myshopnet.errors.InsufficientPermissionsException;
 import com.myshopnet.models.Chat;
 import com.myshopnet.models.Employee;
 import com.myshopnet.server.Response;
+import com.myshopnet.service.AuthService;
 import com.myshopnet.service.ChatService;
 import com.myshopnet.service.UserAccountService;
 import com.myshopnet.utils.GsonSingleton;
@@ -13,16 +14,19 @@ import com.myshopnet.utils.GsonSingleton;
 public class ChatController {
     private Gson gson = GsonSingleton.getInstance();
     private ChatService chatService = new ChatService();
+    private AuthService authService = new AuthService();
     private UserAccountService userAccountService = new UserAccountService();
 
-    // start chat
     public String startChat(String userIdRequesting, String branchId) {
         Chat chatToReturn;
         Response response = new Response();
-        UserAccount userAccount = userAccountService.getUserAccount(userIdRequesting);
 
         try {
-            if (userAccount != null && userAccount.getUser() instanceof Employee) {
+            UserAccount userAccount = userAccountService.getUserAccount(userIdRequesting);
+
+            if (userAccount != null &&
+                    authService.isLoggedIn(userAccount) &&
+                    userAccount.getUser() instanceof Employee) {
                 chatToReturn = chatService.requestToChatWithBranchEmployee(userAccount, branchId).orElse(null);
 
                 response.setSuccess(true);
@@ -45,17 +49,23 @@ public class ChatController {
         return gson.toJson(response);
     }
 
-    // sendMessage
     public String sendMessage(String chatId, String userIdRequesting, String userIdToSend, String message) {
         Response response = new Response();
-        UserAccount userRequesting = userAccountService.getUserAccount(userIdRequesting);
-        UserAccount userToSend = userAccountService.getUserAccount(userIdToSend);
 
         try {
-            Chat chat = chatService.sendMessage(chatId, userRequesting, userToSend, message);
+            UserAccount userRequesting = userAccountService.getUserAccount(userIdRequesting);
+            UserAccount userToSend = userAccountService.getUserAccount(userIdToSend);
 
-            response.setSuccess(true);
-            response.setMessage(gson.toJson(chat));
+            if (userRequesting != null && userToSend != null &&
+            authService.isLoggedIn(userRequesting) && userRequesting.getUser() instanceof Employee &&
+            authService.isLoggedIn(userToSend) && userToSend.getUser() instanceof Employee) {
+                Chat chat = chatService.sendMessage(chatId, userRequesting, userToSend, message);
+                response.setSuccess(true);
+                response.setMessage(gson.toJson(chat));
+            }
+            else {
+                throw new InsufficientPermissionsException("Not authorized");
+            }
         }
         catch (Exception e) {
             response.setSuccess(false);
@@ -65,12 +75,15 @@ public class ChatController {
         return gson.toJson(response);
     }
 
-    // endChat
-    public String endChat(String chatId) {
+    public String endChat(String userIdEndingChat, String chatId) {
         Response response = new Response();
 
         try {
-            chatService.endChat(chatId);
+            UserAccount userAccount = userAccountService.getUserAccount(userIdEndingChat);
+
+            if(userAccount != null && authService.isLoggedIn(userAccount) && userAccount.getUser() instanceof Employee) {
+                chatService.endChat(userAccount, chatId);
+            }
 
             response.setSuccess(true);
             response.setMessage("Chat ended");
