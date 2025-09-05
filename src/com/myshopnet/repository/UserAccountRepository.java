@@ -10,12 +10,12 @@ public class UserAccountRepository implements Repository<UserAccount> {
 
     @Override
     public UserAccount create(UserAccount userAccount) {
-        return update(userAccount.getUser().getId(), userAccount);
+        return update(userAccount.getUser().getUserId(), userAccount);
     }
 
     @Override
     public UserAccount update(String id, UserAccount userAccount) {
-        UserAccount oldUserAccount = Data.getOnlineAccounts().get(userAccount.getUser().getId());
+        UserAccount oldUserAccount = Data.getOnlineAccounts().get(userAccount.getUser().getUserId());
 
         if (oldUserAccount != null) {
             Data.getAllAccounts().replace(id, userAccount);

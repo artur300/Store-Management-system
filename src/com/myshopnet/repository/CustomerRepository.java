@@ -2,7 +2,6 @@ package com.myshopnet.repository;
 
 import com.myshopnet.data.Data;
 import com.myshopnet.models.Customer;
-import com.myshopnet.models.User;
 
 import java.util.List;
 
@@ -10,7 +9,7 @@ public class CustomerRepository implements Repository<Customer> {
 
     @Override
     public Customer create(Customer customer) {
-        return Data.getCustomers().put(customer.getId(), customer);
+        return Data.getCustomers().put(customer.getUserId(), customer);
     }
 
     @Override

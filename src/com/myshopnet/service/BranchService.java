@@ -72,7 +72,7 @@ public class BranchService {
                 .toList();
 
         if (!employeesOfBranch.isEmpty()) {
-            userAccount = userAccountRepository.get(employeesOfBranch.getFirst().getId());
+            userAccount = userAccountRepository.get(employeesOfBranch.getFirst().getUserId());
         }
 
         return userAccount;

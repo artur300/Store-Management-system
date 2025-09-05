@@ -6,7 +6,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 public final class LoggerImpl implements Logger {
-    private static final LoggerImpl INSTANCE = new LoggerImpl();
+    private static LoggerImpl INSTANCE;
     private final PrintWriter out;
     private final DateTimeFormatter fmt = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
 
@@ -19,7 +19,13 @@ public final class LoggerImpl implements Logger {
         }
     }
 
-    public static LoggerImpl getInstance() { return INSTANCE; }
+    public static synchronized LoggerImpl getInstance() {
+        if (INSTANCE == null) {
+            INSTANCE = new LoggerImpl();
+        }
+
+        return INSTANCE;
+    }
 
     public synchronized void log(LogEvent ev) {
         String line = "[" + fmt.format(LocalDateTime.now()) + "] "

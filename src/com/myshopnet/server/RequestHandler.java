@@ -3,26 +3,24 @@ package com.myshopnet.server;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.myshopnet.controller.*;
-import com.myshopnet.errors.EntityNotFoundException;
-import com.myshopnet.errors.StockException;
-import com.myshopnet.models.*;
 import com.myshopnet.utils.GsonSingleton;
 
 import java.util.HashMap;
 import java.util.Map;
 
 public class RequestHandler {
-    private final Gson gson = GsonSingleton.getInstance();
+    private static final Gson gson = GsonSingleton.getInstance();
 
-    private final AuthController authController = new AuthController();
-    private final BranchController branchController = new BranchController();
-    private final CustomerController customerController = new CustomerController();
-    private final EmployeeController employeeController = new EmployeeController();
-    private final OrderController orderController = new OrderController();
-    private final ProductController productController = new ProductController();
-    private final ChatController chatController = new ChatController();
+    private static final AuthController authController = new AuthController();
+    private static final BranchController branchController = new BranchController();
+    private static final CustomerController customerController = new CustomerController();
+    private static final EmployeeController employeeController = new EmployeeController();
+    private static final OrderController orderController = new OrderController();
+    private static final ProductController productController = new ProductController();
+    private static final UserAccountController userAccountController = new UserAccountController();
+    private static final ChatController chatController = new ChatController();
 
-    public String HandleRequest(Request request) {
+    public static String handleRequest(Request request) {
         String response = "";
         String action = request.getAction();
         String data = request.getData();
@@ -50,6 +48,24 @@ public class RequestHandler {
                     String userId = json.get("userId").getAsString();
 
                     response = authController.logout(userId);
+                }
+
+                case "getAllUserAccounts": {
+                    String userId = json.get("userId").getAsString();
+
+                    response = userAccountController.getAllUserAccounts(userId);
+                }
+
+                case "getAllBranches": {
+                    String userId = json.get("userId").getAsString();
+
+                    response = branchController.getAllBranches(userId);
+                }
+
+                case "getBranchByBranchId": {
+                    String branchId = json.get("branchId").getAsString();
+
+                    response = branchController.getBranchByBranchId(branchId);
                 }
 
                 case "createBranch": {
@@ -120,6 +136,31 @@ public class RequestHandler {
                     }
 
                     response = orderController.performOrder(productsMap, branchId, customerId);
+                }
+
+                case "updatePasswordPolicy": {
+                    String userId = json.get("userId").getAsString();
+                    Integer minChars = json.get("minChars").getAsInt();
+                    Integer maxChars = json.get("maxChars").getAsInt();
+                    Integer minNumbers = json.get("minNumbers").getAsInt();
+                    Integer maxNumbers = json.get("maxNumbers").getAsInt();
+                    boolean hasSpecialCharacters = json.get("hasSpecialCharacters").getAsBoolean();
+
+                    response = authController.updatePasswordPolicy(userId, minChars, maxChars, minNumbers, maxNumbers, hasSpecialCharacters);
+                }
+
+                case "resetUserPassword": {
+                    String userId = json.get("userId").getAsString();
+                    String username = json.get("username").getAsString();
+                    String newPassword = json.get("newPassword").getAsString();
+
+                    response = authController.resetPassword(userId, username, newPassword);
+                }
+
+                case "viewPasswordPolicy": {
+                    String userId = json.get("userId").getAsString();
+
+                    response = authController.viewPasswordPolicy(userId);
                 }
 
                 case "startChat": {

@@ -39,7 +39,7 @@ public class EmployeeService {
         }
 
         ((Employee)(userAccount.getUser())).setEmployeeStatus(status);
-        userAccountRepository.update(userAccount.getUser().getId(), userAccount);
+        userAccountRepository.update(userAccount.getUser().getUserId(), userAccount);
     }
 
     public Employee get(String id) {

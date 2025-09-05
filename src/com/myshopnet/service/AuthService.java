@@ -20,9 +20,9 @@ public class AuthService {
             throw new IllegalStateException("Username already in use, please try again with a different one");
         }
 
-        UserAccount userAccount = userAccountRepository.get(user.getId());;
+        UserAccount userAccount = userAccountRepository.get(user.getUserId());;
 
-        if(userAccount != null && PasswordPolicy.isValid(password)) {
+        if(userAccount != null && Data.getPasswordPolicy().isValid(password)) {
             userAccount = new UserAccount(username, password, user);
 
             userAccountRepository.create(userAccount);
@@ -62,13 +62,23 @@ public class AuthService {
             throw new AuthException("Not logged in");
         }
 
-        Data.getOnlineAccounts().remove(userAccount.getUser().getId());
+        Data.getOnlineAccounts().remove(userAccount.getUser().getUserId());
     }
 
     public synchronized boolean isLoggedIn(UserAccount userAccount) {
-        UserAccount loggedUserAccount = Data.getOnlineAccounts().get(String.valueOf(userAccount.getUser().getId()));
+        UserAccount loggedUserAccount = Data.getOnlineAccounts().get(String.valueOf(userAccount.getUser().getUserId()));
 
         return loggedUserAccount != null;
+    }
+
+    public synchronized PasswordPolicy updatePasswordPolicy(Integer minChars, Integer maxChars, Integer minNumbers, Integer maxNumbers, boolean includeSpecialChars) {
+        Data.setPasswordPolicy(new PasswordPolicy(minChars, maxChars, minNumbers, maxNumbers, includeSpecialChars));
+
+        return Data.getPasswordPolicy();
+    }
+
+    public synchronized PasswordPolicy viewPasswordPolicy() {
+        return Data.getPasswordPolicy();
     }
 }
 

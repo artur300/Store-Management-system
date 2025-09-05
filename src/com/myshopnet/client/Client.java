@@ -1,5 +1,9 @@
 package com.myshopnet.client;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import com.myshopnet.client.models.UserTypeLoggedIn;
 import com.myshopnet.client.utils.UIUtils;
 
 import java.io.*;
@@ -9,21 +13,18 @@ import java.util.Scanner;
 public class Client {
     private static final String SERVER_HOST = "localhost";
     private static final int SERVER_PORT = 8080;
+    private final Gson gson = new Gson();
 
     private Socket socket;
     private BufferedReader in;
     private PrintWriter out;
     private Scanner scanner;
-    private String currentUserId;
+    private JsonObject currentUser;
+    private UserTypeLoggedIn currentUserType = UserTypeLoggedIn.NONE;
     private boolean isConnected = false;
 
     public Client() {
         this.scanner = new Scanner(System.in);
-    }
-
-    public static void main(String[] args) {
-        Client client = new Client();
-        client.start();
     }
 
     public void start() {
@@ -61,6 +62,8 @@ public class Client {
     private void loginProcess() {
         LoginHandler loginHandler = new LoginHandler(this);
         currentUser = loginHandler.handleLogin();
+
+        currentUserType = UserTypeLoggedIn.valueOf(currentUser.get("role").getAsString());
     }
 
     private void showMainMenu() {
@@ -68,11 +71,14 @@ public class Client {
         menuHandler.showMainMenu();
     }
 
-    // Communication methods
-    public User sendRequest(String request) {
+    public JsonObject sendRequest(Request request) {
         try {
-            out.println(request);
-            return in.readLine();
+            out.println(gson.toJson(request));
+            String responseData = in.readLine();
+            JsonObject jsonData = (responseData != null && !responseData.isEmpty())
+                    ? JsonParser.parseString(responseData).getAsJsonObject() : new JsonObject();
+
+            return jsonData;
         } catch (IOException e) {
             System.err.println("Communication error: " + e.getMessage());
             return null;
@@ -83,11 +89,11 @@ public class Client {
         return scanner;
     }
 
-    public User getCurrentUser() {
+    public JsonObject getCurrentUser() {
         return currentUser;
     }
 
-    public void setCurrentUser(User user) {
+    public void setCurrentUser(JsonObject user) {
         this.currentUser = user;
     }
 

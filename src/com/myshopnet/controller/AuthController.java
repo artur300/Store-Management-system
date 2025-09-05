@@ -1,7 +1,9 @@
 package com.myshopnet.controller;
 
 import com.google.gson.Gson;
+import com.myshopnet.auth.PasswordPolicy;
 import com.myshopnet.auth.UserAccount;
+import com.myshopnet.models.Admin;
 import com.myshopnet.models.User;
 import com.myshopnet.server.Response;
 import com.myshopnet.service.AuthService;
@@ -20,7 +22,7 @@ public class AuthController {
             UserAccount userAccount = authService.loginUser(username, password);
 
             response.setSuccess(true);
-            response.setMessage(gson.toJson(userAccount.getUser()));
+            response.setMessage(gson.toJson(userAccount));
         }
         catch (Exception e) {
             response.setSuccess(false);
@@ -57,6 +59,108 @@ public class AuthController {
 
             response.setSuccess(true);
             response.setMessage("Logged out successfully");
+        }
+        catch (Exception e) {
+            response.setSuccess(false);
+            response.setMessage(e.getMessage());
+        }
+
+        return gson.toJson(response);
+    }
+
+    public String viewPasswordPolicy(String userId) {
+        Response response = new Response();
+
+        try {
+            UserAccount user = userAccountService.getUserAccount(userId);
+
+            if (user == null) {
+                throw new SecurityException("User not found");
+            }
+
+            if (!authService.isLoggedIn(user)) {
+                throw new SecurityException("User not logged in");
+            }
+
+            if (!(user.getUser() instanceof Admin)) {
+                throw new SecurityException("User not admin");
+            }
+
+            PasswordPolicy passwordPolicy = authService.viewPasswordPolicy();
+
+            response.setSuccess(true);
+            response.setMessage(gson.toJson(passwordPolicy));
+        }
+        catch (Exception e) {
+            response.setSuccess(false);
+            response.setMessage(e.getMessage());
+        }
+
+        return gson.toJson(response);
+    }
+
+    public String resetPassword(String userId, String username, String newPassword) {
+        Response response = new Response();
+
+        try {
+            UserAccount user = userAccountService.getUserAccount(userId);
+
+            if (user == null) {
+                throw new SecurityException("User not found");
+            }
+
+            if (!authService.isLoggedIn(user)) {
+                throw new SecurityException("User not logged in");
+            }
+
+            if (!(user.getUser() instanceof Admin)) {
+                throw new SecurityException("User not admin");
+            }
+
+            UserAccount userToChangePassword = userAccountService.getUserAccountByUsername(userId);
+
+            if (userToChangePassword == null) {
+                throw new SecurityException("User to change password not found");
+            }
+
+            if (user.equals(userToChangePassword)) {
+                throw new IllegalArgumentException("Can't change password to yourself!");
+            }
+
+            userAccountService.resetPassword(userToChangePassword, newPassword);
+            response.setSuccess(true);
+            response.setMessage("Password changed successfully");
+        }
+        catch (Exception e) {
+            response.setSuccess(false);
+            response.setMessage(e.getMessage());
+        }
+
+        return gson.toJson(response);
+    }
+
+    public String updatePasswordPolicy(String userId, Integer minChars, Integer maxChars, Integer minNumbers, Integer maxNumbers, boolean hasSpecialCharacters) {
+        Response response = new Response();
+
+        try {
+            UserAccount user = userAccountService.getUserAccount(userId);
+
+            if (user == null) {
+                throw new SecurityException("User not found");
+            }
+
+            if (!authService.isLoggedIn(user)) {
+                throw new SecurityException("User not logged in");
+            }
+
+            if (!(user.getUser() instanceof Admin)) {
+                throw new SecurityException("User not admin");
+            }
+
+            PasswordPolicy passwordPolicy = authService.updatePasswordPolicy(minChars, maxChars, minNumbers, maxNumbers,hasSpecialCharacters);
+
+            response.setSuccess(true);
+            response.setMessage(gson.toJson(passwordPolicy));
         }
         catch (Exception e) {
             response.setSuccess(false);

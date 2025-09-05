@@ -1,18 +1,26 @@
-// ChatHandler.java
+package com.myshopnet.client;
+import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+
 import com.myshopnet.client.utils.UIUtils;
+import com.myshopnet.models.Branch;
 
 import java.util.*;
 import java.util.concurrent.*;
 
 public class ChatHandler {
-    private ClientApplication client;
-    private User currentUser;
+    private final Gson gson = new Gson();
+
+    private Client client;
+    private JsonObject currentUser;
     private Scanner scanner;
     private boolean inChat = false;
     private String currentChatId = null;
     private ExecutorService chatExecutor;
 
-    public ChatHandler(ClientApplication client, User currentUser) {
+    public ChatHandler(Client client, JsonObject currentUser) {
         this.client = client;
         this.currentUser = currentUser;
         this.scanner = client.getScanner();
@@ -26,13 +34,10 @@ public class ChatHandler {
             UIUtils.printEmptyLine();
 
             UIUtils.printMenuOption(1, "Start New Chat");
-            UIUtils.printMenuOption(2, "Join Existing Chat");
-            UIUtils.printMenuOption(3, "View Active Chats");
-            UIUtils.printMenuOption(4, "View Pending Requests");
-            UIUtils.printMenuOption(5, "Chat History");
-            if (currentUser.isShiftManager()) {
-                UIUtils.printMenuOption(6, "Monitor All Chats");
+            if (currentUser.get("employeeType").getAsString().equals("SHIFT_MANAGER")) {
+                UIUtils.printMenuOption(2, "Join Existing Chat");
             }
+            UIUtils.printMenuOption(4, "Chat History");
             UIUtils.printMenuOption(0, "Back to Main Menu");
 
             UIUtils.printMenuFooter();
@@ -44,21 +49,12 @@ public class ChatHandler {
                     startNewChat();
                     break;
                 case 2:
-                    joinExistingChat();
+                    if (currentUser.get("employeeType").getAsString().equals("SHIFT_MANAGER")) {
+                        joinExistingChat();
+                    }
                     break;
                 case 3:
-                    viewActiveChats();
-                    break;
-                case 4:
-                    viewPendingRequests();
-                    break;
-                case 5:
                     viewChatHistory();
-                    break;
-                case 6:
-                    if (currentUser.isShiftManager()) {
-                        monitorAllChats();
-                    }
                     break;
                 case 0:
                     return;
@@ -70,65 +66,92 @@ public class ChatHandler {
     }
 
     private void startNewChat() {
+        Map<String, String> requestMap = new HashMap<>();
         UIUtils.printMenuHeader("START NEW CHAT");
 
-        // First, get available employees from other branches
-        String request = "GET_AVAILABLE_EMPLOYEES|" + currentUser.getBranchId();
-        String response = client.sendRequest(request);
+        // First, get list of branches and get user input.
 
-        if (response != null && response.startsWith("AVAILABLE_EMPLOYEES")) {
-            displayAvailableEmployees(response);
+        String userId = currentUser.get("userId").getAsString();
+        requestMap.put("userId", userId);
 
-            String targetEmployeeId = UIUtils.getStringInput(scanner, "Enter employee ID to chat with: ");
-            String message = UIUtils.getStringInput(scanner, "Initial message: ");
+        Request request = new Request("getAllBranches", gson.toJson(requestMap));
+        JsonObject response = client.sendRequest(request);
 
-            String chatRequest = String.format("REQUEST_CHAT|%s|%s|%s|%s",
-                    currentUser.getEmployeeNumber(), targetEmployeeId, message, currentUser.getBranchId());
-            String chatResponse = client.sendRequest(chatRequest);
+        if (response != null && response.get("success").getAsBoolean()) {
+            String chosenBranchId = displayAvailableBranches(response.getAsJsonArray("message"));
 
-            if (chatResponse != null && chatResponse.startsWith("CHAT_STARTED")) {
-                String chatId = chatResponse.split("\\|")[1];
-                startChatSession(chatId);
-            } else if (chatResponse != null && chatResponse.startsWith("CHAT_QUEUED")) {
-                UIUtils.showInfo("Employee is busy. You've been added to the queue. You'll be notified when they're available.");
-            } else {
-                String error = chatResponse != null ? chatResponse.replace("CHAT_FAILED|", "") : "Connection error";
-                UIUtils.showError(error);
+
+            if (chosenBranchId != null) {
+                Map<String, String> requestMapToChat = new HashMap<>();
+                requestMapToChat.put("userIdRequesting", userId);
+                requestMapToChat.put("branchid", chosenBranchId);
+
+                Request requestToChat = new Request("startChat", gson.toJson(chosenBranchId));
             }
-        } else {
-            UIUtils.showError("No available employees found or connection error");
         }
 
-        UIUtils.waitForEnter(scanner);
+
+//        String request = "GET_AVAILABLE_EMPLOYEES|" + currentUser.get("branchId").getAsString();
+//        JsonObject response = client.sendRequest(request);
+//
+//        if (response != null && response.startsWith("AVAILABLE_EMPLOYEES")) {
+//            displayAvailableEmployees(response);
+//
+//            String targetEmployeeId = UIUtils.getStringInput(scanner, "Enter employee ID to chat with: ");
+//            String message = UIUtils.getStringInput(scanner, "Initial message: ");
+//
+//            String chatRequest = String.format("REQUEST_CHAT|%s|%s|%s|%s",
+//                    currentUser.get("employeeNumber").getAsString(), targetEmployeeId, message, currentUser.get("branchId").getAsString());
+//            JsonObject chatResponse = client.sendRequest(chatRequest);
+//
+//            if (chatResponse != null && chatResponse.startsWith("CHAT_STARTED")) {
+//                String chatId = chatResponse.split("\\|")[1];
+//                startChatSession(chatId);
+//            } else if (chatResponse != null && chatResponse.startsWith("CHAT_QUEUED")) {
+//                UIUtils.showInfo("Employee is busy. You've been added to the queue. You'll be notified when they're available.");
+//            } else {
+//                String error = chatResponse != null ? chatResponse.replace("CHAT_FAILED|", "") : "Connection error";
+//                UIUtils.showError(error);
+//            }
+//        } else {
+//            UIUtils.showError("No available employees found or connection error");
+//        }
+//
+//        UIUtils.waitForEnter(scanner);
     }
 
-    private void displayAvailableEmployees(String response) {
+    private String displayAvailableBranches(JsonArray branches) {
         try {
-            // Expected format: AVAILABLE_EMPLOYEES|employeeId:name:branch:role|...
-            String[] parts = response.split("\\|");
-            if (parts.length > 1) {
-                List<String[]> rows = new ArrayList<>();
+            while(true) {
+                List<String> branchIds = new ArrayList<>();
 
-                for (int i = 1; i < parts.length; i++) {
-                    String[] empData = parts[i].split(":");
-                    if (empData.length >= 4) {
-                        rows.add(new String[]{
-                                empData[0], // Employee ID
-                                empData[1], // Name
-                                empData[2], // Branch
-                                empData[3]  // Role
-                        });
+                if (!branches.isEmpty()) {
+                    int i = 0;
+
+                    for (JsonElement row : branches) {
+                        JsonObject rowObject = row.getAsJsonObject();
+
+                        branchIds.add(rowObject.get("branchId").getAsString());
+                        UIUtils.printMenuOption(i + 1, rowObject.get("name").getAsString());
+
+                        i++;
                     }
-                }
 
-                String[] headers = {"Employee ID", "Name", "Branch", "Role"};
-                UIUtils.printTable(headers, rows);
-            } else {
-                UIUtils.printLine("No available employees found");
+                    int choice = UIUtils.getIntInput(scanner);
+
+                    if (choice < 1 || choice > branchIds.size()) {
+                        UIUtils.showError("Invalid choice. Please try again.");
+                    }
+
+                    return branchIds.get(choice - 1);
+                }
             }
-        } catch (Exception e) {
-            UIUtils.showError("Error displaying available employees: " + e.getMessage());
         }
+        catch (Exception e) {
+            UIUtils.showError("Error displaying branches: " + e.getMessage());
+        }
+
+        return null;
     }
 
     private void startChatSession(String chatId) {
@@ -142,7 +165,6 @@ public class ChatHandler {
         UIUtils.printLine("Type '/exit' to leave chat, '/history' for chat history");
         UIUtils.printBottomBorder();
 
-        // Start message receiver in separate thread
         chatExecutor.submit(new MessageReceiver());
 
         // Main chat loop
@@ -174,8 +196,8 @@ public class ChatHandler {
         public void run() {
             while (inChat) {
                 try {
-                    String request = "GET_CHAT_MESSAGES|" + currentChatId + "|" + currentUser.getEmployeeNumber();
-                    String response = client.sendRequest(request);
+                    String request = "GET_CHAT_MESSAGES|" + currentChatId + "|" + currentUser.get("employeeNumber").getAsString();
+                    JsonObject response = client.sendRequest(request);
 
                     if (response != null && response.startsWith("NEW_MESSAGES")) {
                         displayNewMessages(response);
@@ -209,7 +231,7 @@ public class ChatHandler {
     }
 
     private void exitChat() {
-        String request = String.format("EXIT_CHAT|%s|%s", currentChatId, currentUser.getEmployeeNumber());
+        String request = String.format("EXIT_CHAT|%s|%s", currentChatId, currentUser.get("employeeNumber").getAsString());
         client.sendRequest(request);
         inChat = false;
         UIUtils.showInfo("You have left the chat.");
@@ -217,7 +239,7 @@ public class ChatHandler {
 
     private void showCurrentChatHistory() {
         String request = "GET_CHAT_HISTORY|" + currentChatId;
-        String response = client.sendRequest(request);
+        JsonObject response = client.sendRequest(request);
 
         if (response != null && response.startsWith("CHAT_HISTORY")) {
             System.out.println("\n--- Chat History ---");
@@ -227,7 +249,7 @@ public class ChatHandler {
     }
 
     private void joinExistingChat() {
-        if (!currentUser.isShiftManager()) {
+        if (!currentUser.get("employeeType").getAsString().equals("SHIFT_MANAGER")) {
             UIUtils.showError("Only shift managers can join existing chats");
             UIUtils.waitForEnter(scanner);
             return;
@@ -235,16 +257,16 @@ public class ChatHandler {
 
         UIUtils.printMenuHeader("JOIN EXISTING CHAT");
 
-        String request = "GET_ACTIVE_CHATS|" + currentUser.getBranchId();
-        String response = client.sendRequest(request);
+        String request = "GET_ACTIVE_CHATS|" + currentUser.get("branchId").getAsString();
+        JsonObject response = client.sendRequest(request);
 
         if (response != null && response.startsWith("ACTIVE_CHATS")) {
             displayActiveChats(response);
 
             String chatId = UIUtils.getStringInput(scanner, "Enter chat ID to join: ");
 
-            String joinRequest = String.format("JOIN_CHAT|%s|%s", chatId, currentUser.getEmployeeNumber());
-            String joinResponse = client.sendRequest(joinRequest);
+            String joinRequest = String.format("JOIN_CHAT|%s|%s", chatId, currentUser.get("employeeNumber").getAsString());
+            JsonObject joinResponse = client.sendRequest(joinRequest);
 
             if (joinResponse != null && joinResponse.equals("CHAT_JOINED")) {
                 startChatSession(chatId);
@@ -257,21 +279,6 @@ public class ChatHandler {
             UIUtils.showError("No active chats found or connection error");
             UIUtils.waitForEnter(scanner);
         }
-    }
-
-    private void viewActiveChats() {
-        UIUtils.printMenuHeader("ACTIVE CHATS");
-
-        String request = "GET_ALL_ACTIVE_CHATS";
-        String response = client.sendRequest(request);
-
-        if (response != null && response.startsWith("ACTIVE_CHATS")) {
-            displayActiveChats(response);
-        } else {
-            UIUtils.showError("Failed to retrieve active chats");
-        }
-
-        UIUtils.waitForEnter(scanner);
     }
 
     private void displayActiveChats(String response) {
@@ -307,8 +314,8 @@ public class ChatHandler {
     private void viewPendingRequests() {
         UIUtils.printMenuHeader("PENDING CHAT REQUESTS");
 
-        String request = "GET_PENDING_REQUESTS|" + currentUser.getEmployeeNumber();
-        String response = client.sendRequest(request);
+        String request = "GET_PENDING_REQUESTS|" + currentUser.get("employeeNumber").getAsString();
+        JsonObject response = client.sendRequest(request);
 
         if (response != null && response.startsWith("PENDING_REQUESTS")) {
             displayPendingRequests(response);
@@ -329,7 +336,7 @@ public class ChatHandler {
         UIUtils.waitForEnter(scanner);
     }
 
-    private void displayPendingRequests(String response) {
+    private void displayPendingRequests(JsonObject response) {
         try {
             // Expected format: PENDING_REQUESTS|requestId:fromEmployee:fromBranch:message:timestamp|...
             String[] parts = response.split("\\|");
@@ -361,8 +368,8 @@ public class ChatHandler {
 
     private void respondToPendingRequest(String requestId) {
         String request = String.format("RESPOND_TO_REQUEST|%s|%s|ACCEPT",
-                requestId, currentUser.getEmployeeNumber());
-        String response = client.sendRequest(request);
+                requestId, currentUser.get("employeeNumber").getAsString());
+        JsonObject response = client.sendRequest(request);
 
         if (response != null && response.startsWith("CHAT_STARTED")) {
             String chatId = response.split("\\|")[1];
@@ -380,7 +387,7 @@ public class ChatHandler {
 
         UIUtils.printLine("1. My Chat History");
         UIUtils.printLine("2. Branch Chat History");
-        if (currentUser.isShiftManager()) {
+        if (currentUser.get("employeeType").getAsString().equals("SHIFT_MANAGER")) {
             UIUtils.printLine("3. All Chats History");
         }
         System.out.print("Select option: ");
@@ -390,13 +397,13 @@ public class ChatHandler {
 
         switch (choice) {
             case 1:
-                request = "GET_MY_CHAT_HISTORY|" + currentUser.getEmployeeNumber();
+                request = "GET_MY_CHAT_HISTORY|" + currentUser.get("employeeNumber").getAsString();
                 break;
             case 2:
-                request = "GET_BRANCH_CHAT_HISTORY|" + currentUser.getBranchId();
+                request = "GET_BRANCH_CHAT_HISTORY|" + currentUser.get("branchId").getAsString();
                 break;
             case 3:
-                if (currentUser.isShiftManager()) {
+                if (currentUser.getAsString().equals("SHIFT_MANAGER")) {
                     request = "GET_ALL_CHAT_HISTORY";
                 } else {
                     UIUtils.showError("Access denied");
@@ -410,7 +417,7 @@ public class ChatHandler {
                 return;
         }
 
-        String response = client.sendRequest(request);
+        JsonObject response = client.sendRequest(request);
 
         if (response != null && response.startsWith("CHAT_HISTORY_LIST")) {
             displayChatHistoryList(response);
@@ -426,7 +433,7 @@ public class ChatHandler {
         UIUtils.waitForEnter(scanner);
     }
 
-    private void displayChatHistoryList(String response) {
+    private void displayChatHistoryList(JsonObject response) {
         try {
             // Expected format: CHAT_HISTORY_LIST|chatId:participants:startTime:endTime:messageCount|...
             String[] parts = response.split("\\|");
@@ -460,12 +467,12 @@ public class ChatHandler {
         UIUtils.printMenuHeader("CHAT DETAILS - " + chatId);
 
         String request = "GET_CHAT_HISTORY|" + chatId;
-        String response = client.sendRequest(request);
+        JsonObject response = client.sendRequest(request);
 
         if (response != null && response.startsWith("CHAT_HISTORY")) {
             displayChatHistoryMessages(response);
 
-            if (currentUser.canManageEmployees()) {
+            if (currentUser.getAsString().equals("ADMIN")) {
                 System.out.print("\nSave this chat to file? (y/N): ");
                 String save = scanner.nextLine().trim().toLowerCase();
                 if (save.equals("y") || save.equals("yes")) {
@@ -477,74 +484,14 @@ public class ChatHandler {
         }
     }
 
-    private void displayChatHistoryMessages(String response) {
-        try {
-            // Expected format: CHAT_HISTORY|sender:timestamp:message|...
-            String[] parts = response.split("\\|");
-            for (int i = 1; i < parts.length; i++) {
-                String[] messageData = parts[i].split(":", 3);
-                if (messageData.length >= 3) {
-                    System.out.println("[" + messageData[1] + "] " + messageData[0] + ": " + messageData[2]);
-                }
-            }
-        } catch (Exception e) {
-            UIUtils.showError("Error displaying chat messages: " + e.getMessage());
-        }
-    }
-
     private void saveChatHistory(String chatId, String chatData) {
         String request = String.format("SAVE_CHAT_HISTORY|%s|%s", chatId, currentUser.getEmployeeNumber());
-        String response = client.sendRequest(request);
+        JsonObject response = client.sendRequest(request);
 
         if (response != null && response.startsWith("CHAT_SAVED")) {
             UIUtils.showSuccess("Chat history saved successfully!");
         } else {
             UIUtils.showError("Failed to save chat history");
-        }
-    }
-
-    private void monitorAllChats() {
-        UIUtils.printMenuHeader("CHAT MONITORING - SHIFT MANAGER");
-
-        String request = "MONITOR_ALL_CHATS|" + currentUser.getEmployeeNumber();
-        String response = client.sendRequest(request);
-
-        if (response != null && response.startsWith("CHAT_MONITOR_DATA")) {
-            displayChatMonitorData(response);
-        } else {
-            UIUtils.showError("Failed to retrieve monitoring data");
-        }
-
-        UIUtils.waitForEnter(scanner);
-    }
-
-    private void displayChatMonitorData(String response) {
-        try {
-            // Expected format: CHAT_MONITOR_DATA|totalChats:activeChats:pendingRequests:averageResponseTime|...
-            String[] parts = response.split("\\|");
-            if (parts.length > 1) {
-                String[] monitorData = parts[1].split(":");
-                if (monitorData.length >= 4) {
-                    UIUtils.printLine("Total Chats Today: " + monitorData[0]);
-                    UIUtils.printLine("Currently Active: " + monitorData[1]);
-                    UIUtils.printLine("Pending Requests: " + monitorData[2]);
-                    UIUtils.printLine("Avg Response Time: " + monitorData[3] + " minutes");
-                    UIUtils.printEmptyLine();
-
-                    // Show detailed breakdown if available
-                    if (parts.length > 2) {
-                        UIUtils.printLine("Branch Breakdown:");
-                        for (int i = 2; i < parts.length; i++) {
-                            String[] branchData = parts[i].split(":");
-                            if (branchData.length >= 2) {
-                                UIUtils.printLine("  " + branchData[0] + ": " + branchData[1] + " chats");
-                            }
-                        }
-                    }
-                }
-            }
-        } catch (Exception e) {
-            UIUtils.showError("Error displaying monitor data: " + e.getMessage());
         }
     }
 

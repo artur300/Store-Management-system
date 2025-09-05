@@ -1,8 +1,8 @@
 package com.myshopnet.models;
 
 public class Employee implements User {
-    private final Role role = Role.SELLER;
-    private String id;
+    private final Role role = Role.EMPLOYEE;
+    private String userId;
     private Long accountNumber;
     private String branchId;
     private EmployeeType employeeType;
@@ -10,7 +10,7 @@ public class Employee implements User {
     private EmployeeStatus employeeStatus;
 
     public Employee(String id, Long accountNumber, String branchId, EmployeeType employeeType, Long employeeNumber) {
-        this.id = id;
+        this.userId = id;
         this.accountNumber = accountNumber;
         this.branchId = branchId;
         this.employeeType = employeeType;
@@ -19,8 +19,13 @@ public class Employee implements User {
     }
 
     @Override
-    public String getId() {
-        return id;
+    public String getUserId() {
+        return userId;
+    }
+
+    @Override
+    public Role getRole() {
+        return role;
     }
 
     public EmployeeStatus getEmployeeStatus() {
@@ -31,8 +36,8 @@ public class Employee implements User {
         this.employeeStatus = employeeStatus;
     }
 
-    public void setId(String id) {
-        this.id = id;
+    public void setUserId(String userId) {
+        this.userId = userId;
     }
 
     public Long getAccountNumber() {

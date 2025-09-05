@@ -1,6 +1,8 @@
 package com.myshopnet.models;
 
 public class NewCustomer extends Customer {
+    private final Role role = Role.NEW_CUSTOMER;
+
     public NewCustomer(String id,String passportId, String fullName, String phone) {
         super(id,passportId, fullName, phone);
     }
@@ -8,5 +10,10 @@ public class NewCustomer extends Customer {
     @Override
     public double calcBuyingStrategy(double baseTotal) {
         return baseTotal * 0.95;
-    } // דוגמה: 5% הנחה
+    }
+
+    @Override
+    public Role getRole() {
+        return role;
+    }
 }

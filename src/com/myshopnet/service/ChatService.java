@@ -6,10 +6,8 @@ import com.myshopnet.errors.AuthException;
 import com.myshopnet.errors.EntityNotFoundException;
 import com.myshopnet.errors.InsufficientPermissionsException;
 import com.myshopnet.models.*;
-import com.myshopnet.chat.UserSession;
 import com.myshopnet.repository.BranchRepository;
 import com.myshopnet.repository.ChatRepository;
-import com.myshopnet.repository.EmployeeRepository;
 import com.myshopnet.repository.UserAccountRepository;
 
 import java.time.LocalDateTime;
@@ -34,8 +32,8 @@ public class ChatService {
         if (canCreateChat(employeeRequesting, employeeAvailableToChat)) {
             chat = new Chat(UUID.randomUUID().toString());
 
-            chat.getUsersInChat().put(employeeRequesting.getUser().getId(), employeeRequesting);
-            chat.getUsersInChat().put(employeeAvailableToChat.getUser().getId(), employeeAvailableToChat);
+            chat.getUsersInChat().put(employeeRequesting.getUser().getUserId(), employeeRequesting);
+            chat.getUsersInChat().put(employeeAvailableToChat.getUser().getUserId(), employeeAvailableToChat);
 
             employeeService.changeStatus(employeeRequesting, EmployeeStatus.BUSY);
             employeeService.changeStatus(employeeAvailableToChat, EmployeeStatus.BUSY);
@@ -108,7 +106,7 @@ public class ChatService {
         }
 
         if (chat != null) {
-            chat.getUsersInChat().put(userAccount.getUser().getId(), userAccount);
+            chat.getUsersInChat().put(userAccount.getUser().getUserId(), userAccount);
         }
 
         chatRepository.update(chatId, chat);
@@ -138,10 +136,10 @@ public class ChatService {
 
         return fromBranch != null && toBranch != null &&
                 !toBranch.getId().equals(fromBranch.getId()) &&
-                chat.getUsersInChat().containsKey(fromUser.getUser().getId()) &&
-                chat.getUsersInChat().containsKey(toUser.getUser().getId()) &&
-                Data.getOnlineAccounts().containsKey(fromUser.getUser().getId()) &&
-                Data.getOnlineAccounts().containsKey(toUser.getUser().getId()) &&
+                chat.getUsersInChat().containsKey(fromUser.getUser().getUserId()) &&
+                chat.getUsersInChat().containsKey(toUser.getUser().getUserId()) &&
+                Data.getOnlineAccounts().containsKey(fromUser.getUser().getUserId()) &&
+                Data.getOnlineAccounts().containsKey(toUser.getUser().getUserId()) &&
                 !message.isBlank();
     }
 
@@ -152,7 +150,7 @@ public class ChatService {
             throw new EntityNotFoundException("Chat");
         }
 
-        if (chat.getUsersInChat().containsKey(userEndingChat.getUser().getId())) {
+        if (chat.getUsersInChat().containsKey(userEndingChat.getUser().getUserId())) {
             chat.getUsersInChat().values()
                     .forEach(userAccount -> {
                         employeeService.changeStatus(userAccount, EmployeeStatus.AVAILABLE);

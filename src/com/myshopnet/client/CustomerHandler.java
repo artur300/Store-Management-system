@@ -1,15 +1,19 @@
-// CustomerHandler.java
-import com.myshopnet.client.Client;
+package com.myshopnet.client;
+
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import com.myshopnet.client.utils.UIUtils;
 
 import java.util.*;
 
 public class CustomerHandler {
+    private final Gson gson = new Gson();
+
     private Client client;
-    private User currentUser;
+    private JsonObject currentUser;
     private Scanner scanner;
 
-    public CustomerHandler(Client client, User currentUser) {
+    public CustomerHandler(Client client, JsonObject currentUser) {
         this.client = client;
         this.currentUser = currentUser;
         this.scanner = client.getScanner();
@@ -25,8 +29,7 @@ public class CustomerHandler {
             UIUtils.printMenuOption(2, "Search Customer");
             UIUtils.printMenuOption(3, "Add New Customer");
             UIUtils.printMenuOption(4, "Update Customer");
-            UIUtils.printMenuOption(5, "Customer Purchase History");
-            UIUtils.printMenuOption(6, "Process Customer Purchase");
+            UIUtils.printMenuOption(5, "Process Customer Purchase");
             UIUtils.printMenuOption(0, "Back to Main Menu");
 
             UIUtils.printMenuFooter();
@@ -47,9 +50,6 @@ public class CustomerHandler {
                     updateCustomer();
                     break;
                 case 5:
-                    viewPurchaseHistory();
-                    break;
-                case 6:
                     processCustomerPurchase();
                     break;
                 case 0:
@@ -65,7 +65,7 @@ public class CustomerHandler {
         UIUtils.printMenuHeader("ALL CUSTOMERS");
 
         String request = "GET_ALL_CUSTOMERS";
-        String response = client.sendRequest(request);
+        JsonObject response = client.sendRequest(request);
 
         if (response != null && response.startsWith("CUSTOMERS_DATA")) {
             displayCustomersData(response);
@@ -112,7 +112,7 @@ public class CustomerHandler {
         String searchTerm = UIUtils.getStringInput(scanner, "Enter customer name, ID, or phone: ");
 
         String request = "SEARCH_CUSTOMER|" + searchTerm;
-        String response = client.sendRequest(request);
+        JsonObject response = client.sendRequest(request);
 
         if (response != null && response.startsWith("CUSTOMER_FOUND")) {
             displayCustomerDetails(response);
@@ -125,7 +125,6 @@ public class CustomerHandler {
 
     private void displayCustomerDetails(String response) {
         try {
-            // Expected format: CUSTOMER_FOUND|id:fullName:phone:type:planDetails:promotions
             String[] parts = response.split("\\|");
             if (parts.length > 1) {
                 String[] customerData = parts[1].split(":");
@@ -148,64 +147,17 @@ public class CustomerHandler {
         }
     }
 
-    private void addNewCustomer() {
-        UIUtils.printMenuHeader("ADD NEW CUSTOMER");
-
-        String fullName = UIUtils.getStringInput(scanner, "Full Name: ");
-        String id = UIUtils.getStringInput(scanner, "Customer ID: ");
-        String phone = UIUtils.getStringInput(scanner, "Phone Number: ");
-
-        UIUtils.printLine("Customer Type:");
-        UIUtils.printLine("1. New Customer");
-        UIUtils.printLine("2. Returning Customer");
-        UIUtils.printLine("3. VIP Customer");
-        System.out.print("Select type (1-3): ");
-
-        int typeChoice = UIUtils.getIntInput(scanner);
-        String customerType;
-
-        switch (typeChoice) {
-            case 1:
-                customerType = "NEW";
-                break;
-            case 2:
-                customerType = "RETURNING";
-                break;
-            case 3:
-                customerType = "VIP";
-                break;
-            default:
-                UIUtils.showError("Invalid type selection");
-                return;
-        }
-
-        String request = String.format("ADD_CUSTOMER|%s|%s|%s|%s|%s",
-                id, fullName, phone, customerType, currentUser.getEmployeeNumber());
-        String response = client.sendRequest(request);
-
-        if (response != null && response.equals("CUSTOMER_ADDED")) {
-            UIUtils.showSuccess("Customer added successfully!");
-            // Show customer's plan details
-            showCustomerPlanDetails(customerType);
-        } else {
-            String error = response != null ? response.replace("CUSTOMER_ADD_FAILED|", "") : "Connection error";
-            UIUtils.showError(error);
-        }
-
-        UIUtils.waitForEnter(scanner);
-    }
-
     private void showCustomerPlanDetails(String customerType) {
         String planDetails = "";
         switch (customerType) {
             case "NEW":
-                planDetails = "Welcome Plan: 5% discount + Free shipping on first purchase";
+                planDetails = "Welcome Plan: 5% discount";
                 break;
             case "RETURNING":
-                planDetails = "Loyalty Plan: 10% discount + Loyalty points accumulation";
+                planDetails = "Loyalty Plan: 10 usd coupon";
                 break;
             case "VIP":
-                planDetails = "VIP Plan: 20% discount + Priority support + Exclusive offers";
+                planDetails = "VIP Plan: 20% discount";
                 break;
         }
         UIUtils.showInfo("Customer Plan: " + planDetails);
@@ -218,7 +170,7 @@ public class CustomerHandler {
 
         // First, get current customer data
         String searchRequest = "SEARCH_CUSTOMER|" + customerId;
-        String searchResponse = client.sendRequest(searchRequest);
+        JsonObject searchResponse = client.sendRequest(searchRequest);
 
         if (searchResponse == null || !searchResponse.startsWith("CUSTOMER_FOUND")) {
             UIUtils.showError("Customer not found");
@@ -231,33 +183,12 @@ public class CustomerHandler {
         String newFullName = UIUtils.getStringInput(scanner, "New Full Name: ");
         String newPhone = UIUtils.getStringInput(scanner, "New Phone Number: ");
 
-        UIUtils.printLine("Update Customer Type:");
-        UIUtils.printLine("1. Keep current");
-        UIUtils.printLine("2. New Customer");
-        UIUtils.printLine("3. Returning Customer");
-        UIUtils.printLine("4. VIP Customer");
-        System.out.print("Select option (1-4): ");
-
         int typeChoice = UIUtils.getIntInput(scanner);
         String newType = "";
 
-        switch (typeChoice) {
-            case 2:
-                newType = "NEW";
-                break;
-            case 3:
-                newType = "RETURNING";
-                break;
-            case 4:
-                newType = "VIP";
-                break;
-            default:
-                newType = "NO_CHANGE";
-        }
-
         String request = String.format("UPDATE_CUSTOMER|%s|%s|%s|%s|%s",
-                customerId, newFullName, newPhone, newType, currentUser.getEmployeeNumber());
-        String response = client.sendRequest(request);
+                customerId, newFullName, newPhone, newType, currentUser.get("employeeNumber").getAsString());
+        JsonObject response = client.sendRequest(request);
 
         if (response != null && response.equals("CUSTOMER_UPDATED")) {
             UIUtils.showSuccess("Customer updated successfully!");
@@ -275,7 +206,7 @@ public class CustomerHandler {
         String customerId = UIUtils.getStringInput(scanner, "Customer ID: ");
 
         String request = "GET_PURCHASE_HISTORY|" + customerId;
-        String response = client.sendRequest(request);
+        JsonObject response = client.sendRequest(request);
 
         if (response != null && response.startsWith("PURCHASE_HISTORY")) {
             displayPurchaseHistory(response);
@@ -330,9 +261,9 @@ public class CustomerHandler {
             int quantity = Integer.parseInt(quantityStr);
 
             String request = String.format("CUSTOMER_PURCHASE|%s|%s|%s|%d|%s|%s",
-                    currentUser.getBranchId(), customerId, productId, quantity,
-                    currentUser.getEmployeeNumber(), currentUser.getBranchId());
-            String response = client.sendRequest(request);
+                    currentUser.get("branchId").getAsString(), customerId, productId, quantity,
+                    currentUser.get("employeeNumber").getAsString(), currentUser.get("branchId").getAsString());
+            JsonObject response = client.sendRequest(request);
 
             if (response != null && response.startsWith("PURCHASE_SUCCESS")) {
                 String[] parts = response.split("\\|");

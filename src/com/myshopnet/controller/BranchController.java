@@ -13,12 +13,58 @@ import com.myshopnet.service.StockService;
 import com.myshopnet.service.UserAccountService;
 import com.myshopnet.utils.GsonSingleton;
 
+import java.util.List;
+
 public class BranchController {
     private Gson gson = GsonSingleton.getInstance();
     private BranchService branchService = new BranchService();
     private AuthService authService = new AuthService();
     private UserAccountService userAccountService = new UserAccountService();
     private StockService stockService = new StockService();
+
+    public String getAllBranches(String userId) {
+        Response response = new Response();
+
+        try {
+            UserAccount userAccount = userAccountService.getUserAccount(userId);
+
+            if (userAccount == null) {
+                throw new SecurityException("User not found");
+            }
+
+            if (!authService.isLoggedIn(userAccount)) {
+                throw new SecurityException("User is not logged");
+            }
+
+            List<Branch> branches = branchService.getAllBranches();
+
+            response.setSuccess(true);
+            response.setMessage(gson.toJson(branches));
+        }
+        catch (Exception e) {
+            response.setSuccess(false);
+            response.setMessage(e.getMessage());
+        }
+
+        return gson.toJson(response);
+    }
+
+    public String getBranchByBranchId(String branchId) {
+        Response response = new Response();
+
+        try {
+            Branch branch = branchService.getBranchById(branchId);
+
+            response.setSuccess(true);
+            response.setMessage(gson.toJson(branch));
+        }
+        catch (Exception e) {
+            response.setSuccess(false);
+            response.setMessage(e.getMessage());
+        }
+
+        return gson.toJson(response);
+    }
 
     public String createBranch(String userId, String branchName) {
         Response response = new Response();

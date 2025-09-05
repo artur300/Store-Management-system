@@ -38,5 +38,13 @@ public class UserAccount {
     public void setUser(User user) {
         this.user = user;
     }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
 }
 

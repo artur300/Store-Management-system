@@ -1,6 +1,8 @@
 package com.myshopnet.models;
 
 public class ReturningCustomer extends Customer {
+    private final Role role = Role.RETURNING_CUSTOMER;
+
     public ReturningCustomer(String id,String passportId, String fullName, String phone) {
         super(id, passportId ,fullName, phone);
     }
@@ -12,6 +14,11 @@ public class ReturningCustomer extends Customer {
     @Override
     public double calcBuyingStrategy(double baseTotal) {
         return Math.max(0, baseTotal - 10.0);
-    } // קופון 10₪
+    }
+
+    @Override
+    public Role getRole() {
+        return role;
+    }
 }
 

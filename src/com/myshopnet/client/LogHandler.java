@@ -1,14 +1,19 @@
-// LogHandler.java
+package com.myshopnet.client;
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+import com.myshopnet.client.Client;
 import com.myshopnet.client.utils.UIUtils;
 
 import java.util.*;
 
 public class LogHandler {
-    private ClientApplication client;
-    private User currentUser;
+    private final Gson gson = new Gson();
+
+    private Client client;
+    private JsonObject currentUser;
     private Scanner scanner;
 
-    public LogHandler(ClientApplication client, User currentUser) {
+    public LogHandler(Client client, JsonObject currentUser) {
         this.client = client;
         this.currentUser = currentUser;
         this.scanner = client.getScanner();
@@ -26,7 +31,7 @@ public class LogHandler {
             UIUtils.printMenuOption(4, "Chat Activity Logs");
             UIUtils.printMenuOption(5, "System Activity Logs");
             UIUtils.printMenuOption(6, "Error Logs");
-            if (currentUser.canManageEmployees()) {
+            if (currentUser.get("employeeType").getAsString().equals("ADMIN")) {
                 UIUtils.printMenuOption(7, "Export Logs");
                 UIUtils.printMenuOption(8, "Log Analytics");
             }
@@ -56,12 +61,12 @@ public class LogHandler {
                     viewErrorLogs();
                     break;
                 case 7:
-                    if (currentUser.canManageEmployees()) {
+                    if (currentUser.get("employeeType").getAsString().equals("ADMIN")) {
                         exportLogs();
                     }
                     break;
                 case 8:
-                    if (currentUser.canManageEmployees()) {
+                    if (currentUser.get("employeeType").getAsString().equals("ADMIN")) {
                         showLogAnalytics();
                     }
                     break;
@@ -78,13 +83,13 @@ public class LogHandler {
         UIUtils.printMenuHeader("EMPLOYEE REGISTRATION LOGS");
 
         String dateFilter = UIUtils.getStringInput(scanner, "Date filter (YYYY-MM-DD) or leave empty: ");
-        String branchFilter = currentUser.isAdmin() ?
+        String branchFilter = currentUser.get("employeeType").getAsString().equals("ADMIN") ?
                 UIUtils.getStringInput(scanner, "Branch filter or leave empty: ") :
-                currentUser.getBranchId();
+                currentUser.get("branchId").getAsString();
 
         String request = String.format("GET_EMPLOYEE_REG_LOGS|%s|%s|%s",
-                dateFilter, branchFilter, currentUser.getEmployeeNumber());
-        String response = client.sendRequest(request);
+                dateFilter, branchFilter, currentUser.get("employeeNumber").getAsString());
+        JsonObject response = client.sendRequest(request);
 
         if (response != null && response.startsWith("EMPLOYEE_REG_LOGS")) {
             displayEmployeeRegLogs(response);
@@ -134,8 +139,8 @@ public class LogHandler {
         String customerType = UIUtils.getStringInput(scanner, "Customer type filter (NEW/RETURNING/VIP) or leave empty: ");
 
         String request = String.format("GET_CUSTOMER_REG_LOGS|%s|%s|%s",
-                dateFilter, customerType, currentUser.getEmployeeNumber());
-        String response = client.sendRequest(request);
+                dateFilter, customerType, currentUser.get("employeeNumber").getAsString());
+        JsonObject response = client.sendRequest(request);
 
         if (response != null && response.startsWith("CUSTOMER_REG_LOGS")) {
             displayCustomerRegLogs(response);
@@ -183,13 +188,13 @@ public class LogHandler {
 
         String dateFilter = UIUtils.getStringInput(scanner, "Date filter (YYYY-MM-DD) or leave empty: ");
         String transactionType = UIUtils.getStringInput(scanner, "Transaction type (SALE/PURCHASE) or leave empty: ");
-        String branchFilter = currentUser.isAdmin() ?
+        String branchFilter = currentUser.get("employeeType").getAsString().equals("ADMIN") ?
                 UIUtils.getStringInput(scanner, "Branch filter or leave empty: ") :
-                currentUser.getBranchId();
+                currentUser.get("branchId").getAsString();
 
         String request = String.format("GET_TRANSACTION_LOGS|%s|%s|%s|%s",
-                dateFilter, transactionType, branchFilter, currentUser.getEmployeeNumber());
-        String response = client.sendRequest(request);
+                dateFilter, transactionType, branchFilter, currentUser.get("employeeNumber").getAsString());
+        JsonObject response = client.sendRequest(request);
 
         if (response != null && response.startsWith("TRANSACTION_LOGS")) {
             displayTransactionLogs(response);
@@ -241,17 +246,17 @@ public class LogHandler {
         UIUtils.printMenuHeader("CHAT ACTIVITY LOGS");
 
         String dateFilter = UIUtils.getStringInput(scanner, "Date filter (YYYY-MM-DD) or leave empty: ");
-        String branchFilter = currentUser.isAdmin() ?
+        String branchFilter = currentUser.get("employeeType").getAsString().equals("ADMIN") ?
                 UIUtils.getStringInput(scanner, "Branch filter or leave empty: ") :
-                currentUser.getBranchId();
+                currentUser.get("branchId").getAsString();
 
         UIUtils.printLine("Include chat content? (y/N): ");
         String includeContent = scanner.nextLine().trim().toLowerCase();
         boolean showContent = includeContent.equals("y") || includeContent.equals("yes");
 
         String request = String.format("GET_CHAT_ACTIVITY_LOGS|%s|%s|%s|%s",
-                dateFilter, branchFilter, showContent, currentUser.getEmployeeNumber());
-        String response = client.sendRequest(request);
+                dateFilter, branchFilter, showContent, currentUser.get("employeeNumber").getAsString());
+        JsonObject response = client.sendRequest(request);
 
         if (response != null && response.startsWith("CHAT_ACTIVITY_LOGS")) {
             displayChatActivityLogs(response, showContent);
@@ -262,7 +267,7 @@ public class LogHandler {
         UIUtils.waitForEnter(scanner);
     }
 
-    private void displayChatActivityLogs(String response, boolean showContent) {
+    private void displayChatActivityLogs(JsonObject  response, boolean showContent) {
         try {
             // Expected format: CHAT_ACTIVITY_LOGS|timestamp:chatId:participants:duration:messageCount:branches:content|...
             String[] parts = response.split("\\|");
@@ -316,8 +321,8 @@ public class LogHandler {
         String severityLevel = UIUtils.getStringInput(scanner, "Severity (INFO/WARN/ERROR) or leave empty: ");
 
         String request = String.format("GET_SYSTEM_ACTIVITY_LOGS|%s|%s|%s|%s",
-                dateFilter, activityType, severityLevel, currentUser.getEmployeeNumber());
-        String response = client.sendRequest(request);
+                dateFilter, activityType, severityLevel, currentUser.get("employeeNumber").getAsString());
+        JsonObject response = client.sendRequest(request);
 
         if (response != null && response.startsWith("SYSTEM_ACTIVITY_LOGS")) {
             displaySystemActivityLogs(response);
@@ -369,8 +374,8 @@ public class LogHandler {
         String errorLevel = UIUtils.getStringInput(scanner, "Error level (CRITICAL/HIGH/MEDIUM/LOW) or leave empty: ");
 
         String request = String.format("GET_ERROR_LOGS|%s|%s|%s",
-                dateFilter, errorLevel, currentUser.getEmployeeNumber());
-        String response = client.sendRequest(request);
+                dateFilter, errorLevel, currentUser.get("employeeNumber").getAsString());
+        JsonObject response = client.sendRequest(request);
 
         if (response != null && response.startsWith("ERROR_LOGS")) {
             displayErrorLogs(response);
@@ -424,8 +429,8 @@ public class LogHandler {
     private void viewErrorDetails(String errorCode) {
         UIUtils.printMenuHeader("ERROR DETAILS - " + errorCode);
 
-        String request = "GET_ERROR_DETAILS|" + errorCode + "|" + currentUser.getEmployeeNumber();
-        String response = client.sendRequest(request);
+        String request = "GET_ERROR_DETAILS|" + errorCode + "|" + currentUser.get("employeeNumber").getAsString();
+        JsonObject response = client.sendRequest(request);
 
         if (response != null && response.startsWith("ERROR_DETAILS")) {
             try {
@@ -498,8 +503,8 @@ public class LogHandler {
         String fileName = UIUtils.getStringInput(scanner, "File name (optional): ");
 
         String request = String.format("EXPORT_ALL_LOGS|%s|%s|%s",
-                format.toUpperCase(), fileName, currentUser.getEmployeeNumber());
-        String response = client.sendRequest(request);
+                format.toUpperCase(), fileName, currentUser.get("employeeNumber").getAsString());
+        JsonObject response = client.sendRequest(request);
 
         if (response != null && response.startsWith("EXPORT_SUCCESS")) {
             String[] parts = response.split("\\|");
@@ -561,8 +566,8 @@ public class LogHandler {
         String fileName = UIUtils.getStringInput(scanner, "File name (optional): ");
 
         String request = String.format("EXPORT_SPECIFIC_LOGS|%s|%s|%s|%s",
-                logType, format.toUpperCase(), fileName, currentUser.getEmployeeNumber());
-        String response = client.sendRequest(request);
+                logType, format.toUpperCase(), fileName, currentUser.get("employeeNumber").getAsString());
+        JsonObject response = client.sendRequest(request);
 
         if (response != null && response.startsWith("EXPORT_SUCCESS")) {
             String[] parts = response.split("\\|");
@@ -590,8 +595,8 @@ public class LogHandler {
         String fileName = UIUtils.getStringInput(scanner, "File name (optional): ");
 
         String request = String.format("EXPORT_LOGS_BY_DATE|%s|%s|%s|%s|%s",
-                fromDate, toDate, format.toUpperCase(), fileName, currentUser.getEmployeeNumber());
-        String response = client.sendRequest(request);
+                fromDate, toDate, format.toUpperCase(), fileName, currentUser.get("employeeNumber").getAsString());
+        JsonObject response = client.sendRequest(request);
 
         if (response != null && response.startsWith("EXPORT_SUCCESS")) {
             String[] parts = response.split("\\|");
@@ -618,8 +623,8 @@ public class LogHandler {
         String fileName = UIUtils.getStringInput(scanner, "File name (optional): ");
 
         String request = String.format("EXPORT_ERROR_LOGS|%s|%s|%s|%s",
-                severity, format.toUpperCase(), fileName, currentUser.getEmployeeNumber());
-        String response = client.sendRequest(request);
+                severity, format.toUpperCase(), fileName, currentUser.get("employeeNumber").getAsString());
+        JsonObject response = client.sendRequest(request);
 
         if (response != null && response.startsWith("EXPORT_SUCCESS")) {
             String[] parts = response.split("\\|");
@@ -685,8 +690,8 @@ public class LogHandler {
             period = "30";
         }
 
-        String request = String.format("GET_ACTIVITY_TRENDS|%s|%s", period, currentUser.getEmployeeNumber());
-        String response = client.sendRequest(request);
+        String request = String.format("GET_ACTIVITY_TRENDS|%s|%s", period, currentUser.get("employeeNumber").getAsString());
+        JsonObject response = client.sendRequest(request);
 
         if (response != null && response.startsWith("ACTIVITY_TRENDS")) {
             displayActivityTrends(response);
@@ -732,8 +737,8 @@ public class LogHandler {
     private void showErrorAnalysis() {
         UIUtils.printMenuHeader("ERROR ANALYSIS");
 
-        String request = "GET_ERROR_ANALYSIS|" + currentUser.getEmployeeNumber();
-        String response = client.sendRequest(request);
+        String request = "GET_ERROR_ANALYSIS|" + currentUser.get("employeeNumber").getAsString();
+        JsonObject response = client.sendRequest(request);
 
         if (response != null && response.startsWith("ERROR_ANALYSIS")) {
             displayErrorAnalysis(response);

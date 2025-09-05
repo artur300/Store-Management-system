@@ -3,8 +3,6 @@ package com.myshopnet.repository;
 import com.myshopnet.auth.UserAccount;
 import com.myshopnet.data.Data;
 import com.myshopnet.models.Employee;
-import com.myshopnet.models.User;
-import com.myshopnet.service.AuthService;
 
 import java.util.List;
 
@@ -12,7 +10,7 @@ public class EmployeeRepository implements Repository<Employee> {
     @Override
     public Employee create(Employee employee) {
         UserAccount employeeUserAccount = new UserAccount(employee);
-        Data.getAllAccounts().put(employee.getId(), employeeUserAccount);
+        Data.getAllAccounts().put(employee.getUserId(), employeeUserAccount);
 
         return employee;
     }
@@ -32,7 +30,7 @@ public class EmployeeRepository implements Repository<Employee> {
     @Override
     public Employee get(String id) {
         return getAll().stream()
-                .filter(employee -> employee.getId().equals(id))
+                .filter(employee -> employee.getUserId().equals(id))
                 .toList().getFirst();
     }
 

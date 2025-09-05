@@ -1,6 +1,8 @@
 package com.myshopnet.models;
 
 public class VipCustomer extends Customer {
+    private final Role role = Role.VIP_CUSTOMER;
+
     public VipCustomer(String id, String passpoortId, String fullName, String phone) {
         super(id, passpoortId,fullName, phone);
     }
@@ -12,6 +14,11 @@ public class VipCustomer extends Customer {
     @Override
     public double calcBuyingStrategy(double baseTotal) {
         return baseTotal * 0.80;
+    }
+
+    @Override
+    public Role getRole() {
+        return role;
     }
 }
 
