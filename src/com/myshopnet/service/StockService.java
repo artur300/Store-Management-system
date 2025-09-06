@@ -4,12 +4,13 @@ import com.myshopnet.models.Branch;
 import com.myshopnet.models.Product;
 import com.myshopnet.repository.BranchRepository;
 import com.myshopnet.repository.ProductRepository;
+import com.myshopnet.utils.Singletons;
 
 import java.util.List;
 
 public class StockService {
-    private BranchRepository branchRepository = new BranchRepository();
-    private ProductRepository productRepository = new ProductRepository();
+    private BranchRepository branchRepository = Singletons.BRANCH_REPO;
+    private ProductRepository productRepository = Singletons.PRODUCT_REPO;
 
     public void updateProductStock(String branchId, String productId, Long quantity) {
         Branch branch = branchRepository.get(branchId);

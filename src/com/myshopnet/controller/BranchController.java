@@ -17,10 +17,10 @@ import java.util.List;
 
 public class BranchController {
     private Gson gson = GsonSingleton.getInstance();
-    private BranchService branchService = new BranchService();
-    private AuthService authService = new AuthService();
-    private UserAccountService userAccountService = new UserAccountService();
-    private StockService stockService = new StockService();
+    private BranchService branchService = com.myshopnet.utils.Singletons.BRANCH_SERVICE;
+    private AuthService authService = com.myshopnet.utils.Singletons.AUTH_SERVICE;
+    private UserAccountService userAccountService = com.myshopnet.utils.Singletons.USER_ACCOUNT_SERVICE;
+    private StockService stockService = com.myshopnet.utils.Singletons.STOCK_SERVICE;
 
     public String getAllBranches(String userId) {
         Response response = new Response();

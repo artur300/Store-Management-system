@@ -2,43 +2,61 @@ package com.myshopnet.server;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
+import com.myshopnet.chat.PushServer;
 import com.myshopnet.logs.LogEvent;
 import com.myshopnet.logs.LogType;
 import com.myshopnet.logs.Logger;
-import com.myshopnet.logs.LoggerImpl;
+import com.myshopnet.utils.Singletons;
 
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 public class Server {
+    private final Logger logger = Singletons.LOGGER;
     private static final int PORT = 8080;
     private final Gson gson = new Gson();
     private BufferedReader in;
     private PrintWriter out;
-    private static final Logger logger = LoggerImpl.getInstance();
 
     public void startListening() throws IOException {
+        try {
+            Thread pushThread = new Thread(new PushServer());
+            pushThread.setDaemon(true);
+            pushThread.start();
+        } catch (Exception ignored) { }
         try (ServerSocket server = new ServerSocket(PORT)) {
             logger.log(new LogEvent(LogType.SERVER_LISTEN, "* Server up on " + PORT + ". Waiting for clients..."));
             while (true) {
+                System.out.println("Waiting for clients...");
+
                 Socket socket = server.accept();
 
-                in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-                out = new PrintWriter(socket.getOutputStream(), true);
+                logger.log(new LogEvent(LogType.REQUEST_RECIEVED, "Request from " + socket.getRemoteSocketAddress() + " recieved"));
 
                 new Thread(() -> {
-                    try {
-                        String requestData = in.readLine();
-                        Request request = !requestData.isEmpty() ? gson.fromJson(requestData, Request.class) : null;
+                    try (BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream())); PrintWriter out = new PrintWriter(socket.getOutputStream(), true)) {
+                        String requestData;
 
-                        if (request == null) {
-                            throw new RuntimeException("Invalid request");
+                        while ((requestData = in.readLine()) != null) {
+                            if (requestData.trim().isEmpty()) {
+                                continue;
+                            }
+
+                            try {
+                                Request request = gson.fromJson(requestData, Request.class);
+                                String response = RequestHandler.handleRequest(request);
+                                out.println(response);
+                                out.flush();
+                            }
+                            catch (Exception ex) {
+                                out.println("{\"error\":\"Invalid request\"}");
+                                out.flush();
+                                logger.log(new LogEvent(LogType.REQUEST_RECIEVED, "Bad request: " + ex.getMessage()));
+                            }
                         }
 
-                        RequestHandler.handleRequest(request);
+
                     }
                     catch (IOException e) {
                         logger.log(new LogEvent(LogType.SERVER_LISTEN, e.getMessage()));

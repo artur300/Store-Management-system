@@ -9,14 +9,15 @@ import com.myshopnet.models.EmployeeType;
 import com.myshopnet.repository.BranchRepository;
 import com.myshopnet.repository.EmployeeRepository;
 import com.myshopnet.repository.UserAccountRepository;
+import com.myshopnet.utils.Singletons;
 
 import java.util.*;
 
 public class EmployeeService {
-    private final EmployeeRepository employeeRepository = new EmployeeRepository();
-    private final BranchRepository branchRepository = new BranchRepository();
-    private final UserAccountRepository userAccountRepository = new UserAccountRepository();
-    private final BranchService branchService = new BranchService();
+    private final EmployeeRepository employeeRepository = Singletons.EMPLOYEE_REPO;
+    private final BranchRepository branchRepository = Singletons.BRANCH_REPO;
+    private final UserAccountRepository userAccountRepository = Singletons.USER_ACCOUNT_REPO;
+    private final BranchService branchService = Singletons.BRANCH_SERVICE;
 
     public Employee addEmployee(Long accountNumber, String branchId, String employeeType, Long employeeNumber) {
         Branch branch = branchRepository.get(branchId);

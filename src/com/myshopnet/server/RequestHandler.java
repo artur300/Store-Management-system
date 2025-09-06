@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.myshopnet.controller.*;
 import com.myshopnet.utils.GsonSingleton;
+import com.myshopnet.utils.Singletons;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -11,14 +12,14 @@ import java.util.Map;
 public class RequestHandler {
     private static final Gson gson = GsonSingleton.getInstance();
 
-    private static final AuthController authController = new AuthController();
-    private static final BranchController branchController = new BranchController();
-    private static final CustomerController customerController = new CustomerController();
-    private static final EmployeeController employeeController = new EmployeeController();
-    private static final OrderController orderController = new OrderController();
-    private static final ProductController productController = new ProductController();
-    private static final UserAccountController userAccountController = new UserAccountController();
-    private static final ChatController chatController = new ChatController();
+    private static final AuthController authController = Singletons.AUTH_CONTROLLER;
+    private static final BranchController branchController = Singletons.BRANCH_CONTROLLER;
+    private static final CustomerController customerController = Singletons.CUSTOMER_CONTROLLER;
+    private static final EmployeeController employeeController = Singletons.EMPLOYEE_CONTROLLER;
+    private static final OrderController orderController = Singletons.ORDER_CONTROLLER;
+    private static final ProductController productController = Singletons.PRODUCT_CONTROLLER;
+    private static final UserAccountController userAccountController = Singletons.USER_ACCOUNT_CONTROLLER;
+    private static final ChatController chatController = Singletons.CHAT_CONTROLLER;
 
     public static String handleRequest(Request request) {
         String response = "";
@@ -34,6 +35,7 @@ public class RequestHandler {
                     String password = json.get("password").getAsString();
 
                     response = authController.login(username,password);
+                    break;
                 }
 
                 case "register":{
@@ -42,30 +44,35 @@ public class RequestHandler {
                     String userId = json.get("userId").getAsString();
 
                     response = authController.register(username,password, userId);
+                    break;
                 }
 
                 case "logout": {
                     String userId = json.get("userId").getAsString();
 
                     response = authController.logout(userId);
+                    break;
                 }
 
                 case "getAllUserAccounts": {
                     String userId = json.get("userId").getAsString();
 
                     response = userAccountController.getAllUserAccounts(userId);
+                    break;
                 }
 
                 case "getAllBranches": {
                     String userId = json.get("userId").getAsString();
 
                     response = branchController.getAllBranches(userId);
+                    break;
                 }
 
                 case "getBranchByBranchId": {
                     String branchId = json.get("branchId").getAsString();
 
                     response = branchController.getBranchByBranchId(branchId);
+                    break;
                 }
 
                 case "createBranch": {
@@ -73,6 +80,7 @@ public class RequestHandler {
                     String branchName = json.get("branchName").getAsString();
 
                     response = branchController.createBranch(userId, branchName);
+                    break;
                 }
 
                 case "updateBranchStock": {
@@ -82,6 +90,7 @@ public class RequestHandler {
                     Long stock = json.get("stock").getAsLong();
 
                     response = branchController.updateBranchStock(branchId, userId, productId, stock);
+                    break;
                 }
 
                 case "createCustomer": {
@@ -89,16 +98,19 @@ public class RequestHandler {
                     String passportId = json.get("passportId").getAsString();
                     String phoneNumber = json.get("phoneNumber").getAsString();
                     response = customerController.createCustomer(fullName, passportId, phoneNumber);
+                    break;
                 }
 
                 case "getCustomer": {
                     String customerId = json.get("customerId").getAsString();
 
                     response = customerController.getCustomer(customerId);
+                    break;
                 }
 
                 case "getAllCustomers": {
                     response = customerController.getAllCustomers();
+                    break;
                 }
 
                 case "addEmployee": {
@@ -111,18 +123,21 @@ public class RequestHandler {
                     String password = json.get("password").getAsString();
 
                     response = employeeController.addEmployee(currentUserId, accountNumber, branchId,employeeType, employeeNumber, username, password);
+                    break;
                 }
 
                 case "getEmployee": {
                     String employeeId = json.get("employeeId").getAsString();
 
                     response = employeeController.getEmployee(employeeId);
+                    break;
                 }
 
                 case "getAllEmployeesByBranch": {
                     String branchId = json.get("branchId").getAsString();
 
                     response = employeeController.getAllEmployeesByBranch(branchId);
+                    break;
                 }
 
                 case "performOrder": {
@@ -136,6 +151,7 @@ public class RequestHandler {
                     }
 
                     response = orderController.performOrder(productsMap, branchId, customerId);
+                    break;
                 }
 
                 case "updatePasswordPolicy": {
@@ -147,6 +163,7 @@ public class RequestHandler {
                     boolean hasSpecialCharacters = json.get("hasSpecialCharacters").getAsBoolean();
 
                     response = authController.updatePasswordPolicy(userId, minChars, maxChars, minNumbers, maxNumbers, hasSpecialCharacters);
+                    break;
                 }
 
                 case "resetUserPassword": {
@@ -155,12 +172,14 @@ public class RequestHandler {
                     String newPassword = json.get("newPassword").getAsString();
 
                     response = authController.resetPassword(userId, username, newPassword);
+                    break;
                 }
 
                 case "viewPasswordPolicy": {
                     String userId = json.get("userId").getAsString();
 
                     response = authController.viewPasswordPolicy(userId);
+                    break;
                 }
 
                 case "startChat": {
@@ -168,6 +187,7 @@ public class RequestHandler {
                     String branchId = json.get("branchId").getAsString();
 
                     response = chatController.startChat(userIdRequesting, branchId);
+                    break;
                 }
 
                 case "endChat": {
@@ -175,6 +195,7 @@ public class RequestHandler {
                     String chatId = json.get("chatId").getAsString();
 
                     response = chatController.endChat(userId, chatId);
+                    break;
                 }
 
                 case "createProduct": {
@@ -185,6 +206,7 @@ public class RequestHandler {
                     String price = json.get("price").getAsString();
 
                     response = productController.createProduct(userId, productSku, productName, productCategory, price);
+                    break;
                 }
 
                 default:

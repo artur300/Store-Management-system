@@ -9,7 +9,7 @@ import java.util.Map;
 
 public class OrderController {
     private Gson gson = GsonSingleton.getInstance();
-    private OrderService orderService = new OrderService();
+    private OrderService orderService = com.myshopnet.utils.Singletons.ORDER_SERVICE;
 
     public String performOrder(Map<String, Long> mapOfProductsAndQuantities, String branchId, String customerId) {
         Response response = new Response();

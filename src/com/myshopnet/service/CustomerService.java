@@ -4,13 +4,14 @@ import com.myshopnet.errors.EntityNotFoundException;
 import com.myshopnet.models.*;
 import com.myshopnet.repository.CustomerRepository;
 import com.myshopnet.repository.OrderRepository;
+import com.myshopnet.utils.Singletons;
 
 import java.util.List;
 import java.util.UUID;
 
 public class CustomerService {
-    private OrderRepository orderRepository = new OrderRepository();
-    private CustomerRepository customerRepository = new CustomerRepository();
+    private OrderRepository orderRepository = Singletons.ORDER_REPO;
+    private CustomerRepository customerRepository = Singletons.CUSTOMER_REPO;
 
     public Customer createCustomer(String fullName, String passportId, String phoneNumber) {
         Customer newCustomer = new NewCustomer(UUID.randomUUID().toString(), passportId, phoneNumber, fullName);

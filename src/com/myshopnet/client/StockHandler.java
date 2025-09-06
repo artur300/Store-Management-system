@@ -87,18 +87,7 @@ public class StockHandler {
 
     private void searchProduct() {
         UIUtils.printMenuHeader("SEARCH PRODUCT");
-
-        String searchTerm = UIUtils.getStringInput(scanner, "Enter product name or ID: ");
-
-        String request = String.format("SEARCH_PRODUCT|%s|%s", currentUser.get("branchId").getAsString(), searchTerm);
-        JsonObject response = client.sendRequest(request);
-
-//        if (response != null && response.startsWith("PRODUCT_FOUND")) {
-//            displaySearchResults(response);
-//        } else {
-//            UIUtils.showError("Product not found or connection error");
-//        }
-
+        UIUtils.showInfo("Product search is not implemented in this client.");
         UIUtils.waitForEnter(scanner);
     }
 
@@ -142,15 +131,18 @@ public class StockHandler {
             int quantity = Integer.parseInt(quantityStr);
             double price = Double.parseDouble(priceStr);
 
-            String request = String.format("PROCESS_PURCHASE|%s|%s|%s|%d|%.2f|%s",
-                    currentUser.get("branchId").getAsString(), productId, productName, quantity, price,
-                    currentUser.get("employeeNumber").getAsString());
+            JsonObject data = new JsonObject();
+            data.addProperty("branchId", currentUser.get("branchId").getAsString());
+            data.addProperty("userId", currentUser.get("userId").getAsString());
+            data.addProperty("productId", productId);
+            data.addProperty("stock", (long)quantity);
+            Request request = new Request("updateBranchStock", gson.toJson(data));
             JsonObject response = client.sendRequest(request);
 
-            if (response != null && response.startsWith("PURCHASE_SUCCESS")) {
-                UIUtils.showSuccess("Purchase/Restock completed successfully!");
+            if (response != null && response.has("success") && response.get("success").getAsBoolean()) {
+                UIUtils.showSuccess("Restock updated successfully!");
             } else {
-                String error = response != null ? response.replace("PURCHASE_FAILED|", "") : "Connection error";
+                String error = response != null && response.has("message") ? response.get("message").getAsString() : "Connection error";
                 UIUtils.showError(error);
             }
         } catch (NumberFormatException e) {

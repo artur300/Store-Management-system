@@ -14,11 +14,11 @@ import com.myshopnet.utils.GsonSingleton;
 import java.util.List;
 
 public class EmployeeController {
-    private EmployeeService employeeService = new EmployeeService();
+    private EmployeeService employeeService = com.myshopnet.utils.Singletons.EMPLOYEE_SERVICE;
     private Gson gson = GsonSingleton.getInstance();
-    private BranchService branchService = new BranchService();
-    private AuthService authService = new AuthService();
-    private UserAccountService userAccountService = new UserAccountService();
+    private BranchService branchService = com.myshopnet.utils.Singletons.BRANCH_SERVICE;
+    private AuthService authService = com.myshopnet.utils.Singletons.AUTH_SERVICE;
+    private UserAccountService userAccountService = com.myshopnet.utils.Singletons.USER_ACCOUNT_SERVICE;
 
     public String addEmployee(String currentUserID, Long accountNumber, String branchId,
                                String employeeType,Long employeeNumber,String username,String password)

@@ -8,17 +8,18 @@ import com.myshopnet.models.EmployeeStatus;
 import com.myshopnet.repository.BranchRepository;
 import com.myshopnet.repository.EmployeeRepository;
 import com.myshopnet.repository.UserAccountRepository;
+import com.myshopnet.utils.Singletons;
 
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
 public class BranchService {
-    private UserAccountRepository userAccountRepository = new UserAccountRepository();
-    private EmployeeRepository employeeRepository = new EmployeeRepository();
-    private AuthService authService = new AuthService();
-    private BranchRepository branchRepository = new BranchRepository();
-    private ChatService chatService = new ChatService();
+    private UserAccountRepository userAccountRepository = Singletons.USER_ACCOUNT_REPO;
+    private EmployeeRepository employeeRepository = Singletons.EMPLOYEE_REPO;
+    private AuthService authService = Singletons.AUTH_SERVICE;
+    private BranchRepository branchRepository = Singletons.BRANCH_REPO;
+    private ChatService chatService = Singletons.CHAT_SERVICE;
 
     public BranchService() {
         this.branchRepository = new BranchRepository();

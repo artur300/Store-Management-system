@@ -11,11 +11,12 @@ import com.myshopnet.auth.UserAccount;
 import com.myshopnet.server.Response;
 import com.myshopnet.errors.EntityNotFoundException;
 import com.myshopnet.utils.GsonSingleton;
+import com.myshopnet.utils.Singletons;
 
 public class ProductController {
     private Gson gson = GsonSingleton.getInstance();
-    private ProductService productService = new ProductService();
-    private UserAccountService userAccountService = new UserAccountService();
+    private ProductService productService = Singletons.PRODUCT_SERVICE;
+    private UserAccountService userAccountService = Singletons.USER_ACCOUNT_SERVICE;
 
     public String createProduct(String currentLoggedInUser,String productSku, String productName, String productCategory, String price) {
         Response response = new Response();

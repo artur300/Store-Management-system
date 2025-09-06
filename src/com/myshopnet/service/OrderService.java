@@ -7,18 +7,19 @@ import com.myshopnet.repository.BranchRepository;
 import com.myshopnet.repository.CustomerRepository;
 import com.myshopnet.repository.OrderRepository;
 import com.myshopnet.repository.ProductRepository;
+import com.myshopnet.utils.Singletons;
 
 import java.util.Map;
 import java.util.UUID;
 
 
 public class OrderService {
-    private final OrderRepository orderRepository = new OrderRepository();
-    private final BranchRepository branchRepository = new BranchRepository();
-    private final ProductRepository productRepository = new ProductRepository();
-    private final CustomerService customerService = new CustomerService();
-    private final CustomerRepository customerRepository = new CustomerRepository();
-    private final StockService stockService = new StockService();
+    private final OrderRepository orderRepository = Singletons.ORDER_REPO;
+    private final BranchRepository branchRepository = Singletons.BRANCH_REPO;
+    private final ProductRepository productRepository = Singletons.PRODUCT_REPO;
+    private final CustomerService customerService = Singletons.CUSTOMER_SERVICE;
+    private final CustomerRepository customerRepository = Singletons.CUSTOMER_REPO;
+    private final StockService stockService = Singletons.STOCK_SERVICE;
 
     public Order performOrder(Map<String, Long> mapOfProductsAndQuantities, String branchId, String customerId) {
         Branch branch = branchRepository.get(branchId);

@@ -22,6 +22,7 @@ public class Client {
     private JsonObject currentUser;
     private UserTypeLoggedIn currentUserType = UserTypeLoggedIn.NONE;
     private boolean isConnected = false;
+    private PushClient pushClient = new PushClient();
 
     public Client() {
         this.scanner = new Scanner(System.in);
@@ -63,7 +64,20 @@ public class Client {
         LoginHandler loginHandler = new LoginHandler(this);
         currentUser = loginHandler.handleLogin();
 
+        if (currentUser == null) return;
         currentUserType = UserTypeLoggedIn.valueOf(currentUser.get("role").getAsString());
+
+        String userId = currentUser.get("userId").getAsString();
+        pushClient.start(userId, evt -> {
+            try {
+                String type = evt.has("type") ? evt.get("type").getAsString() : "";
+                if ("chatCreated".equals(type)) {
+                    String chatId = evt.get("chatId").getAsString();
+                    System.out.println("\n[Notification] A chat is ready for you. Chat ID: " + chatId);
+                    System.out.print("Press Enter to continue...");
+                }
+            } catch (Exception ignored) { }
+        });
     }
 
     private void showMainMenu() {
@@ -71,18 +85,36 @@ public class Client {
         menuHandler.showMainMenu();
     }
 
-    public JsonObject sendRequest(Request request) {
+    public synchronized JsonObject sendRequest(Request request) {
         try {
-            out.println(gson.toJson(request));
-            String responseData = in.readLine();
-            JsonObject jsonData = (responseData != null && !responseData.isEmpty())
-                    ? JsonParser.parseString(responseData).getAsJsonObject() : new JsonObject();
+            String requestJson = gson.toJson(request);
+            out.println(requestJson);
+            out.flush();
 
-            return jsonData;
+            String responseData = in.readLine();
+
+            if (responseData == null) {
+                System.err.println("Server closed the connection.");
+                isConnected = false;
+                return null;
+            }
+
+            if (responseData.trim().isEmpty()) {
+                return new JsonObject();
+            }
+
+            return JsonParser.parseString(responseData).getAsJsonObject();
+
         } catch (IOException e) {
             System.err.println("Communication error: " + e.getMessage());
+            isConnected = false;
             return null;
         }
+    }
+
+    public JsonObject sendRequest(String legacyRequest) {
+        System.err.println("[Legacy API] Ignored request: " + legacyRequest);
+        return null;
     }
 
     public Scanner getScanner() {
@@ -103,6 +135,7 @@ public class Client {
 
     private void cleanup() {
         try {
+            if (pushClient != null) pushClient.stop();
             if (out != null) out.close();
             if (in != null) in.close();
             if (socket != null) socket.close();

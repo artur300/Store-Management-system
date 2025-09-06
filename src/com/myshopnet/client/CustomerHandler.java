@@ -64,11 +64,11 @@ public class CustomerHandler {
     private void viewAllCustomers() {
         UIUtils.printMenuHeader("ALL CUSTOMERS");
 
-        String request = "GET_ALL_CUSTOMERS";
+        Request request = new Request("getAllCustomers", "");
         JsonObject response = client.sendRequest(request);
 
-        if (response != null && response.startsWith("CUSTOMERS_DATA")) {
-            displayCustomersData(response);
+        if (response != null && response.has("success") && response.get("success").getAsBoolean()) {
+            displayCustomersDataJson(response.getAsJsonArray("message"));
         } else {
             UIUtils.showError("Failed to retrieve customer data");
         }
@@ -77,47 +77,52 @@ public class CustomerHandler {
     }
 
     private void displayCustomersData(String response) {
+        // legacy no-op retained for compatibility
+    }
+
+    private void displayCustomersDataJson(com.google.gson.JsonArray customerArray) {
         try {
-            // Expected format: CUSTOMERS_DATA|id:fullName:phone:type|...
-            String[] parts = response.split("\\|");
-            if (parts.length > 1) {
-                List<String[]> rows = new ArrayList<>();
-
-                for (int i = 1; i < parts.length; i++) {
-                    String[] customerData = parts[i].split(":");
-                    if (customerData.length >= 4) {
-                        rows.add(new String[]{
-                                customerData[0], // ID
-                                customerData[1], // Full Name
-                                customerData[2], // Phone
-                                customerData[3]  // Type
-                        });
-                    }
-                }
-
-                String[] headers = {"Customer ID", "Full Name", "Phone Number", "Type"};
-                UIUtils.printTable(headers, rows);
-                UIUtils.showInfo("Total customers: " + rows.size());
-            } else {
-                UIUtils.printLine("No customers found");
+            List<String[]> rows = new ArrayList<>();
+            for (var el : customerArray) {
+                JsonObject customer = el.getAsJsonObject();
+                rows.add(new String[]{
+                        customer.get("userId").getAsString(),
+                        customer.get("fullName").getAsString(),
+                        customer.get("phone").getAsString(),
+                        customer.get("role").getAsString()
+                });
             }
+            String[] headers = {"Customer ID", "Full Name", "Phone Number", "Type"};
+            UIUtils.printTable(headers, rows);
+            UIUtils.showInfo("Total customers: " + rows.size());
         } catch (Exception e) {
             UIUtils.showError("Error displaying customers: " + e.getMessage());
         }
     }
 
+
     private void searchCustomer() {
         UIUtils.printMenuHeader("SEARCH CUSTOMER");
 
-        String searchTerm = UIUtils.getStringInput(scanner, "Enter customer name, ID, or phone: ");
+        String customerId = UIUtils.getStringInput(scanner, "Enter customer ID: ");
 
-        String request = "SEARCH_CUSTOMER|" + searchTerm;
+        JsonObject data = new JsonObject();
+        data.addProperty("customerId", customerId);
+        Request request = new Request("getCustomer", gson.toJson(data));
         JsonObject response = client.sendRequest(request);
 
-        if (response != null && response.startsWith("CUSTOMER_FOUND")) {
-            displayCustomerDetails(response);
+        if (response != null && response.has("success") && response.get("success").getAsBoolean()) {
+            JsonObject cust = response.getAsJsonObject("message");
+            List<String[]> rows = new ArrayList<>();
+            rows.add(new String[]{
+                    cust.get("userId").getAsString(),
+                    cust.get("fullName").getAsString(),
+                    cust.get("phone").getAsString(),
+                    cust.get("role").getAsString()
+            });
+            UIUtils.printTable(new String[]{"Customer ID","Full Name","Phone","Type"}, rows);
         } else {
-            UIUtils.showError("Customer not found or connection error");
+            UIUtils.showError(response != null && response.has("message") ? response.get("message").getAsString() : "Customer not found or connection error");
         }
 
         UIUtils.waitForEnter(scanner);
@@ -163,61 +168,38 @@ public class CustomerHandler {
         UIUtils.showInfo("Customer Plan: " + planDetails);
     }
 
+    private void addNewCustomer() {
+        UIUtils.printMenuHeader("ADD NEW CUSTOMER");
+        String fullName = UIUtils.getStringInput(scanner, "Full Name: ");
+        String passportId = UIUtils.getStringInput(scanner, "Passport/ID: ");
+        String phone = UIUtils.getStringInput(scanner, "Phone Number: ");
+        JsonObject data = new JsonObject();
+        data.addProperty("fullName", fullName);
+        data.addProperty("passportId", passportId);
+        data.addProperty("phoneNumber", phone);
+        Request request = new Request("createCustomer", gson.toJson(data));
+        JsonObject resp = client.sendRequest(request);
+        if (resp != null && resp.has("success") && resp.get("success").getAsBoolean()) {
+            UIUtils.showSuccess("Customer created successfully");
+        } else {
+            UIUtils.showError(resp != null && resp.has("message") ? resp.get("message").getAsString() : "Failed to create customer");
+        }
+        UIUtils.waitForEnter(scanner);
+    }
+
     private void updateCustomer() {
         UIUtils.printMenuHeader("UPDATE CUSTOMER");
-
-        String customerId = UIUtils.getStringInput(scanner, "Customer ID to update: ");
-
-        // First, get current customer data
-        String searchRequest = "SEARCH_CUSTOMER|" + customerId;
-        JsonObject searchResponse = client.sendRequest(searchRequest);
-
-        if (searchResponse == null || !searchResponse.startsWith("CUSTOMER_FOUND")) {
-            UIUtils.showError("Customer not found");
-            UIUtils.waitForEnter(scanner);
-            return;
-        }
-
-        // Display current data and get updates
-        UIUtils.printLine("Leave field empty to keep current value:");
-        String newFullName = UIUtils.getStringInput(scanner, "New Full Name: ");
-        String newPhone = UIUtils.getStringInput(scanner, "New Phone Number: ");
-
-        int typeChoice = UIUtils.getIntInput(scanner);
-        String newType = "";
-
-        String request = String.format("UPDATE_CUSTOMER|%s|%s|%s|%s|%s",
-                customerId, newFullName, newPhone, newType, currentUser.get("employeeNumber").getAsString());
-        JsonObject response = client.sendRequest(request);
-
-        if (response != null && response.equals("CUSTOMER_UPDATED")) {
-            UIUtils.showSuccess("Customer updated successfully!");
-        } else {
-            String error = response != null ? response.replace("CUSTOMER_UPDATE_FAILED|", "") : "Connection error";
-            UIUtils.showError(error);
-        }
-
+        UIUtils.showInfo("Update customer is not implemented in this client.");
         UIUtils.waitForEnter(scanner);
     }
 
     private void viewPurchaseHistory() {
         UIUtils.printMenuHeader("CUSTOMER PURCHASE HISTORY");
-
-        String customerId = UIUtils.getStringInput(scanner, "Customer ID: ");
-
-        String request = "GET_PURCHASE_HISTORY|" + customerId;
-        JsonObject response = client.sendRequest(request);
-
-        if (response != null && response.startsWith("PURCHASE_HISTORY")) {
-            displayPurchaseHistory(response);
-        } else {
-            UIUtils.showError("Failed to retrieve purchase history or customer not found");
-        }
-
+        UIUtils.showInfo("Purchase history is not implemented in this client.");
         UIUtils.waitForEnter(scanner);
     }
 
-    private void displayPurchaseHistory(String response) {
+    private void displayPurchaseHistory(String response) { // legacy not used
         try {
             // Expected format: PURCHASE_HISTORY|date:productName:quantity:amount:discount|...
             String[] parts = response.split("\\|");
@@ -260,28 +242,20 @@ public class CustomerHandler {
         try {
             int quantity = Integer.parseInt(quantityStr);
 
-            String request = String.format("CUSTOMER_PURCHASE|%s|%s|%s|%d|%s|%s",
-                    currentUser.get("branchId").getAsString(), customerId, productId, quantity,
-                    currentUser.get("employeeNumber").getAsString(), currentUser.get("branchId").getAsString());
+            JsonObject data = new JsonObject();
+            data.addProperty("branchId", currentUser.get("branchId").getAsString());
+            data.addProperty("customerId", customerId);
+            JsonObject products = new JsonObject();
+            products.addProperty(productId, quantity);
+            data.add("products", products);
+
+            Request request = new Request("performOrder", gson.toJson(data));
             JsonObject response = client.sendRequest(request);
 
-            if (response != null && response.startsWith("PURCHASE_SUCCESS")) {
-                String[] parts = response.split("\\|");
-                UIUtils.showSuccess("Purchase completed!");
-                if (parts.length > 1) {
-                    UIUtils.showInfo("Transaction ID: " + parts[1]);
-                }
-                if (parts.length > 2) {
-                    UIUtils.showInfo("Original Amount: $" + parts[2]);
-                }
-                if (parts.length > 3) {
-                    UIUtils.showInfo("Discount Applied: $" + parts[3]);
-                }
-                if (parts.length > 4) {
-                    UIUtils.showInfo("Final Amount: $" + parts[4]);
-                }
+            if (response != null && response.has("success") && response.get("success").getAsBoolean()) {
+                UIUtils.showSuccess("Order performed successfully");
             } else {
-                String error = response != null ? response.replace("PURCHASE_FAILED|", "") : "Connection error";
+                String error = response != null && response.has("message") ? response.get("message").getAsString() : "Connection error";
                 UIUtils.showError(error);
             }
         } catch (NumberFormatException e) {

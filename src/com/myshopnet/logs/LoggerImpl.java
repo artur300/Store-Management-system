@@ -12,7 +12,7 @@ public final class LoggerImpl implements Logger {
 
     private LoggerImpl() {
         try {
-            Path p = Paths.get("app.log"); // ייכתב ליד ההרצה
+            Path p = Paths.get("app.log");
             out = new PrintWriter(new BufferedWriter(new FileWriter(p.toFile(), true)), true);
         } catch (IOException e) {
             throw new UncheckedIOException(e);

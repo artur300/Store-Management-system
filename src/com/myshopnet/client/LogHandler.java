@@ -1,3 +1,4 @@
+/* LEGACY LOGHANDLER DISABLED - commented out
 package com.myshopnet.client;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
@@ -81,22 +82,7 @@ public class LogHandler {
 
     private void viewEmployeeRegistrationLogs() {
         UIUtils.printMenuHeader("EMPLOYEE REGISTRATION LOGS");
-
-        String dateFilter = UIUtils.getStringInput(scanner, "Date filter (YYYY-MM-DD) or leave empty: ");
-        String branchFilter = currentUser.get("employeeType").getAsString().equals("ADMIN") ?
-                UIUtils.getStringInput(scanner, "Branch filter or leave empty: ") :
-                currentUser.get("branchId").getAsString();
-
-        String request = String.format("GET_EMPLOYEE_REG_LOGS|%s|%s|%s",
-                dateFilter, branchFilter, currentUser.get("employeeNumber").getAsString());
-        JsonObject response = client.sendRequest(request);
-
-        if (response != null && response.startsWith("EMPLOYEE_REG_LOGS")) {
-            displayEmployeeRegLogs(response);
-        } else {
-            UIUtils.showError("Failed to retrieve employee registration logs");
-        }
-
+        UIUtils.showInfo("Logs viewer is not implemented in this client.");
         UIUtils.waitForEnter(scanner);
     }
 
@@ -133,6 +119,12 @@ public class LogHandler {
     }
 
     private void viewCustomerRegistrationLogs() {
+        UIUtils.printMenuHeader("CUSTOMER REGISTRATION LOGS");
+        UIUtils.showInfo("Logs viewer is not implemented in this client.");
+        UIUtils.waitForEnter(scanner);
+    }
+
+    private void viewCustomerRegistrationLogs_legacy_remove() {
         UIUtils.printMenuHeader("CUSTOMER REGISTRATION LOGS");
 
         String dateFilter = UIUtils.getStringInput(scanner, "Date filter (YYYY-MM-DD) or leave empty: ");
@@ -184,6 +176,12 @@ public class LogHandler {
     }
 
     private void viewTransactionLogs() {
+        UIUtils.printMenuHeader("TRANSACTION LOGS");
+        UIUtils.showInfo("Logs viewer is not implemented in this client.");
+        UIUtils.waitForEnter(scanner);
+    }
+
+    private void viewTransactionLogs_legacy_remove() {
         UIUtils.printMenuHeader("TRANSACTION LOGS");
 
         String dateFilter = UIUtils.getStringInput(scanner, "Date filter (YYYY-MM-DD) or leave empty: ");
@@ -822,6 +820,32 @@ public class LogHandler {
 
     private void showSecurityAnalysis() {
         UIUtils.showInfo("Security analysis - Implementation pending");
+        UIUtils.waitForEnter(scanner);
+    }
+}
+*/
+
+package com.myshopnet.client;
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+import com.myshopnet.client.utils.UIUtils;
+import java.util.*;
+
+public class LogHandler {
+    private final Gson gson = new Gson();
+    private Client client;
+    private JsonObject currentUser;
+    private Scanner scanner;
+
+    public LogHandler(Client client, JsonObject currentUser) {
+        this.client = client;
+        this.currentUser = currentUser;
+        this.scanner = client.getScanner();
+    }
+
+    public void showLogMenu() {
+        UIUtils.printMenuHeader("SYSTEM LOGS");
+        UIUtils.showInfo("Logs UI is not implemented in this client build.");
         UIUtils.waitForEnter(scanner);
     }
 }

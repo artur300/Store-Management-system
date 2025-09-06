@@ -9,13 +9,14 @@ import com.myshopnet.server.Response;
 import com.myshopnet.service.AuthService;
 import com.myshopnet.service.UserAccountService;
 import com.myshopnet.utils.GsonSingleton;
+import com.myshopnet.utils.Singletons;
 
 import java.util.List;
 
 public class UserAccountController {
     private Gson gson = GsonSingleton.getInstance();
-    private AuthService authService = new AuthService();
-    private UserAccountService userAccountService = new UserAccountService();
+    private AuthService authService = Singletons.AUTH_SERVICE;
+    private UserAccountService userAccountService = Singletons.USER_ACCOUNT_SERVICE;
 
     public String getAllUserAccounts(String userId) {
         Response response = new Response();

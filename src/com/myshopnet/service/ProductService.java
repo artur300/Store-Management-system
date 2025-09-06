@@ -6,13 +6,14 @@ import com.myshopnet.models.Category;
 import com.myshopnet.models.Product;
 import com.myshopnet.repository.BranchRepository;
 import com.myshopnet.repository.ProductRepository;
+import com.myshopnet.utils.Singletons;
 
 import java.util.List;
 
 public class ProductService {
-    private ProductRepository productRepository = new ProductRepository();
-    private BranchRepository branchRepository = new BranchRepository();
-    private StockService stockService = new StockService();
+    private ProductRepository productRepository = Singletons.PRODUCT_REPO;
+    private BranchRepository branchRepository = Singletons.BRANCH_REPO;
+    private StockService stockService = Singletons.STOCK_SERVICE;
 
     public Product createProduct(String productSku, String productName, Category productCategory, Double price) {
         if (price <= 0) {

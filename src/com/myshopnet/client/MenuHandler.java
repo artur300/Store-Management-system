@@ -97,9 +97,9 @@ public class MenuHandler {
 
         String confirmation = scanner.nextLine().trim().toLowerCase();
         if (confirmation.equals("y") || confirmation.equals("yes")) {
-            String data = requestMap.put("userId", currentUser.get("userId").getAsString());
+            requestMap.put("userId", currentUser.get("userId").getAsString());
 
-            client.sendRequest(new Request("logout", gson.toJson(data)));
+            client.sendRequest(new Request("logout", gson.toJson(requestMap)));
 
             UIUtils.showInfo("Logged out successfully. Goodbye!");
             keepRunning = false;

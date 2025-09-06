@@ -9,7 +9,7 @@ import com.myshopnet.utils.GsonSingleton;
 
 public class CustomerController {
     private Gson gson = GsonSingleton.getInstance();
-    private CustomerService customerService = new CustomerService();
+    private CustomerService customerService = com.myshopnet.utils.Singletons.CUSTOMER_SERVICE;
 
     public String createCustomer(String fullName, String passportId, String phoneNumber) {
         Response response = new Response();

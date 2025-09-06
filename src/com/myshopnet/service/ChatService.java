@@ -9,18 +9,19 @@ import com.myshopnet.models.*;
 import com.myshopnet.repository.BranchRepository;
 import com.myshopnet.repository.ChatRepository;
 import com.myshopnet.repository.UserAccountRepository;
+import com.myshopnet.utils.Singletons;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.UUID;
 
 public class ChatService {
-    private final UserAccountRepository userAccountRepository = new UserAccountRepository();
-    private final AuthService authService = new AuthService();
-    private final ChatRepository chatRepository = new ChatRepository();
-    private final BranchRepository branchRepository = new BranchRepository();
-    private final BranchService branchService = new BranchService();
-    private final EmployeeService employeeService = new EmployeeService();
+    private final UserAccountRepository userAccountRepository = Singletons.USER_ACCOUNT_REPO;
+    private final AuthService authService = Singletons.AUTH_SERVICE;
+    private final ChatRepository chatRepository =  Singletons.CHAT_REPO;
+    private final BranchRepository branchRepository =  Singletons.BRANCH_REPO;
+    private final BranchService branchService =  Singletons.BRANCH_SERVICE;
+    private final EmployeeService employeeService =  Singletons.EMPLOYEE_SERVICE;
 
     public Chat getChat(String chatId) {
         return chatRepository.get(chatId);
@@ -39,6 +40,10 @@ public class ChatService {
             employeeService.changeStatus(employeeAvailableToChat, EmployeeStatus.BUSY);
 
             chat = chatRepository.create(chat);
+
+            String msgJson = String.format("{\"type\":\"chatCreated\",\"chatId\":\"%s\"}", chat.getId());
+            com.myshopnet.chat.NotificationHub.notifyUser(employeeRequesting.getUser().getUserId(), msgJson);
+            com.myshopnet.chat.NotificationHub.notifyUser(employeeAvailableToChat.getUser().getUserId(), msgJson);
         }
 
         return chat;

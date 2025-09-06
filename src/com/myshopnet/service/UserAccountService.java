@@ -4,11 +4,12 @@ import com.myshopnet.auth.UserAccount;
 import com.myshopnet.data.Data;
 import com.myshopnet.repository.UserAccountRepository;
 import com.myshopnet.utils.PasswordUtil;
+import com.myshopnet.utils.Singletons;
 
 import java.util.List;
 
 public class UserAccountService {
-    private final UserAccountRepository userAccountRepository = new UserAccountRepository();
+    private final UserAccountRepository userAccountRepository = Singletons.USER_ACCOUNT_REPO;
 
     public List<UserAccount> getAllUserAccounts() {
         return userAccountRepository.getAll();

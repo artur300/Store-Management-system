@@ -10,10 +10,11 @@ import com.myshopnet.logs.LoggerImpl;
 import com.myshopnet.models.User;
 import com.myshopnet.repository.UserAccountRepository;
 import com.myshopnet.utils.PasswordUtil;
+import com.myshopnet.utils.Singletons;
 
 public class AuthService {
-    private final UserAccountRepository userAccountRepository = new UserAccountRepository();
-    private final UserAccountService userAccountService = new UserAccountService();
+    private UserAccountRepository userAccountRepository = Singletons.USER_ACCOUNT_REPO;
+    private UserAccountService userAccountService = Singletons.USER_ACCOUNT_SERVICE;
 
     public synchronized UserAccount registerAccount(String username, String password, User user) {
         if (userAccountService.usernameTaken(username)) {

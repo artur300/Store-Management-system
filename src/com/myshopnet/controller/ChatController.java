@@ -13,9 +13,9 @@ import com.myshopnet.utils.GsonSingleton;
 
 public class ChatController {
     private Gson gson = GsonSingleton.getInstance();
-    private ChatService chatService = new ChatService();
-    private AuthService authService = new AuthService();
-    private UserAccountService userAccountService = new UserAccountService();
+    private ChatService chatService = com.myshopnet.utils.Singletons.CHAT_SERVICE;
+    private AuthService authService = com.myshopnet.utils.Singletons.AUTH_SERVICE;
+    private UserAccountService userAccountService = com.myshopnet.utils.Singletons.USER_ACCOUNT_SERVICE;
 
     public String startChat(String userIdRequesting, String branchId) {
         Chat chatToReturn;
