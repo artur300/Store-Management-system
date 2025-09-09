@@ -69,7 +69,7 @@ public class AuthService {
     }
 
     public synchronized boolean isLoggedIn(UserAccount userAccount) {
-        UserAccount loggedUserAccount = Data.getOnlineAccounts().get(String.valueOf(userAccount.getUser().getUserId()));
+        UserAccount loggedUserAccount = Data.getOnlineAccounts().get(userAccount.getUsername());
 
         return loggedUserAccount != null;
     }

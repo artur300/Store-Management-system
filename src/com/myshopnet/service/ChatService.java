@@ -72,7 +72,7 @@ public class ChatService {
             branchService.addEmployeeToWaitingBranchQueue(branch.getId(), employeeRequesting);
         }
         else {
-           chatToInitiate =  createChat(employeeRequesting, employeeAvailableToChat);
+           chatToInitiate = createChat(employeeRequesting, employeeAvailableToChat);
         }
 
         return Optional.ofNullable(chatToInitiate);
