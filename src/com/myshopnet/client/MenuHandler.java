@@ -3,6 +3,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.myshopnet.client.utils.UIUtils;
 import com.myshopnet.utils.GsonSingleton;
+import com.google.gson.JsonParser;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -78,6 +79,9 @@ public class MenuHandler {
                 }
                 break;
             }
+            case 7:
+                showBranchInfo();
+                break;
             case 0:
                 logout();
                 break;
@@ -104,4 +108,29 @@ public class MenuHandler {
             keepRunning = false;
         }
     }
+    private void showBranchInfo() {
+        Map<String, String> branchRequest = new HashMap<>();
+        branchRequest.put("branchId", currentUser.get("branchId").getAsString());
+
+        Request request = new Request("getBranchByBranchId", gson.toJson(branchRequest));
+        JsonObject response = client.sendRequest(request);
+
+        if (response != null && response.get("success").getAsBoolean()) {
+            String branchData = response.get("message").getAsString();
+
+
+            JsonObject branchJson = JsonParser.parseString(branchData).getAsJsonObject();
+
+            UIUtils.printMenuHeader("BRANCH INFORMATION");
+            System.out.println("Branch ID: " + branchJson.get("id").getAsString());
+            System.out.println("Branch Name: " + branchJson.get("name").getAsString());
+            UIUtils.waitForEnter(scanner);
+        }
+     else {
+        String error = response != null ? response.get("message").getAsString() : "Unknown error";
+        UIUtils.showError("Failed to get branch info: " + error);
+        UIUtils.waitForEnter(scanner);
+    }
+    }
+
 }
