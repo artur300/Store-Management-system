@@ -1,7 +1,7 @@
 package com.myshopnet.models;
 
 public class Employee implements User {
-    private final Role role = Role.EMPLOYEE;
+    protected Role role;
     private String userId;
     private Long accountNumber;
     private String branchId;
@@ -16,6 +16,7 @@ public class Employee implements User {
         this.employeeType = employeeType;
         this.employeeNumber = employeeNumber;
         this.employeeStatus = EmployeeStatus.AVAILABLE;
+        this.role = Role.EMPLOYEE;
     }
 
     @Override

@@ -21,15 +21,17 @@ public class AuthService {
             throw new IllegalStateException("Username already in use, please try again with a different one");
         }
 
-        UserAccount userAccount = userAccountRepository.get(user.getUserId());;
+        UserAccount userAccount = null;
 
-        if(userAccount != null && Data.getPasswordPolicy().isValid(password)) {
-            userAccount = new UserAccount(username, password, user);
+        try {
+            if (Data.getPasswordPolicy().isValid(password)) {
+                userAccount = new UserAccount(username, password, user);
 
-            userAccountRepository.create(userAccount);
+                userAccountRepository.create(userAccount);
+            }
         }
-        else {
-            throw new IllegalArgumentException("Password is not strong enough");
+        catch (Exception e) {
+            throw new IllegalArgumentException(e.getMessage());
         }
 
         return userAccount;

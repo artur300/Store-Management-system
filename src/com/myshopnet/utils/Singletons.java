@@ -20,6 +20,7 @@ public final class Singletons {
     public static final ProductRepository PRODUCT_REPO = new ProductRepository();
     public static final UserAccountRepository USER_ACCOUNT_REPO = new UserAccountRepository();
 
+    public static final UserAccountService USER_ACCOUNT_SERVICE = new UserAccountService();
     public static final AuthService AUTH_SERVICE = new AuthService();
     public static final BranchService BRANCH_SERVICE = new BranchService();
     public static final ChatService CHAT_SERVICE = new ChatService();
@@ -28,7 +29,6 @@ public final class Singletons {
     public static final OrderService ORDER_SERVICE = new OrderService();
     public static final ProductService PRODUCT_SERVICE = new ProductService();
     public static final StockService STOCK_SERVICE = new StockService();
-    public static final UserAccountService USER_ACCOUNT_SERVICE = new UserAccountService();
 
     public static final AuthController AUTH_CONTROLLER = new AuthController();
     public static final BranchController BRANCH_CONTROLLER = new BranchController();

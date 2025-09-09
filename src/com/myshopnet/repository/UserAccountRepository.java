@@ -10,7 +10,7 @@ public class UserAccountRepository implements Repository<UserAccount> {
 
     @Override
     public UserAccount create(UserAccount userAccount) {
-        return update(userAccount.getUser().getUserId(), userAccount);
+        return Data.getAllAccounts().put(userAccount.getUsername(), userAccount);
     }
 
     @Override

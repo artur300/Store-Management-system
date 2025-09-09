@@ -34,7 +34,6 @@ public class MenuHandler {
     private void displayMainMenu() {
         UIUtils.printMenuHeader("MAIN MENU - " + currentUser.get("employeeType").getAsString());
         UIUtils.printLine("Branch: " + currentUser.get("branchId").getAsString());
-        UIUtils.printLine("User: " + currentUser.get("fullName").getAsString());
         UIUtils.printEmptyLine();
 
         UIUtils.printMenuOption(1, "Inventory Management");
@@ -42,7 +41,7 @@ public class MenuHandler {
         UIUtils.printMenuOption(3, "Chat System");
         UIUtils.printMenuOption(4, "System Logs");
 
-        if (currentUser.get("employeeType").getAsString().equals("ADMIN")) {
+        if (currentUser.get("role").getAsString().equals("ADMIN")) {
             UIUtils.printMenuOption(5, "Admin Panel");
             UIUtils.printMenuOption(6, "Employee Management");
         }

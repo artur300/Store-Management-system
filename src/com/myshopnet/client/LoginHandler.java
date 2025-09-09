@@ -2,6 +2,7 @@ package com.myshopnet.client;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import com.myshopnet.client.utils.UIUtils;
 
 import java.util.HashMap;
@@ -37,7 +38,9 @@ public class LoginHandler {
             JsonObject response = client.sendRequest(request);
 
             if (response != null && response.get("success").getAsBoolean()) {
-                return parseLoginResponse(response.getAsJsonObject("message"));
+                JsonObject responseObject = JsonParser.parseString(response.get("message").getAsString()).getAsJsonObject();
+
+                return parseLoginResponse(responseObject);
             }
             else if (response != null && !response.get("success").getAsBoolean()) {
                 attempts++;

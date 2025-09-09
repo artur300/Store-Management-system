@@ -7,7 +7,9 @@ import java.util.List;
 public class BranchRepository implements Repository<Branch> {
     @Override
     public Branch create(Branch branch) {
-        return Data.getBranches().put(branch.getId(), branch);
+        Data.getBranches().put(branch.getId(), branch);
+
+        return Data.getBranches().get(branch.getId());
     }
 
     @Override
