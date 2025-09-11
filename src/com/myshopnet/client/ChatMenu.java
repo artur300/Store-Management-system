@@ -1,40 +1,32 @@
 package com.myshopnet.client;
-import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
 import com.myshopnet.client.utils.UIUtils;
-import com.myshopnet.models.Branch;
 
 import java.util.*;
 import java.util.concurrent.*;
 
-public class ChatHandler {
-    private final Gson gson = new Gson();
-
-    private Client client;
-    private JsonObject currentUser;
+public class ChatMenu implements Menu {
     private Scanner scanner;
     private boolean inChat = false;
     private String currentChatId = null;
     private ExecutorService chatExecutor;
 
-    public ChatHandler(Client client, JsonObject currentUser) {
-        this.client = client;
-        this.currentUser = currentUser;
-        this.scanner = client.getScanner();
+    public ChatMenu() {
+        this.scanner = Singletons.CLIENT.getScanner();
         this.chatExecutor = Executors.newSingleThreadExecutor();
     }
 
-    public void showChatMenu() {
+    public void show() {
         while (true) {
             UIUtils.printMenuHeader("CHAT SYSTEM");
             UIUtils.printLine("Inter-branch communication");
             UIUtils.printEmptyLine();
 
             UIUtils.printMenuOption(1, "Start New Chat");
-            if (currentUser.get("employeeType").getAsString().equals("SHIFT_MANAGER")) {
+            if (Auth.getCurrentUser().get("employeeType").getAsString().equals("SHIFT_MANAGER")) {
                 UIUtils.printMenuOption(2, "Join Existing Chat");
             }
             UIUtils.printMenuOption(4, "Chat History");
@@ -49,7 +41,7 @@ public class ChatHandler {
                     startNewChat();
                     break;
                 case 2:
-                    if (currentUser.get("employeeType").getAsString().equals("SHIFT_MANAGER")) {
+                    if (Auth.getCurrentUser().get("employeeType").getAsString().equals("SHIFT_MANAGER")) {
                         joinExistingChat();
                     }
                     break;
@@ -69,12 +61,12 @@ public class ChatHandler {
         Map<String, String> requestMap = new HashMap<>();
         UIUtils.printMenuHeader("START NEW CHAT");
 
-        String userId = currentUser.get("userId").getAsString();
+        String userId = Auth.getCurrentUser().get("userId").getAsString();
         requestMap.put("userId", userId);
 
         // Load branches to choose from
-        Request request = new Request("getAllBranches", gson.toJson(requestMap));
-        JsonObject response = client.sendRequest(request);
+        Request request = new Request("getAllBranches", Singletons.GSON.toJson(requestMap));
+        JsonObject response = Singletons.CLIENT.sendRequest(request);
 
         if (response == null) {
             UIUtils.showError("Connection error while loading branches");
@@ -89,8 +81,8 @@ public class ChatHandler {
                 requestMapToChat.put("userIdRequesting", userId);
                 requestMapToChat.put("branchId", chosenBranchId);
 
-                Request requestToChat = new Request("startChat", gson.toJson(requestMapToChat));
-                JsonObject chatResponse = client.sendRequest(requestToChat);
+                Request requestToChat = new Request("startChat", Singletons.GSON.toJson(requestMapToChat));
+                JsonObject chatResponse = Singletons.CLIENT.sendRequest(requestToChat);
 
                 if (chatResponse != null && chatResponse.get("success").getAsBoolean()) {
                     // message might be a JSON object (chat) or a string (queued info)
@@ -112,7 +104,7 @@ public class ChatHandler {
                         // In case message is a JSON string containing the chat JSON, attempt to parse
                         try {
                             String msgStr = chatResponse.get("message").getAsString();
-                            JsonObject chatObj = gson.fromJson(msgStr, JsonObject.class);
+                            JsonObject chatObj = Singletons.GSON.fromJson(msgStr, JsonObject.class);
                             if (chatObj != null && chatObj.has("id")) {
                                 String chatId = chatObj.get("id").getAsString();
                                 UIUtils.showSuccess("Chat started! ID: " + chatId);
@@ -234,10 +226,10 @@ public class ChatHandler {
     private void exitChat() {
         try {
             JsonObject data = new JsonObject();
-            data.addProperty("userId", currentUser.get("userId").getAsString());
+            data.addProperty("userId", Auth.getCurrentUser().get("userId").getAsString());
             data.addProperty("chatId", currentChatId);
-            Request req = new Request("endChat", gson.toJson(data));
-            client.sendRequest(req);
+            Request req = new Request("endChat", Singletons.GSON.toJson(data));
+            Singletons.CLIENT.sendRequest(req);
         } catch (Exception ignored) {}
         inChat = false;
         UIUtils.showInfo("You have left the chat.");
@@ -248,7 +240,7 @@ public class ChatHandler {
     }
 
     private void joinExistingChat() {
-        if (!currentUser.get("employeeType").getAsString().equals("SHIFT_MANAGER")) {
+        if (!Auth.getCurrentUser().get("employeeType").getAsString().equals("SHIFT_MANAGER")) {
             UIUtils.showError("Only shift managers can join existing chats");
             UIUtils.waitForEnter(scanner);
             return;

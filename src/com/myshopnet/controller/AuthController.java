@@ -51,11 +51,12 @@ public class AuthController {
         return gson.toJson(response);
     }
 
-    public String logout(String userId) {
+    public String logout(String username) {
         Response response = new Response();
-        UserAccount user = userAccountService.getUserAccount(userId);
 
         try {
+            UserAccount user = userAccountService.getUserAccount(username);
+
             authService.logout(user);
 
             response.setSuccess(true);

@@ -48,9 +48,9 @@ public class RequestHandler {
                 }
 
                 case "logout": {
-                    String userId = json.get("userId").getAsString();
+                    String username = json.get("username").getAsString();
 
-                    response = authController.logout(userId);
+                    response = authController.logout(username);
                     break;
                 }
 
@@ -94,10 +94,13 @@ public class RequestHandler {
                 }
 
                 case "createCustomer": {
+                    String username = json.get("username").getAsString();
+                    String password = json.get("password").getAsString();
                     String fullName = json.get("fullName").getAsString();
                     String passportId = json.get("passportId").getAsString();
                     String phoneNumber = json.get("phoneNumber").getAsString();
-                    response = customerController.createCustomer(fullName, passportId, phoneNumber);
+
+                    response = customerController.createCustomer(username, password, fullName, passportId, phoneNumber);
                     break;
                 }
 

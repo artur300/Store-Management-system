@@ -15,12 +15,12 @@ public class UserAccountService {
         return userAccountRepository.getAll();
     }
 
-    public UserAccount getUserAccount(String userId) {
-        return userAccountRepository.get(userId);
+    public UserAccount getUserAccount(String username) {
+        return userAccountRepository.get(username);
     }
 
     public synchronized boolean accountAlreadyExists(UserAccount userAccount) {
-        return userAccountRepository.get(userAccount.getUser().getUserId()) != null;
+        return userAccountRepository.get(userAccount.getUsername()) != null;
     }
 
     public synchronized boolean usernameTaken(String username) {

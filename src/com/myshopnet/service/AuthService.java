@@ -38,7 +38,7 @@ public class AuthService {
     }
 
     public synchronized UserAccount loginUser(String username, String password) {
-        UserAccount userAccount = userAccountRepository.get(username, password);
+        UserAccount userAccount = userAccountRepository.get(username);
 
         if (userAccount == null) {
             throw new AuthException("User not found");
@@ -61,7 +61,7 @@ public class AuthService {
             throw new AuthException("User not found");
         }
 
-        if (isLoggedIn(userAccount)) {
+        if (!isLoggedIn(userAccount)) {
             throw new AuthException("Not logged in");
         }
 

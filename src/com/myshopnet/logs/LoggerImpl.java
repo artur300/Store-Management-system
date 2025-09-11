@@ -31,7 +31,7 @@ public final class LoggerImpl implements Logger {
         String line = "[" + fmt.format(LocalDateTime.now()) + "] "
                 + ev.getType() + " - " + ev.getMessage();
         out.println(line);
-        System.out.println(line); // גם לקונסול
+        System.out.println(line);
     }
 }
 

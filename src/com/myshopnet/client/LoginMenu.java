@@ -1,6 +1,5 @@
 package com.myshopnet.client;
 
-import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.myshopnet.client.utils.UIUtils;
@@ -9,15 +8,18 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
 
-public class LoginHandler {
-    private final Gson gson = new Gson();
+public class LoginMenu implements Menu {
+    private String username, password;
 
-    private Client client;
     private Scanner scanner;
 
-    public LoginHandler(Client client) {
-        this.client = client;
-        this.scanner = client.getScanner();
+    public LoginMenu() {
+        this.scanner =  Singletons.CLIENT.getScanner();
+    }
+
+    public void show() {
+         username = UIUtils.getStringInput(scanner, "Username: ");
+         password = UIUtils.getStringInput(scanner, "Password: ");
     }
 
     public JsonObject handleLogin() {
@@ -26,16 +28,15 @@ public class LoginHandler {
         Map<String, String> loginRequest = new HashMap<>();
 
         while (attempts < maxAttempts) {
-            UIUtils.printMenuHeader("USER LOGIN");
+            show();
 
-            String username = UIUtils.getStringInput(scanner, "Username: ");
-            String password = UIUtils.getStringInput(scanner, "Password: ");
+            UIUtils.printMenuHeader("USER LOGIN");
 
             loginRequest.put("username", username);
             loginRequest.put("password", password);
 
-            Request request = new Request("login", gson.toJson(loginRequest));
-            JsonObject response = client.sendRequest(request);
+            Request request = new Request("login", Singletons.GSON.toJson(loginRequest));
+            JsonObject response =  Singletons.CLIENT.sendRequest(request);
 
             if (response != null && response.get("success").getAsBoolean()) {
                 JsonObject responseObject = JsonParser.parseString(response.get("message").getAsString()).getAsJsonObject();
@@ -61,7 +62,6 @@ public class LoginHandler {
     private JsonObject parseLoginResponse(JsonObject response) {
         try {
             if (response != null) {
-                String username = response.get("username").getAsString();
                 JsonObject user = response.getAsJsonObject("user");
 
                 if (user == null) {
@@ -70,6 +70,8 @@ public class LoginHandler {
 
                 UIUtils.showSuccess("Welcome, " + username + "!");
                 UIUtils.waitForEnter(scanner);
+                Auth.setCurrentUser(user);
+                Auth.setUsername(response.get("username").getAsString());
 
                 return user;
             }

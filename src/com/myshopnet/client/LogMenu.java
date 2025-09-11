@@ -826,24 +826,17 @@ public class LogHandler {
 */
 
 package com.myshopnet.client;
-import com.google.gson.Gson;
-import com.google.gson.JsonObject;
 import com.myshopnet.client.utils.UIUtils;
 import java.util.*;
 
-public class LogHandler {
-    private final Gson gson = new Gson();
-    private Client client;
-    private JsonObject currentUser;
+public class LogMenu implements Menu {
     private Scanner scanner;
 
-    public LogHandler(Client client, JsonObject currentUser) {
-        this.client = client;
-        this.currentUser = currentUser;
-        this.scanner = client.getScanner();
+    public LogMenu() {
+        this.scanner = Singletons.CLIENT.getScanner();
     }
 
-    public void showLogMenu() {
+    public void show() {
         UIUtils.printMenuHeader("SYSTEM LOGS");
         UIUtils.showInfo("Logs UI is not implemented in this client build.");
         UIUtils.waitForEnter(scanner);

@@ -8,18 +8,18 @@ import com.myshopnet.client.utils.UIUtils;
 
 import java.io.*;
 import java.net.*;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Scanner;
 
 public class Client {
     private static final String SERVER_HOST = "localhost";
     private static final int SERVER_PORT = 8080;
-    private final Gson gson = new Gson();
 
     private Socket socket;
     private BufferedReader in;
     private PrintWriter out;
     private Scanner scanner;
-    private JsonObject currentUser;
     private UserTypeLoggedIn currentUserType = UserTypeLoggedIn.NONE;
     private boolean isConnected = false;
     private PushClient pushClient = new PushClient();
@@ -33,7 +33,7 @@ public class Client {
             connectToServer();
             showWelcomeScreen();
             loginProcess();
-            if (currentUser != null) {
+            if (Auth.getCurrentUser() != null) {
                 showMainMenu();
             }
         } catch (Exception e) {
@@ -61,13 +61,15 @@ public class Client {
     }
 
     private void loginProcess() {
-        LoginHandler loginHandler = new LoginHandler(this);
-        currentUser = loginHandler.handleLogin();
+        Singletons.REGISTER_MENU.show();
 
-        if (currentUser == null) return;
-        currentUserType = UserTypeLoggedIn.valueOf(currentUser.get("role").getAsString());
+        if (Auth.getCurrentUser() == null) {
+            return;
+        }
 
-        String userId = currentUser.get("userId").getAsString();
+        Auth.setCurrentUserType(UserTypeLoggedIn.valueOf(Auth.getCurrentUser().get("role").getAsString()));
+        String userId = Auth.getCurrentUser().get("userId").getAsString();
+
         pushClient.start(userId, evt -> {
             try {
                 String type = evt.has("type") ? evt.get("type").getAsString() : "";
@@ -78,16 +80,38 @@ public class Client {
                 }
             } catch (Exception ignored) { }
         });
+
+        showMenuAccordingToUser();
+    }
+
+    public void showMenuAccordingToUser() {
+        switch (Auth.getCurrentUserType()) {
+            case ADMIN:
+                Singletons.ADMIN_MENU.show();
+                break;
+
+            case EMPLOYEE:
+                Singletons.EMPLOYEE_MENU.show();
+                break;
+
+            case CUSTOMER:
+                Singletons.CUSTOMER_MENU.show();
+                break;
+        }
     }
 
     private void showMainMenu() {
-        MenuHandler menuHandler = new MenuHandler(this, currentUser);
-        menuHandler.showMainMenu();
+        MainMenu menuHandler = new MainMenu();
+        menuHandler.show();
+    }
+
+    public UserTypeLoggedIn getCurrentUserType() {
+        return currentUserType;
     }
 
     public synchronized JsonObject sendRequest(Request request) {
         try {
-            String requestJson = gson.toJson(request);
+            String requestJson = Singletons.GSON.toJson(request);
             out.println(requestJson);
             out.flush();
 
@@ -121,14 +145,6 @@ public class Client {
         return scanner;
     }
 
-    public JsonObject getCurrentUser() {
-        return currentUser;
-    }
-
-    public void setCurrentUser(JsonObject user) {
-        this.currentUser = user;
-    }
-
     public boolean isConnected() {
         return isConnected;
     }
@@ -142,6 +158,27 @@ public class Client {
             if (scanner != null) scanner.close();
         } catch (IOException e) {
             System.err.println("Error during cleanup: " + e.getMessage());
+        }
+    }
+
+    public void logout() {
+        if (Auth.getCurrentUser() != null) {
+            Map<String, String> requestMap = new HashMap<>();
+
+            requestMap.put("username", Auth.getUsername());
+            Request request = new Request("logout", Singletons.GSON.toJson(requestMap));
+            JsonObject response = sendRequest(request);
+
+            if (response != null && response.get("success").getAsBoolean()) {
+                UIUtils.showSuccess("Logged out successfully!");
+                UIUtils.clearScreen();
+
+                Singletons.REGISTER_MENU.show();
+            }
+            else {
+                String error = response != null ? response.get("message").getAsString() : "Can't log out";
+                UIUtils.showError(error);
+            }
         }
     }
 }

@@ -1,10 +1,8 @@
 package com.myshopnet.models;
 
 public class NewCustomer extends Customer {
-    private final Role role = Role.NEW_CUSTOMER;
-
     public NewCustomer(String id,String passportId, String fullName, String phone) {
-        super(id,passportId, fullName, phone);
+        super(id,passportId, fullName, phone, CustomerType.NEW_CUSTOMER);
     }
 
     @Override

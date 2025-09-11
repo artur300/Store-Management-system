@@ -12,11 +12,13 @@ import java.util.UUID;
 public class CustomerService {
     private OrderRepository orderRepository = Singletons.ORDER_REPO;
     private CustomerRepository customerRepository = Singletons.CUSTOMER_REPO;
+    private AuthService authService = Singletons.AUTH_SERVICE;
 
-    public Customer createCustomer(String fullName, String passportId, String phoneNumber) {
+    public Customer createCustomer(String username, String password, String fullName, String passportId, String phoneNumber) {
         Customer newCustomer = new NewCustomer(UUID.randomUUID().toString(), passportId, phoneNumber, fullName);
 
-        customerRepository.create(newCustomer);
+        authService.registerAccount(username, password, newCustomer);
+
         return newCustomer;
     }
     public Customer getCustomer(String customerId) {
@@ -26,9 +28,11 @@ public class CustomerService {
         }
         return customer;
     }
+
     public List<Customer> getAllCustomers() {
         return customerRepository.getAll();
     }
+
     public Customer updateCustomer(String customerId, Customer updatedCustomer) {
         Customer existingCustomer = customerRepository.get(customerId);
         if (existingCustomer == null) {
@@ -56,10 +60,12 @@ public class CustomerService {
         }
 
         if (amountOfOrders > 1 && amountOfOrders < 10 && customer instanceof NewCustomer) {
+            customer.setCustomerType(CustomerType.RETURNING_CUSTOMER);
             customer = new ReturningCustomer(customer);
         }
 
         if (amountOfOrders > 10 && customer instanceof ReturningCustomer) {
+            customer.setCustomerType(CustomerType.VIP_CUSTOMER);
             customer = new VipCustomer(customer);
         }
 

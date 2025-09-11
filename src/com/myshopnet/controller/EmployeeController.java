@@ -1,6 +1,8 @@
 package com.myshopnet.controller;
 
 import com.google.gson.Gson;
+import com.myshopnet.data.Data;
+import com.myshopnet.models.EmployeeType;
 import com.myshopnet.service.EmployeeService;
 import com.myshopnet.service.AuthService;
 import com.myshopnet.service.UserAccountService;
@@ -11,13 +13,14 @@ import com.myshopnet.auth.UserAccount;
 import com.myshopnet.server.Response;
 import com.myshopnet.errors.EntityNotFoundException;
 import com.myshopnet.utils.GsonSingleton;
+import com.myshopnet.utils.Singletons;
+
 import java.util.List;
 
 public class EmployeeController {
     private EmployeeService employeeService = com.myshopnet.utils.Singletons.EMPLOYEE_SERVICE;
     private Gson gson = GsonSingleton.getInstance();
     private BranchService branchService = com.myshopnet.utils.Singletons.BRANCH_SERVICE;
-    private AuthService authService = com.myshopnet.utils.Singletons.AUTH_SERVICE;
     private UserAccountService userAccountService = com.myshopnet.utils.Singletons.USER_ACCOUNT_SERVICE;
 
     public String addEmployee(String currentUserID, Long accountNumber, String branchId,
@@ -28,18 +31,20 @@ public class EmployeeController {
         try {
             UserAccount currentUserAccount = userAccountService.getUserAccount(currentUserID);
 
-            if (currentUserAccount == null || !(currentUserAccount.getUser() instanceof Admin)) {
-                response.setSuccess(false);
-                response.setMessage("User is not Admin");
+            if (Data.getOnlineAccounts().get(currentUserAccount.getUsername()) == null) {
+                throw new SecurityException("Not logged in");
             }
-            else
-            {
-                Employee employee = employeeService.addEmployee(accountNumber, branchId, employeeType, employeeNumber);
-                authService.registerAccount(username,password,employee);
 
-                response.setSuccess(true);
-                response.setMessage("Employee added successfully");}
+            if (!(currentUserAccount.getUser() instanceof Admin)) {
+                throw new SecurityException("No permission to access this operation");
+            }
 
+            Employee employee = employeeService.addEmployee(username, password,
+                    accountNumber, branchId, EmployeeType.valueOf(employeeType), employeeNumber);
+            UserAccount userAccount = userAccountService.getUserAccount(employee.getUserId());
+
+            response.setSuccess(true);
+            response.setMessage(gson.toJson(userAccount));
         }
         catch(Exception e) {
             response.setSuccess(false);
@@ -57,16 +62,15 @@ public class EmployeeController {
 
             if (employee == null)
             {
-                response.setSuccess(false);
-                response.setMessage("Employee not found");
+                throw new SecurityException("Employee not found");
             }
-            else {
-                response.setSuccess(true);
-                response.setMessage(gson.toJson(employee));
-            }
-        } catch (Exception e) {
+
+            response.setSuccess(true);
+            response.setMessage(gson.toJson(employee));
+        }
+        catch (Exception e) {
             response.setSuccess(false);
-            response.setMessage("Failed to set employee");
+            response.setMessage(e.getMessage());
         }
         return gson.toJson(response);
     }

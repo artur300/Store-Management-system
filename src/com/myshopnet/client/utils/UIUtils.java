@@ -94,7 +94,6 @@ public class UIUtils {
     public static void printTable(String[] headers, List<String[]> rows) {
         if (headers == null || rows == null) return;
 
-        // Calculate column widths
         int[] widths = new int[headers.length];
         for (int i = 0; i < headers.length; i++) {
             widths[i] = headers[i].length();

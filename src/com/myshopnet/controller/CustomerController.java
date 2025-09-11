@@ -1,24 +1,30 @@
 package com.myshopnet.controller;
 import com.google.gson.Gson;
+import com.myshopnet.auth.UserAccount;
 import com.myshopnet.server.Response;
+import com.myshopnet.service.AuthService;
 import com.myshopnet.service.CustomerService;
 import com.myshopnet.models.Customer;
 import java.util.List;
-import com.myshopnet.errors.EntityNotFoundException;
+
+import com.myshopnet.service.UserAccountService;
 import com.myshopnet.utils.GsonSingleton;
+import com.myshopnet.utils.Singletons;
 
 public class CustomerController {
     private Gson gson = GsonSingleton.getInstance();
-    private CustomerService customerService = com.myshopnet.utils.Singletons.CUSTOMER_SERVICE;
+    private CustomerService customerService = Singletons.CUSTOMER_SERVICE;
+    private UserAccountService userAccountService = Singletons.USER_ACCOUNT_SERVICE;
 
-    public String createCustomer(String fullName, String passportId, String phoneNumber) {
+    public String createCustomer(String username, String password, String fullName, String passportId, String phoneNumber) {
         Response response = new Response();
 
         try {
-            Customer customer = customerService.createCustomer(fullName, passportId, phoneNumber);
+            customerService.createCustomer(username, password, fullName, passportId, phoneNumber);
+            UserAccount userAccount = userAccountService.getUserAccount(username);
 
             response.setSuccess(true);
-            response.setMessage(gson.toJson(customer));
+            response.setMessage(gson.toJson(userAccount));
         } catch (Exception e) {
             response.setSuccess(false);
             response.setMessage(e.getMessage());

@@ -1,10 +1,8 @@
 package com.myshopnet.models;
 
 public class ReturningCustomer extends Customer {
-    private final Role role = Role.RETURNING_CUSTOMER;
-
     public ReturningCustomer(String id,String passportId, String fullName, String phone) {
-        super(id, passportId ,fullName, phone);
+        super(id, passportId ,fullName, phone, CustomerType.RETURNING_CUSTOMER);
     }
 
     public ReturningCustomer(Customer customer) {

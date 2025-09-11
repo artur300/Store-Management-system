@@ -25,10 +25,10 @@ public final class Singletons {
     public static final BranchService BRANCH_SERVICE = new BranchService();
     public static final ChatService CHAT_SERVICE = new ChatService();
     public static final CustomerService CUSTOMER_SERVICE = new CustomerService();
-    public static final EmployeeService EMPLOYEE_SERVICE = new EmployeeService();
     public static final OrderService ORDER_SERVICE = new OrderService();
     public static final ProductService PRODUCT_SERVICE = new ProductService();
     public static final StockService STOCK_SERVICE = new StockService();
+    public static final EmployeeService EMPLOYEE_SERVICE = new EmployeeService();
 
     public static final AuthController AUTH_CONTROLLER = new AuthController();
     public static final BranchController BRANCH_CONTROLLER = new BranchController();

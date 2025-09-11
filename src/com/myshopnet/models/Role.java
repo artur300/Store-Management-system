@@ -8,12 +8,6 @@ public enum Role {
     @SerializedName("ADMIN")
     ADMIN,
     @SerializedName("CUSTOMER")
-    CUSTOMER,
-    @SerializedName("NEW_CUSTOMER")
-    NEW_CUSTOMER,
-    @SerializedName("VIP_CUSTOMER")
-    VIP_CUSTOMER,
-    @SerializedName("RETURNING_CUSTOMER")
-    RETURNING_CUSTOMER
+    CUSTOMER
 }
 
