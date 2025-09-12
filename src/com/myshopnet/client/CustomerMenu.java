@@ -36,10 +36,8 @@ public class CustomerMenu implements Menu {
             switch (choice) {
                 case 1:
                     showCustomerPlanDetails();
-                    break;
                 case 2:
                     addItemsToCart();
-                    break;
                 case 3:
                     viewPurchaseHistory();
                 case 4:
@@ -68,20 +66,66 @@ public class CustomerMenu implements Menu {
 
         int choice = UIUtils.getIntInput(scanner);
 
-        switch (choice) {
-            case 1:
-                buy();
-                break;
-            case 2:
-                show();
-                break;
-            default:
-                UIUtils.showError("Invalid choice. Please try again.");
-                UIUtils.waitForEnter(scanner);
+        try {
+            switch (choice) {
+                case 1:
+                    buy();
+                    break;
+                case 2:
+                    show();
+                    break;
+                default:
+                    UIUtils.showError("Invalid choice. Please try again.");
+                    UIUtils.waitForEnter(scanner);
+            }
+        }
+        catch (Exception e) {
+            UIUtils.showError(e.getMessage());
+            UIUtils.waitForEnter(scanner);
         }
     }
 
     private void buy() {
+        checkIfCartInStock();
+
+        Map<String, String> requestMap = new HashMap<>();
+
+        List<Map<String,String>> productSkuQuantity = new ArrayList<>();
+        Map<String, String> orderMap;
+
+        for (Map.Entry<String, Product> productEntry : cart.entrySet()) {
+            orderMap = new HashMap<>();
+
+            String sku = productEntry.getKey();
+            Integer quantity = productEntry.getValue().getQuantity();
+            String branchId = productEntry.getValue().getBranchId();
+
+            orderMap.put("sku", sku);
+            orderMap.put("quantity", quantity.toString());
+            orderMap.put("branchId", branchId);
+
+            productSkuQuantity.add(orderMap);
+        }
+
+        requestMap.put("customerId", Auth.getUsername());
+        requestMap.put("products", Singletons.GSON.toJson(productSkuQuantity));
+
+        Request request = new Request("performOrder", Singletons.GSON.toJson(requestMap));
+        JsonObject response = Singletons.CLIENT.sendRequest(request);
+
+        if (response.get("success").getAsBoolean()) {
+            UIUtils.showSuccess("Order processed successfully. Enjoy your clothes!");
+        }
+        else if (!response.get("success").getAsBoolean()) {
+            UIUtils.showError(response.get("message").getAsString());
+        }
+
+        cart = new HashMap<>();
+
+        UIUtils.waitForEnter(scanner);
+    }
+
+    private void checkIfCartInStock() {
         Map<String, String> requestMap = new HashMap<>();
 
         for (Map.Entry<String, Product> productEntry : cart.entrySet()) {
@@ -96,9 +140,9 @@ public class CustomerMenu implements Menu {
             Request request = new Request("checkIfProductInStockInBranch", Singletons.GSON.toJson(requestMap));
             JsonObject response = Singletons.CLIENT.sendRequest(request);
 
-            if (response.get("status").getAsBoolean()) {
-                if (!response.get("message").getAsBoolean()) {
-                    throw new RuntimeException("The product is not in stock.");
+            if (response.get("success").getAsBoolean()) {
+                if (!Boolean.parseBoolean(response.get("message").getAsString())) {
+                    throw new RuntimeException(String.format("The product %s is not in stock.", productEntry.getValue().getName()));
                 }
             }
             else {
@@ -107,11 +151,6 @@ public class CustomerMenu implements Menu {
 
             requestMap = new HashMap<>();
         }
-
-        //perform order now
-
-
-        cart = new HashMap<>();
     }
 
     private void showCustomerPlanDetails() {
@@ -142,7 +181,9 @@ public class CustomerMenu implements Menu {
        try {
            String branchIdChosen = getBranchPick();
            Product product = getProductPick(branchIdChosen);
+           UIUtils.printLine("Enter quantity: ");
            Integer quantity = UIUtils.getIntInput(scanner);
+           product.setQuantity(quantity);
 
            if (quantity <= 0) {
                throw new RuntimeException("Invalid quantity. Please try again.");
@@ -158,11 +199,12 @@ public class CustomerMenu implements Menu {
 
            cart.put(product.getSku(), product);
            UIUtils.printLine("Successfully added " + product.getSku() + " to the cart. Press enter to continue.");
-           UIUtils.waitForEnter(scanner);
        }
        catch (Exception e) {
            UIUtils.showError(e.getMessage());
        }
+
+       show();
     }
 
 
@@ -198,12 +240,12 @@ public class CustomerMenu implements Menu {
         UIUtils.printLine("Enter the branch you want to purchase from: ");
         int choice = UIUtils.getIntInput(scanner);
 
-        if (choice < 0 || choice > branchesId.size()) {
+        if (choice < 1 || choice > branchesId.size()) {
             UIUtils.showError("Invalid choice. Please try again.");
             return null;
         }
 
-        return branchesId.get(choice);
+        return branchesId.get(choice - 1);
     }
 
     private Product getProductPick(String branchIdChosen) {
@@ -238,11 +280,11 @@ public class CustomerMenu implements Menu {
             );
 
             productsActual.add(product);
-            UIUtils.printMenuOption(i++, String.format("%s. %s (%s) - $%s", i, b.get("name").getAsString(),
+            UIUtils.printMenuOption(i++, String.format("%s (%s) - $%s", b.get("name").getAsString(),
                     b.get("sku").getAsString() , b.get("price").getAsString()));
         }
 
-        UIUtils.printLine("Enter the branch you want to purchase from: ");
+        UIUtils.printLine("Enter the product you want to purchase: ");
         int choice = UIUtils.getIntInput(scanner);
 
         if (choice < 0 || choice > productsActual.size()) {
@@ -250,7 +292,7 @@ public class CustomerMenu implements Menu {
             return null;
         }
 
-        return productsActual.get(choice);
+        return productsActual.get(choice - 1);
     }
 
     private void renderCartMenu() {
@@ -258,7 +300,7 @@ public class CustomerMenu implements Menu {
         Double total = 0.0, discountTotal = 0.0;
 
         for (Product p : cart.values()) {
-            total += p.getPrice();
+            total += p.getPrice() * p.getQuantity();
 
             rows.add(new String[] { p.getSku(), p.getName(), String.valueOf(p.getQuantity()), String.valueOf(p.getPrice())});
         }

@@ -12,9 +12,9 @@ public class StockService {
     private BranchRepository branchRepository = Singletons.BRANCH_REPO;
     private ProductRepository productRepository = Singletons.PRODUCT_REPO;
 
-    public void updateProductStock(String branchId, String productId, Long quantity) {
+    public void updateProductStock(String branchId, String productSku, Long quantity) {
         Branch branch = branchRepository.get(branchId);
-        Product product = productRepository.get(productId);
+        Product product = productRepository.get(productSku);
 
         if (product == null) {
             throw new EntityNotFoundException("Product");

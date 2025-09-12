@@ -30,7 +30,7 @@ public class CustomerRepository implements Repository<Customer> {
 
     @Override
     public Customer get(String id) {
-        return Data.getCustomers().get(id);
+        return (Customer) Data.getAllAccounts().get(id).getUser();
     }
 
     @Override

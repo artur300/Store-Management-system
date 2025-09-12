@@ -6,7 +6,9 @@ import com.myshopnet.models.Employee;
 import com.myshopnet.utils.GsonSingleton;
 import com.myshopnet.utils.Singletons;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class RequestHandler {
@@ -178,18 +180,26 @@ public class RequestHandler {
                 }
 
                 case "performOrder": {
-                    String branchId = json.get("branchId").getAsString();
                     String customerId = json.get("customerId").getAsString();
                     JsonArray productsJson = JsonParser.parseString(json.get("products").getAsString()).getAsJsonArray();
-                    Map<String, Long> productsStock = new HashMap<>();
+                    List<Map<String, String>> productsStockBranches = new ArrayList<>();
 
                     for (JsonElement el : productsJson) {
-                        JsonObject product = el.getAsJsonObject();
+                        Map<String, String> productStockBranch = new HashMap<>();
 
-                        productsStock.put(product.get("productSku").getAsString(), product.get("quantity").getAsLong());
+                        JsonObject product = el.getAsJsonObject();
+                        String productSku = product.get("sku").getAsString();
+                        String branchId = product.get("branchId").getAsString();
+                        String quantity = product.get("quantity").getAsString();
+
+                        productStockBranch.put("productSku", productSku);
+                        productStockBranch.put("branchId", branchId);
+                        productStockBranch.put("quantity", quantity);
+
+                        productsStockBranches.add(productStockBranch);
                     }
 
-                    response = orderController.performOrder(productsStock, branchId, customerId);
+                    response = orderController.performOrder(productsStockBranches, customerId);
                     break;
                 }
 

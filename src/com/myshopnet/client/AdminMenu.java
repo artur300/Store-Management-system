@@ -226,7 +226,7 @@ public class AdminMenu implements Menu {
         }
     }
 
-    private String getBranchByBranchId(String branchId) {
+    public String getBranchByBranchId(String branchId) {
         Map<String, String> requestMap = new HashMap<>();
         String userId = Auth.getCurrentUser().get("userId").getAsString();
         String name = null;

@@ -5,17 +5,19 @@ import com.myshopnet.service.OrderService;
 import com.myshopnet.models.Order;
 import com.myshopnet.server.Response;
 import com.myshopnet.utils.GsonSingleton;
+
+import java.util.List;
 import java.util.Map;
 
 public class OrderController {
     private Gson gson = GsonSingleton.getInstance();
     private OrderService orderService = com.myshopnet.utils.Singletons.ORDER_SERVICE;
 
-    public String performOrder(Map<String, Long> mapOfProductsAndQuantities, String branchId, String customerId) {
+    public String performOrder(List<Map<String, String>> mapOfProductsQuantitiesBranches, String customerId) {
         Response response = new Response();
 
         try {
-            Order order = orderService.performOrder(mapOfProductsAndQuantities, branchId, customerId);
+            Order order = orderService.performOrder(mapOfProductsQuantitiesBranches, customerId);
 
             response.setSuccess(true);
             response.setMessage(gson.toJson(order));

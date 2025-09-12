@@ -56,7 +56,7 @@ public class PasswordPolicyMenu implements Menu {
         Map<String, String> requestMap = new HashMap();
         UIUtils.printMenuHeader("CURRENT PASSWORD POLICY");
 
-        requestMap.put("userId", Auth.getCurrentUser().get("userId").getAsString());
+        requestMap.put("userId", Auth.getUsername());
         Request request = new Request("viewPasswordPolicy", Singletons.GSON.toJson(requestMap));
         JsonObject response = Singletons.CLIENT.sendRequest(request);
 

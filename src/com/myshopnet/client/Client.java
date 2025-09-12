@@ -85,6 +85,8 @@ public class Client {
     }
 
     public void showMenuAccordingToUser() {
+        Auth.setCurrentUserType(UserTypeLoggedIn.valueOf(Auth.getCurrentUser().get("role").getAsString()));
+
         switch (Auth.getCurrentUserType()) {
             case ADMIN:
                 Singletons.ADMIN_MENU.show();

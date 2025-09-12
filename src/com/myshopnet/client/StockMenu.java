@@ -4,6 +4,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.myshopnet.client.utils.UIUtils;
+import com.myshopnet.models.Admin;
 
 import java.util.*;
 
@@ -34,7 +35,7 @@ public class StockMenu implements Menu {
     public void show() {
         while (true) {
             UIUtils.printMenuHeader("STOCK MANAGEMENT");
-            UIUtils.printLine("Branch: " + Auth.getCurrentUser().get("branchId").getAsString());
+            UIUtils.printLine("Branch: " + ((AdminMenu)Singletons.ADMIN_MENU).getBranchByBranchId(Auth.getCurrentUser().get("branchId").getAsString()));
             UIUtils.printEmptyLine();
 
             UIUtils.printMenuOption(1, "View Current Stock");

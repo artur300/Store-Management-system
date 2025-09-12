@@ -11,6 +11,7 @@ import com.myshopnet.repository.OrderRepository;
 import com.myshopnet.repository.ProductRepository;
 import com.myshopnet.utils.Singletons;
 
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -23,54 +24,68 @@ public class OrderService {
     private final CustomerRepository customerRepository = Singletons.CUSTOMER_REPO;
     private final StockService stockService = Singletons.STOCK_SERVICE;
 
-    public Order performOrder(Map<String, Long> mapOfProductsAndQuantities, String branchId, String customerId) {
-        Branch branch = branchRepository.get(branchId);
+    public Order performOrder(List<Map<String, String>> mapOfProductsAndQuantities, String customerId) {
         Customer customer = customerRepository.get(customerId);
         Double baseTotal = 0.0;
 
-        if (branch == null) {
-            throw new EntityNotFoundException("Branch");
+        if (mapOfProductsAndQuantities != null && mapOfProductsAndQuantities.isEmpty()) {
+            throw new RuntimeException("Nothing to perform order on.");
         }
 
-        for (Map.Entry<String, Long> productStock : mapOfProductsAndQuantities.entrySet()) {
-            String productId = productStock.getKey();
-            Long requestedQuantity = productStock.getValue();
+        if (customer == null) {
+            throw new EntityNotFoundException("Customer");
+        }
 
-            Product product = productRepository.get(productId);
+        for (Map<String, String> mapOfProducts : mapOfProductsAndQuantities) {
+            String productSku = mapOfProducts.get("productSku");
+            String branchId = mapOfProducts.get("branchId");
+            Long quantity = Long.valueOf(mapOfProducts.get("quantity"));
+
+            Branch branch = branchRepository.get(branchId);
+            Product product = productRepository.get(productSku);
+
+            if (branch == null) {
+                throw new EntityNotFoundException("Branch");
+            }
 
             if (product == null) {
                 throw new EntityNotFoundException("Product");
             }
 
-            Long currentStock = branch.getProductsStock().getStockOfProducts().get(product);
-            if (currentStock == null || currentStock < requestedQuantity) {
-                throw new StockException(product.getName());
+            if (branch.getProductsStock() == null || branch.getProductsStock().getStockOfProducts() == null) {
+                throw new EntityNotFoundException("Branch Stock");
+            }
+
+            if (branch.getProductsStock().getStockOfProducts().get(product) - quantity < 0) {
+                throw new StockException(String.format("Product %s has not enough stock", product.getName()));
             }
         }
 
-        for (Map.Entry<String, Long> productQuantity : mapOfProductsAndQuantities.entrySet()) {
-            String productId = productQuantity.getKey();
-            Long requestedQuantity = productQuantity.getValue();
 
-            Product product = productRepository.get(productId);
-            baseTotal += product.getPrice() * requestedQuantity;
+        for (Map<String, String> mapOfProducts : mapOfProductsAndQuantities) {
+            String productSku = mapOfProducts.get("productSku");
+            String branchId = mapOfProducts.get("branchId");
+            Long quantity = Long.valueOf(mapOfProducts.get("quantity"));
+
+            Branch branch = branchRepository.get(branchId);
+            Product product = productRepository.get(productSku);
+
+            baseTotal += product.getPrice() * quantity;
             Long currentStock = branch.getProductsStock().getStockOfProducts().get(product);
-            Long newStock = currentStock - requestedQuantity;
-
-            stockService.updateProductStock(branchId, productId, newStock);
+            Long newStock = currentStock - quantity;
+            Singletons.STOCK_SERVICE.updateProductStock(branchId, productSku, newStock);
         }
 
-        customerService.checkCustomerStatus(customerId);
+        Singletons.CUSTOMER_SERVICE.checkCustomerStatus(customerId);
 
         Order order = new Order(UUID.randomUUID().toString(),
-                branchId,
                 customerId,
                 baseTotal,
                 customer.calcBuyingStrategy(baseTotal),
                 mapOfProductsAndQuantities);
+
         orderRepository.create(order);
         Singletons.LOGGER.log(new LogEvent(LogType.PURCHASE,"Order Created"));
-
 
         return order;
     }
