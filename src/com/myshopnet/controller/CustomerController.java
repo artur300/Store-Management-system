@@ -1,6 +1,8 @@
 package com.myshopnet.controller;
 import com.google.gson.Gson;
 import com.myshopnet.auth.UserAccount;
+import com.myshopnet.logs.LogEvent;
+import com.myshopnet.logs.LogType;
 import com.myshopnet.server.Response;
 import com.myshopnet.service.AuthService;
 import com.myshopnet.service.CustomerService;
@@ -22,6 +24,7 @@ public class CustomerController {
         try {
             customerService.createCustomer(username, password, fullName, passportId, phoneNumber);
             UserAccount userAccount = userAccountService.getUserAccount(username);
+            Singletons.LOGGER.log(new LogEvent(LogType.CUSTOMER_REGISTERED,"Customer Created"));
 
             response.setSuccess(true);
             response.setMessage(gson.toJson(userAccount));

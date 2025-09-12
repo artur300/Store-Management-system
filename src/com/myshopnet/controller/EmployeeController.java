@@ -2,6 +2,8 @@ package com.myshopnet.controller;
 
 import com.google.gson.Gson;
 import com.myshopnet.data.Data;
+import com.myshopnet.logs.LogEvent;
+import com.myshopnet.logs.LogType;
 import com.myshopnet.models.EmployeeType;
 import com.myshopnet.service.EmployeeService;
 import com.myshopnet.service.AuthService;
@@ -43,6 +45,7 @@ public class EmployeeController {
                     accountNumber, branchId, EmployeeType.valueOf(employeeType), employeeNumber);
             UserAccount userAccount = userAccountService.getUserAccount(employee.getUserId());
 
+            Singletons.LOGGER.log(new LogEvent(LogType.EMPLOYEE_REGISTERED,"Employee Created"));
             response.setSuccess(true);
             response.setMessage(gson.toJson(userAccount));
         }

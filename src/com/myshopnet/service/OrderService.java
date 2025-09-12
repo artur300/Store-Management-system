@@ -2,6 +2,8 @@ package com.myshopnet.service;
 
 import com.myshopnet.errors.EntityNotFoundException;
 import com.myshopnet.errors.StockException;
+import com.myshopnet.logs.LogEvent;
+import com.myshopnet.logs.LogType;
 import com.myshopnet.models.*;
 import com.myshopnet.repository.BranchRepository;
 import com.myshopnet.repository.CustomerRepository;
@@ -67,6 +69,8 @@ public class OrderService {
                 customer.calcBuyingStrategy(baseTotal),
                 mapOfProductsAndQuantities);
         orderRepository.create(order);
+        Singletons.LOGGER.log(new LogEvent(LogType.PURCHASE,"Order Created"));
+
 
         return order;
     }
