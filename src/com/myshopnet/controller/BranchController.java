@@ -6,6 +6,7 @@ import com.myshopnet.errors.InsufficientPermissionsException;
 import com.myshopnet.models.Admin;
 import com.myshopnet.models.Branch;
 import com.myshopnet.models.Employee;
+import com.myshopnet.models.Product;
 import com.myshopnet.server.Response;
 import com.myshopnet.service.AuthService;
 import com.myshopnet.service.BranchService;
@@ -13,7 +14,10 @@ import com.myshopnet.service.StockService;
 import com.myshopnet.service.UserAccountService;
 import com.myshopnet.utils.GsonSingleton;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class BranchController {
     private Gson gson = GsonSingleton.getInstance();
@@ -55,16 +59,41 @@ public class BranchController {
         try {
             Branch branch = branchService.getBranchById(branchId);
 
-            response.setSuccess(true);
-            response.setMessage(gson.toJson(branch));
-        }
-        catch (Exception e) {
+            if (branch != null) {
+                Map<String, Object> branchData = new HashMap<>();
+                branchData.put("id", branch.getId());
+                branchData.put("name", branch.getName());
+
+
+                List<Map<String, Object>> stockList = new ArrayList<>();
+
+                for (Map.Entry<Product, Long> entry : branch.getProductsStock().getStockOfProducts().entrySet()) {
+                    Product product = entry.getKey();
+                    Long quantity = entry.getValue();
+
+                    Map<String, Object> stockItem = new HashMap<>();
+                    stockItem.put("sku", product.getSku());
+                    stockItem.put("name", product.getName());
+                    stockItem.put("price", product.getPrice());
+                    stockItem.put("quantity", quantity);
+
+                    stockList.add(stockItem);
+                }
+                branchData.put("stock", stockList);
+                response.setSuccess(true);
+                response.setMessage(gson.toJson(branchData));
+            } else {
+                response.setSuccess(false);
+                response.setMessage("Branch not found");
+            }
+        } catch (Exception e) {
             response.setSuccess(false);
             response.setMessage(e.getMessage());
         }
-
         return gson.toJson(response);
     }
+
+
 
     public String createBranch(String userId, String branchName) {
         Response response = new Response();

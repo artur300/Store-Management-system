@@ -22,7 +22,8 @@ public class ProductService {
 
         Product product = new Product(productSku, productName, productCategory, price);
 
-        return productRepository.create(product);
+       productRepository.create(product);
+       return product;
     }
 
     public void addProductToAllBranches(String productId) {
