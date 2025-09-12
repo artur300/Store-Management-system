@@ -238,7 +238,7 @@ public class AdminMenu implements Menu {
         JsonObject responseBranch = Singletons.CLIENT.sendRequest(request);
 
         if (responseBranch.get("success").getAsBoolean()) {
-            JsonObject branchObject = responseBranch.getAsJsonObject("message");
+            JsonObject branchObject = JsonParser.parseString(responseBranch.get("message").getAsString()).getAsJsonObject();
 
             name = branchObject.get("name").getAsString();
         }
