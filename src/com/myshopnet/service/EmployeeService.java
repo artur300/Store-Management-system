@@ -30,19 +30,17 @@ public class EmployeeService {
 
         Employee employee = new Employee(UUID.randomUUID().toString(), fullName,
                 phoneNumber , accountNumber, branchId, employeeType, employeeNumber);
+
+        employee.registerObserver(branchService);
         authService.registerAccount(username, password, employee);
 
         return employee;
     }
 
     public void changeStatus(UserAccount userAccount, EmployeeStatus status) {
-        // going from busy -> available
-        if (((Employee)(userAccount.getUser())).getEmployeeStatus() == EmployeeStatus.BUSY &&
-                status == EmployeeStatus.AVAILABLE) {
-            branchService.notifyAndPollWaitingEmployeeToChat(userAccount);
-        }
-
-        ((Employee)(userAccount.getUser())).setEmployeeStatus(status);
+        // Set status via Employee, which will notify observers
+        Employee emp = (Employee) userAccount.getUser();
+        emp.setEmployeeStatus(status);
         userAccountRepository.update(userAccount.getUser().getUserId(), userAccount);
     }
 

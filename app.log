@@ -370,48 +370,58 @@
 [2025-09-12T13:06:49.5243572] LOGIN - user=admin
 [2025-09-12T13:06:53.1286053] REQUEST_RECIEVED - logout=admin
 [2025-09-12T13:06:53.1286053] SERVER_LISTEN - Connection reset
-[2025-09-12T15:07:41.9841495] SERVER_LISTEN - * Push server up on 8081. Waiting for subscribers...
-[2025-09-12T15:07:41.9861422] SERVER_LISTEN - * Server up on 8080. Waiting for clients...
-[2025-09-12T15:08:00.8127479] REQUEST_RECIEVED - Request from /127.0.0.1:63411 recieved
-[2025-09-12T15:08:15.3642204] LOGIN - user=admin
-[2025-09-12T15:13:12.7227769] REQUEST_RECIEVED - logout=admin
-[2025-09-12T15:13:12.7247752] SERVER_LISTEN - Connection reset
-[2025-09-12T15:13:14.0743772] REQUEST_RECIEVED - Request from /127.0.0.1:63447 recieved
-[2025-09-12T15:13:18.9351644] SERVER_LISTEN - * Server up on 8080. Waiting for clients...
-[2025-09-12T15:13:18.9401474] SERVER_LISTEN - * Push server up on 8081. Waiting for subscribers...
-[2025-09-12T15:13:26.3057973] REQUEST_RECIEVED - Request from /127.0.0.1:63457 recieved
-[2025-09-12T15:13:31.1033652] LOGIN - user=admin
-[2025-09-12T15:16:54.2424204] REQUEST_RECIEVED - logout=admin
-[2025-09-12T15:16:54.2434171] SERVER_LISTEN - Connection reset
-[2025-09-12T15:16:55.586255] REQUEST_RECIEVED - Request from /127.0.0.1:63489 recieved
-[2025-09-12T15:17:02.0012717] LOGIN - user=admin
-[2025-09-12T15:20:23.3061207] SERVER_LISTEN - * Push server up on 8081. Waiting for subscribers...
-[2025-09-12T15:20:23.3130975] SERVER_LISTEN - * Server up on 8080. Waiting for clients...
-[2025-09-12T15:25:19.845268] SERVER_LISTEN - * Push server up on 8081. Waiting for subscribers...
-[2025-09-12T15:25:19.8532419] SERVER_LISTEN - * Server up on 8080. Waiting for clients...
-[2025-09-12T15:37:12.8745206] SERVER_LISTEN - * Push server up on 8081. Waiting for subscribers...
-[2025-09-12T15:37:12.8894708] SERVER_LISTEN - * Server up on 8080. Waiting for clients...
-[2025-09-12T15:37:20.2660152] SERVER_LISTEN - * Server up on 8080. Waiting for clients...
-[2025-09-12T15:37:20.2709981] SERVER_LISTEN - * Push server up on 8081. Waiting for subscribers...
-[2025-09-12T15:37:21.8587243] REQUEST_RECIEVED - Request from /127.0.0.1:63630 recieved
-[2025-09-12T15:37:27.5763265] LOGIN - user=admin
-[2025-09-12T15:52:18.0472686] REQUEST_RECIEVED - Request from /10.0.0.138:49830 recieved
-[2025-09-12T15:52:18.0513595] REQUEST_RECIEVED - Bad request: java.lang.IllegalStateException: Expected BEGIN_OBJECT but was STRING at line 1 column 1 path $
-See https://github.com/google/gson/blob/main/Troubleshooting.md#unexpected-json-structure
-[2025-09-12T15:52:18.0513595] REQUEST_RECIEVED - Bad request: java.lang.IllegalStateException: Expected BEGIN_OBJECT but was STRING at line 1 column 1 path $
-See https://github.com/google/gson/blob/main/Troubleshooting.md#unexpected-json-structure
-[2025-09-12T15:52:18.0513595] REQUEST_RECIEVED - Bad request: java.lang.IllegalStateException: Expected BEGIN_OBJECT but was STRING at line 1 column 1 path $
-See https://github.com/google/gson/blob/main/Troubleshooting.md#unexpected-json-structure
-[2025-09-12T15:52:23.0472541] REQUEST_RECIEVED - Client disconnected
-[2025-09-12T16:00:20.1471956] SERVER_LISTEN - * Push server up on 8081. Waiting for subscribers...
-[2025-09-12T16:00:20.1521794] SERVER_LISTEN - * Server up on 8080. Waiting for clients...
-[2025-09-12T16:00:22.6108912] REQUEST_RECIEVED - Request from /127.0.0.1:63767 recieved
-[2025-09-12T16:00:27.9107216] LOGIN - user=admin
-[2025-09-12T16:06:35.5911671] SERVER_LISTEN - * Server up on 8080. Waiting for clients...
-[2025-09-12T16:06:35.5961504] SERVER_LISTEN - * Push server up on 8081. Waiting for subscribers...
-[2025-09-12T16:06:38.1253544] REQUEST_RECIEVED - Request from /127.0.0.1:63827 recieved
-[2025-09-12T16:06:43.1505684] LOGIN - user=admin
-[2025-09-12T16:12:00.9077053] REQUEST_RECIEVED - logout=admin
-[2025-09-12T16:12:00.9077053] SERVER_LISTEN - Connection reset
-[2025-09-12T16:12:02.477689] REQUEST_RECIEVED - Request from /127.0.0.1:63868 recieved
-[2025-09-12T16:12:07.6944335] LOGIN - user=admin
+[2025-09-12T14:54:56.7281016] SERVER_LISTEN - * Push server up on 8081. Waiting for subscribers...
+[2025-09-12T14:54:56.7341583] SERVER_LISTEN - * Server up on 8080. Waiting for clients...
+[2025-09-12T14:54:58.7571565] REQUEST_RECIEVED - Request from /127.0.0.1:49494 recieved
+[2025-09-12T14:55:05.7160093] LOGIN - user=admin
+[2025-09-12T14:56:54.2173651] LOGIN - user=customer1234
+[2025-09-12T14:57:59.8965194] REQUEST_RECIEVED - logout=customer1234
+[2025-09-12T14:57:59.8965194] SERVER_LISTEN - Connection reset
+[2025-09-12T14:58:02.2348932] REQUEST_RECIEVED - Request from /127.0.0.1:64700 recieved
+[2025-09-12T14:58:06.0130943] LOGIN - user=admin
+[2025-09-12T14:58:24.2777852] LOGIN - user=royemployee1234_1
+[2025-09-12T14:58:58.1575962] LOGIN - user=admin
+[2025-09-12T15:00:10.4298699] REQUEST_RECIEVED - logout=admin
+[2025-09-12T15:00:10.4298699] SERVER_LISTEN - Connection reset
+[2025-09-12T15:00:12.5726208] REQUEST_RECIEVED - Request from /127.0.0.1:51596 recieved
+[2025-09-12T15:00:16.1013373] LOGIN - user=admin
+[2025-09-12T15:00:21.0150287] REQUEST_RECIEVED - Client disconnected
+[2025-09-12T15:01:40.9157674] REQUEST_RECIEVED - Request from /127.0.0.1:54584 recieved
+[2025-09-12T15:01:45.9799243] LOGIN - user=admin
+[2025-09-12T15:03:24.041869] REQUEST_RECIEVED - Client disconnected
+[2025-09-12T15:03:26.3324066] REQUEST_RECIEVED - Request from /127.0.0.1:54955 recieved
+[2025-09-12T15:03:48.4339399] LOGIN - user=admin
+[2025-09-12T15:03:53.7249391] REQUEST_RECIEVED - Client disconnected
+[2025-09-12T15:26:10.2617536] SERVER_LISTEN - * Push server up on 8081. Waiting for subscribers...
+[2025-09-12T15:26:10.2652639] SERVER_LISTEN - * Server up on 8080. Waiting for clients...
+[2025-09-12T15:26:11.9104233] REQUEST_RECIEVED - Request from /127.0.0.1:57734 recieved
+[2025-09-12T15:26:19.1474799] LOGIN - user=admin
+[2025-09-12T15:28:53.0116126] REQUEST_RECIEVED - logout=admin
+[2025-09-12T15:28:53.0116126] SERVER_LISTEN - Connection reset
+[2025-09-12T15:28:55.2447295] REQUEST_RECIEVED - Request from /127.0.0.1:53378 recieved
+[2025-09-12T15:29:00.3226778] LOGIN - user=admin
+[2025-09-12T15:43:09.9246604] REQUEST_RECIEVED - Client disconnected
+[2025-09-12T15:44:27.912351] REQUEST_RECIEVED - Request from /127.0.0.1:54817 recieved
+[2025-09-12T15:44:34.7352907] LOGIN - user=admin
+[2025-09-12T15:45:19.6875503] REQUEST_RECIEVED - Client disconnected
+[2025-09-12T15:51:18.8365286] REQUEST_RECIEVED - Request from /127.0.0.1:57500 recieved
+[2025-09-12T15:51:22.4497669] LOGIN - user=admin
+[2025-09-12T15:51:28.3857258] REQUEST_RECIEVED - Client disconnected
+[2025-09-12T15:51:40.0571591] REQUEST_RECIEVED - Request from /127.0.0.1:57505 recieved
+[2025-09-12T15:51:45.3268783] LOGIN - user=admin
+[2025-09-12T15:53:32.4571932] SERVER_LISTEN - * Server up on 8080. Waiting for clients...
+[2025-09-12T15:53:32.4792332] SERVER_LISTEN - * Push server up on 8081. Waiting for subscribers...
+[2025-09-12T15:53:41.3740138] REQUEST_RECIEVED - Request from /127.0.0.1:57529 recieved
+[2025-09-12T15:54:19.1867532] LOGIN - user=admin
+[2025-09-12T15:56:56.2743122] SERVER_LISTEN - * Push server up on 8081. Waiting for subscribers...
+[2025-09-12T15:56:56.2988707] SERVER_LISTEN - * Server up on 8080. Waiting for clients...
+[2025-09-12T15:56:58.6352149] REQUEST_RECIEVED - Request from /127.0.0.1:63169 recieved
+[2025-09-12T15:57:12.6540855] LOGIN - user=admin
+[2025-09-12T15:58:17.6338809] SERVER_LISTEN - * Server up on 8080. Waiting for clients...
+[2025-09-12T15:58:17.6574205] SERVER_LISTEN - * Push server up on 8081. Waiting for subscribers...
+[2025-09-12T15:58:18.2585974] REQUEST_RECIEVED - Request from /127.0.0.1:63184 recieved
+[2025-09-12T15:58:34.1604523] LOGIN - user=admin
+[2025-09-12T16:16:50.7571241] SERVER_LISTEN - * Server up on 8080. Waiting for clients...
+[2025-09-12T16:16:50.7616369] SERVER_LISTEN - * Push server up on 8081. Waiting for subscribers...
+[2025-09-12T16:17:17.9740194] REQUEST_RECIEVED - Request from /127.0.0.1:57736 recieved
+[2025-09-12T16:17:23.3497485] LOGIN - user=admin

@@ -2,9 +2,7 @@ package com.myshopnet.service;
 
 import com.myshopnet.auth.UserAccount;
 import com.myshopnet.errors.EntityNotFoundException;
-import com.myshopnet.models.Branch;
-import com.myshopnet.models.Employee;
-import com.myshopnet.models.EmployeeStatus;
+import com.myshopnet.models.*;
 import com.myshopnet.repository.BranchRepository;
 import com.myshopnet.repository.EmployeeRepository;
 import com.myshopnet.repository.UserAccountRepository;
@@ -14,7 +12,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-public class BranchService {
+public class BranchService implements EmployeeStatusObserver {
     private UserAccountRepository userAccountRepository = Singletons.USER_ACCOUNT_REPO;
     private EmployeeRepository employeeRepository = Singletons.EMPLOYEE_REPO;
     private AuthService authService = Singletons.AUTH_SERVICE;
@@ -23,6 +21,22 @@ public class BranchService {
 
     public BranchService() {
         this.branchRepository = new BranchRepository();
+        // Register as observer to all existing employees
+        for (Employee e : employeeRepository.getAll()) {
+            e.registerObserver(this);
+        }
+    }
+
+    @Override
+    public void onStatusChanged(Employee employee, EmployeeStatus oldStatus, EmployeeStatus newStatus) {
+        // When an employee becomes AVAILABLE from BUSY, try to match waiting chat requests
+        if (oldStatus == EmployeeStatus.BUSY && newStatus == EmployeeStatus.AVAILABLE) {
+            UserAccount ua = userAccountRepository.get(employee.getUserId());
+
+            if (ua != null) {
+                notifyAndPollWaitingEmployeeToChat(ua);
+            }
+        }
     }
 
     public Branch createNewBranch(String branchName) {

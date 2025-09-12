@@ -1,6 +1,9 @@
 package com.myshopnet.models;
 
-public class Employee implements User {
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
+
+public class Employee implements User, EmployeeStatusSubject {
     protected Role role;
     private String fullName;
     private String userId;
@@ -10,6 +13,8 @@ public class Employee implements User {
     private EmployeeType employeeType;
     private Long employeeNumber;
     private EmployeeStatus employeeStatus;
+
+    private final List<EmployeeStatusObserver> observers = new CopyOnWriteArrayList<>();
 
     public Employee(String id, String fullName, String phoneNumber,
                     Long accountNumber, String branchId, EmployeeType employeeType, Long employeeNumber) {
@@ -39,7 +44,28 @@ public class Employee implements User {
     }
 
     public void setEmployeeStatus(EmployeeStatus employeeStatus) {
+        EmployeeStatus old = this.employeeStatus;
         this.employeeStatus = employeeStatus;
+        notifyObservers(old, employeeStatus);
+    }
+
+    @Override
+    public void registerObserver(EmployeeStatusObserver observer) {
+        if (observer != null && !observers.contains(observer)) {
+            observers.add(observer);
+        }
+    }
+
+    @Override
+    public void removeObserver(EmployeeStatusObserver observer) {
+        observers.remove(observer);
+    }
+
+    @Override
+    public void notifyObservers(EmployeeStatus oldStatus, EmployeeStatus newStatus) {
+        for (EmployeeStatusObserver observer : observers) {
+            observer.onStatusChanged(this, oldStatus, newStatus);
+        }
     }
 
     public void setUserId(String userId) {

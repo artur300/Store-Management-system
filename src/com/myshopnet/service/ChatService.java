@@ -1,6 +1,7 @@
 package com.myshopnet.service;
 
 import com.myshopnet.auth.UserAccount;
+import com.myshopnet.chat.NotificationHub;
 import com.myshopnet.data.Data;
 import com.myshopnet.errors.AuthException;
 import com.myshopnet.errors.EntityNotFoundException;
@@ -42,8 +43,8 @@ public class ChatService {
             chat = chatRepository.create(chat);
 
             String msgJson = String.format("{\"type\":\"chatCreated\",\"chatId\":\"%s\"}", chat.getId());
-            com.myshopnet.chat.NotificationHub.notifyUser(employeeRequesting.getUser().getUserId(), msgJson);
-            com.myshopnet.chat.NotificationHub.notifyUser(employeeAvailableToChat.getUser().getUserId(), msgJson);
+            NotificationHub.notifyUser(employeeRequesting.getUser().getUserId(), msgJson);
+            NotificationHub.notifyUser(employeeAvailableToChat.getUser().getUserId(), msgJson);
         }
 
         return chat;
