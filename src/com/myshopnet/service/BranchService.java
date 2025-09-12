@@ -32,6 +32,7 @@ public class BranchService implements EmployeeStatusObserver {
         // When an employee becomes AVAILABLE from BUSY, try to match waiting chat requests
         if (oldStatus == EmployeeStatus.BUSY && newStatus == EmployeeStatus.AVAILABLE) {
             UserAccount ua = userAccountRepository.get(employee.getUserId());
+
             if (ua != null) {
                 notifyAndPollWaitingEmployeeToChat(ua);
             }

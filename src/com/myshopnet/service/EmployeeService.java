@@ -30,7 +30,7 @@ public class EmployeeService {
 
         Employee employee = new Employee(UUID.randomUUID().toString(), fullName,
                 phoneNumber , accountNumber, branchId, employeeType, employeeNumber);
-        // Register BranchService as observer for this new employee
+
         employee.registerObserver(branchService);
         authService.registerAccount(username, password, employee);
 

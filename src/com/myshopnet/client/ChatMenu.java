@@ -29,7 +29,6 @@ public class ChatMenu implements Menu {
             if (Auth.getCurrentUser().get("employeeType").getAsString().equals("SHIFT_MANAGER")) {
                 UIUtils.printMenuOption(2, "Join Existing Chat");
             }
-            UIUtils.printMenuOption(4, "Chat History");
             UIUtils.printMenuOption(0, "Back to Main Menu");
 
             UIUtils.printMenuFooter();
@@ -85,7 +84,6 @@ public class ChatMenu implements Menu {
                 JsonObject chatResponse = Singletons.CLIENT.sendRequest(requestToChat);
 
                 if (chatResponse != null && chatResponse.get("success").getAsBoolean()) {
-                    // message might be a JSON object (chat) or a string (queued info)
                     try {
                         if (chatResponse.get("message").isJsonObject()) {
                             JsonObject chatObj = chatResponse.getAsJsonObject("message");
@@ -101,7 +99,6 @@ public class ChatMenu implements Menu {
                             }
                         }
                     } catch (Exception ex) {
-                        // In case message is a JSON string containing the chat JSON, attempt to parse
                         try {
                             String msgStr = chatResponse.get("message").getAsString();
                             JsonObject chatObj = Singletons.GSON.fromJson(msgStr, JsonObject.class);
