@@ -58,8 +58,146 @@ public class AdminMenu implements Menu {
     }
 
     private void manageCustomers() {
+        while (true) {
+            UIUtils.printMenuHeader("EMPLOYEE MANAGEMENT");
+            UIUtils.printEmptyLine();
 
+            UIUtils.printMenuOption(1, "View All Customers");
+            UIUtils.printMenuOption(2, "Add New Customer");
+            UIUtils.printMenuOption(3, "Edit Customer Details");
+            UIUtils.printMenuOption(4, "Delete Customer");
+            UIUtils.printMenuOption(0, "Back");
+
+            UIUtils.printMenuFooter();
+
+            int choice = UIUtils.getIntInput(scanner);
+
+            switch (choice) {
+                case 1:
+                    viewAllCustomers();
+                    break;
+                case 2:
+                    createCustomer();
+                    break;
+                case 3:
+                    updateCustomer();
+                    break;
+                case 4:
+                    deleteCustomer();
+                    break;
+                case 0:
+                    show();
+                    return;
+                default:
+                    UIUtils.showError("Invalid choice. please try again.");
+                    UIUtils.waitForEnter(scanner);
+            }
+        }
     }
+
+    private void viewAllCustomers() {
+        Map<String, String> map = new HashMap<>();
+        map.put("currentUserId", Auth.getUsername());
+
+        Request request = new Request("getAllCustomers", Singletons.GSON.toJson(map));
+        JsonObject response = Singletons.CLIENT.sendRequest(request);
+
+        if (response != null && response.get("success").getAsBoolean()){
+            JsonArray customers = JsonParser.parseString(response.get("message").getAsString()).getAsJsonArray();
+            renderCustomerTable(customers);
+        } else {
+            String error = response != null ? response.get("message").getAsString() : "Connection error";
+            UIUtils.showError(error);
+        }
+        UIUtils.waitForEnter(scanner);
+    }
+
+    private void createCustomer() {
+        UIUtils.printMenuHeader("ADD NEW CUSTOMER");
+
+        String fullName = UIUtils.getStringInput(scanner, "Full Name: ");
+        String phoneNumber = UIUtils.getStringInput(scanner, "Phone Number: ");
+        String passportId = UIUtils.getStringInput(scanner, "Passport ID: ");
+        String username = UIUtils.getStringInput(scanner, "Username (for login): ");
+        String password = UIUtils.getStringInput(scanner, "Password (for login): ");
+
+        Map<String, String> map = new HashMap<>();
+        map.put("fullName", fullName);
+        map.put("phoneNumber", phoneNumber);
+        map.put("passportId", passportId);
+        map.put("username", username);
+        map.put("password", password);
+
+        Request request = new Request("createCustomer", Singletons.GSON.toJson(map));
+        JsonObject response = Singletons.CLIENT.sendRequest(request);
+
+        if (response != null && response.get("success").getAsBoolean()){
+            UIUtils.showSuccess("Customer added successfully!");
+        } else {
+            String error = response != null ? response.get("success").getAsString() : "Connection error";
+            UIUtils.showError(error);
+        }
+
+        UIUtils.waitForEnter(scanner);
+    }
+
+    private void deleteCustomer() {
+        UIUtils.printMenuHeader("DELETE CUSTOMER");
+
+        String username = UIUtils.getStringInput(scanner, "Username of employee to delete: ");
+
+        Map<String, String> map = new HashMap<>();
+        map.put("userId",  Auth.getUsername());
+        map.put("username", username);
+
+        JsonObject resp = Singletons.CLIENT.sendRequest(new Request("deleteCustomer", Singletons.GSON.toJson(map)));
+
+        if (resp != null && resp.get("success").getAsBoolean()) {
+            UIUtils.showSuccess("Customer deleted.");
+        } else {
+            String error = resp != null ? resp.get("message").getAsString() : "Connection error";
+            UIUtils.showError(error);
+        }
+
+        UIUtils.waitForEnter(scanner);
+    }
+
+    private void updateCustomer() {
+        UIUtils.printMenuHeader("UPDATE CUSTOMER");
+
+        String username = UIUtils.getStringInput(scanner, "Employee username to edit: ");
+
+        String fullName = UIUtils.getStringInput(scanner, "Full Name: ");
+        String phoneNumber = UIUtils.getStringInput(scanner, "Phone Number: ");
+        String passportId = UIUtils.getStringInput(scanner, "Passport ID: ");
+
+        Map<String, String> getMap = new HashMap<>();
+
+        getMap.put("userId", Auth.getUsername());
+        getMap.put("username", username);
+        getMap.put("fullName", fullName);
+        getMap.put("phoneNumber", phoneNumber);
+        getMap.put("passportId", passportId);
+
+        JsonObject getResp = Singletons.CLIENT.sendRequest(new Request("updateCustomer", Singletons.GSON.toJson(getMap)));
+
+        if (getResp == null || !getResp.get("success").getAsBoolean()) {
+            String error = getResp != null ? getResp.get("message").getAsString() : "Connection error";
+            UIUtils.showError(error);
+            UIUtils.waitForEnter(scanner);
+            return;
+        }
+
+        if (getResp.get("success").getAsBoolean()) {
+            UIUtils.showSuccess("Employee updated.");
+        }
+        else {
+            String error = getResp.get("message").getAsString();
+            UIUtils.showError(error);
+        }
+        UIUtils.waitForEnter(scanner);
+    }
+
 
     private void manageUserAccounts() {
         UIUtils.printMenuHeader("USER ACCOUNT MANAGEMENT");
@@ -90,6 +228,7 @@ public class AdminMenu implements Menu {
 
     private String getBranchByBranchId(String branchId) {
         Map<String, String> requestMap = new HashMap<>();
+        String userId = Auth.getCurrentUser().get("userId").getAsString();
         String name = null;
 
         requestMap.put("branchId", branchId);
@@ -99,9 +238,11 @@ public class AdminMenu implements Menu {
         JsonObject responseBranch = Singletons.CLIENT.sendRequest(request);
 
         if (responseBranch.get("success").getAsBoolean()) {
-            JsonObject branchObject = JsonParser.parseString(responseBranch.get("message").getAsString()).getAsJsonObject();
+            JsonObject branchObject = responseBranch.getAsJsonObject("message");
+
             name = branchObject.get("name").getAsString();
-        } else {
+        }
+        else {
             UIUtils.showError("Failed to get branch by id: " + branchId);
         }
 
@@ -323,7 +464,7 @@ public class AdminMenu implements Menu {
     private void deleteEmployee() {
         UIUtils.printMenuHeader("DELETE EMPLOYEE");
 
-        String employeeId = UIUtils.getStringInput(scanner, "Employee full name to delete: ");
+        String employeeId = UIUtils.getStringInput(scanner, "Employee ID to delete: ");
 
         Map<String, String> map = new HashMap<>();
         map.put("currentUserId", Auth.getUsername());
@@ -359,5 +500,22 @@ public class AdminMenu implements Menu {
         String[] headers = {"ID", "Full Name", "Phone", "Account #", "BranchName" ,"BranchID", "Type", "Emp #", "Status"};
         UIUtils.printTable(headers, rows);
         UIUtils.showInfo("Total employees: " + rows.size());
+    }
+
+    private void renderCustomerTable(JsonArray customers) {
+        List<String[]> rows = new ArrayList<>();
+        for (JsonElement el : customers) {
+            JsonObject e = el.getAsJsonObject();
+            String id = e.get("userId").getAsString();
+            String fullName = e.has("fullName") && !e.get("fullName").isJsonNull() ? e.get("fullName").getAsString() : "";
+            String phone = e.has("phone") && !e.get("phone").isJsonNull() ? e.get("phone").getAsString() : "";
+            String passportId = e.get("passportId").getAsString();
+
+            rows.add(new String[] { id, fullName, phone, passportId });
+        }
+
+        String[] headers = {"ID", "Full Name", "Phone", "Passport ID" };
+        UIUtils.printTable(headers, rows);
+        UIUtils.showInfo("Total customers: " + rows.size());
     }
 }

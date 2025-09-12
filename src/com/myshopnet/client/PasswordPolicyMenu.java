@@ -9,13 +9,19 @@ import java.util.Scanner;
 
 public class PasswordPolicyMenu implements Menu {
     private Scanner scanner;
-    private Menu previousMenu;
+    private Menu goBackMenu;
 
     public PasswordPolicyMenu() {
         this.scanner = new Scanner(System.in);
     }
 
+    public Menu getGoBackMenu() {
+        return goBackMenu;
+    }
 
+    public void setGoBackMenu(Menu goBackMenu) {
+        this.goBackMenu = goBackMenu;
+    }
 
     @Override
     public void show() {

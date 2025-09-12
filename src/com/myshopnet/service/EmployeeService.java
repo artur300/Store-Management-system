@@ -38,7 +38,6 @@ public class EmployeeService {
     }
 
     public void changeStatus(UserAccount userAccount, EmployeeStatus status) {
-        // Set status via Employee, which will notify observers
         Employee emp = (Employee) userAccount.getUser();
         emp.setEmployeeStatus(status);
         userAccountRepository.update(userAccount.getUser().getUserId(), userAccount);
