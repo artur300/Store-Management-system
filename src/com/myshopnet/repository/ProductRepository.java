@@ -11,7 +11,7 @@ import java.util.List;
 public class ProductRepository implements Repository<Product> {
     @Override
     public Product create(Product product) {
-        if (Data.getAllAccounts().containsKey(product.getSku())) {
+        if (Data.getProducts().containsKey(product.getSku())) {
             throw new EntityAlreadyExistsException("Product");
         }
 

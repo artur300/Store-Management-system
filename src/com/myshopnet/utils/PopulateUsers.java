@@ -1,5 +1,6 @@
 package com.myshopnet.utils;
 
+import com.myshopnet.controller.ProductController;
 import com.myshopnet.models.Admin;
 import com.myshopnet.models.Branch;
 import com.myshopnet.models.Employee;
@@ -60,5 +61,14 @@ public class PopulateUsers {
                         holon.getId(),
                         EmployeeType.SHIFT_MANAGER,
                         123L));
+
+        Singletons.PRODUCT_CONTROLLER.createProduct(
+                "admin",
+                "T-Shirt",
+                "T-Shirt",
+                "SHIRTS",
+                "50");
+
     }
+
 }

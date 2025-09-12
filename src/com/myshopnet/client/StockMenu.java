@@ -1,5 +1,6 @@
 package com.myshopnet.client;
 
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.myshopnet.client.utils.UIUtils;
@@ -49,7 +50,7 @@ public class StockMenu implements Menu {
                     viewStockByBranchId();
                     break;
                 case 2:
-
+                    updateProductStock();
                     break;
                 case 0:
                     Singletons.MAIN_MENU.show();
@@ -72,22 +73,68 @@ public class StockMenu implements Menu {
             JsonObject response = Singletons.CLIENT.sendRequest(request);
 
             if (response != null && response.get("success").getAsBoolean()) {
-                JsonObject branch = JsonParser.parseString(response.get("message").getAsString()).getAsJsonObject();
+                JsonObject branchData = JsonParser.parseString(response.get("message").getAsString()).getAsJsonObject();
 
-                UIUtils.waitForEnter(scanner);
-            }
-            else if (response.get("error") != null) {
-                UIUtils.showError(response.get("message").getAsString());
+                UIUtils.printMenuHeader("CURRENT STOCK - " + branchData.get("name").getAsString());
+
+                JsonArray stockArray = branchData.getAsJsonArray("stock");
+
+                for (int i = 0; i < stockArray.size(); i++) {
+                    JsonObject stockItem = stockArray.get(i).getAsJsonObject();
+
+                    rows.add(new String[]{
+                            stockItem.get("sku").getAsString(),
+                            stockItem.get("name").getAsString(),
+                            stockItem.get("quantity").getAsString(),
+                            "$" + stockItem.get("price").getAsString()
+                    });
+                }
+
+                String[] headers = {"SKU", "Product Name", "Quantity", "Price"};
+                UIUtils.printTable(headers, rows);
+                UIUtils.showInfo("Total products: " + rows.size());
+            } else {
+                String error = response != null ? response.get("message").getAsString() : "Connection error";
+                UIUtils.showError(error);
             }
 
-            String[] headers = { "Product ID", "Product Name", "Quantity", "Price" };
-            UIUtils.printTable(headers, rows);
-        }
-        catch (Exception e) {
+            UIUtils.waitForEnter(scanner);
+        } catch (Exception e) {
             UIUtils.showError("Error displaying inventory: " + e.getMessage());
+            UIUtils.waitForEnter(scanner);
         }
     }
+    private void updateProductStock() {
+        UIUtils.printMenuHeader("UPDATE PRODUCT STOCK");
 
+        String productId = UIUtils.getStringInput(scanner, "Product ID: ");
+        String newQuantityStr = UIUtils.getStringInput(scanner, "New Quantity: ");
+
+        try {
+            Long newQuantity = Long.parseLong(newQuantityStr);
+
+            Map<String, String> map = new HashMap<>();
+            map.put("branchId", Auth.getCurrentUser().get("branchId").getAsString());
+            map.put("userId", Auth.getUsername());
+            map.put("productId", productId);
+            map.put("stock", newQuantity.toString());
+
+            Request request = new Request("updateBranchStock", Singletons.GSON.toJson(map));
+            JsonObject response = Singletons.CLIENT.sendRequest(request);
+
+            if (response != null && response.get("success").getAsBoolean()) {
+                UIUtils.showSuccess("Stock updated successfully!");
+            } else {
+                String error = response != null ? response.get("message").getAsString() : "Connection error";
+                UIUtils.showError(error);
+            }
+
+        } catch (NumberFormatException e) {
+            UIUtils.showError("Invalid quantity format. Please enter a number.");
+        }
+
+        UIUtils.waitForEnter(scanner);
+    }
     private void displaySearchResults(String response) {
         try {
             String[] parts = response.split("\\|");
