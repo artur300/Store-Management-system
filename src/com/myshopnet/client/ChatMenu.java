@@ -3,6 +3,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
+import com.google.gson.JsonParser;
 import com.myshopnet.client.utils.UIUtils;
 
 import java.util.*;
@@ -14,12 +15,19 @@ public class ChatMenu implements Menu {
     private String currentChatId = null;
     private ExecutorService chatExecutor;
 
+    private volatile boolean waitingForChat = false;
+
+    private final PushClient pushClient = new PushClient();
+    private volatile boolean pushRunning = false;
+
     public ChatMenu() {
         this.scanner = Singletons.CLIENT.getScanner();
         this.chatExecutor = Executors.newSingleThreadExecutor();
     }
 
     public void show() {
+        ensurePushSubscribed();
+
         while (true) {
             UIUtils.printMenuHeader("CHAT SYSTEM");
             UIUtils.printLine("Inter-branch communication");
@@ -44,9 +52,6 @@ public class ChatMenu implements Menu {
                         joinExistingChat();
                     }
                     break;
-                case 3:
-                    viewChatHistory();
-                    break;
                 case 0:
                     return;
                 default:
@@ -56,11 +61,47 @@ public class ChatMenu implements Menu {
         }
     }
 
+    private void ensurePushSubscribed(){
+        if (pushRunning) return;
+        try {
+            String userId = Auth.getUsername();
+            pushClient.start(userId, evt -> {
+                try {
+                    if (evt == null || !evt.has("type")) return;
+                    String type = evt.get("type").getAsString();
+
+                    if ("chatCreated".equalsIgnoreCase(type)){
+                        String chatId = evt.get("chatId").getAsString();
+                        waitingForChat = false;
+                        if (!inChat) {
+                            UIUtils.showSuccess("A chat session is now available. Opening chat..");
+                            startChatSession(chatId);
+                        }
+                    }
+                } catch (Exception ignored) {   }
+            });
+            pushRunning = true;
+        } catch (Exception error) {
+            pushRunning = false;
+        }
+    }
+
     private void startNewChat() {
+        if (inChat){
+            UIUtils.showError("You are already in a chat session.");
+            UIUtils.waitForEnter(scanner);
+            return;
+        }
+        if (waitingForChat){
+            UIUtils.showInfo("You already have a ppending chat request in the queue. please wait for a notification.");
+            UIUtils.waitForEnter(scanner);
+            return;
+        }
+
         Map<String, String> requestMap = new HashMap<>();
         UIUtils.printMenuHeader("START NEW CHAT");
 
-        String userId = Auth.getCurrentUser().get("userId").getAsString();
+        String userId = Auth.getUsername();
         requestMap.put("userId", userId);
 
         // Load branches to choose from
@@ -73,7 +114,7 @@ public class ChatMenu implements Menu {
         }
 
         if (response.get("success").getAsBoolean()) {
-            String chosenBranchId = displayAvailableBranches(response.getAsJsonArray("message"));
+            String chosenBranchId = displayAvailableBranches(JsonParser.parseString(response.get("message").getAsString()).getAsJsonArray());;
 
             if (chosenBranchId != null) {
                 Map<String, String> requestMapToChat = new HashMap<>();
@@ -132,7 +173,7 @@ public class ChatMenu implements Menu {
                     for (JsonElement row : branches) {
                         JsonObject rowObject = row.getAsJsonObject();
 
-                        branchIds.add(rowObject.get("branchId").getAsString());
+                        branchIds.add(rowObject.get("id").getAsString());
                         UIUtils.printMenuOption(i + 1, rowObject.get("name").getAsString());
 
                         i++;

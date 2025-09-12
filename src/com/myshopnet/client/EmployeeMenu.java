@@ -55,7 +55,7 @@ public class EmployeeMenu implements Menu {
     }
 
     private void startChat() {
-
+        Singletons.CHAT_MENU.show();
     }
 
     private void viewAllCustomers() {

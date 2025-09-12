@@ -19,31 +19,31 @@ public class PopulateUsers {
         );
 
         Employee employee1 = Singletons.EMPLOYEE_SERVICE.addEmployee(
-                "royemployee1234_1",
+                "employee1",
                 "admin1234",
-                "roy dadon"
+                "employee1"
                 , "0543535345",
                 5211111111L,
                 haifa.getId()
-                , EmployeeType.SHIFT_MANAGER
+                , EmployeeType.SELLER
                 ,
                 123L);
 
         Employee employee2 = Singletons.EMPLOYEE_SERVICE.addEmployee(
-                "royemployee1234_2",
+                "employee2",
                 "admin1234",
-                "roy dadon"
+                "employee2"
                 , "0543535345",
                 5211111111L,
                 tlv.getId()
-                , EmployeeType.SHIFT_MANAGER
+                , EmployeeType.CASHIER
                 ,
                 123L);
 
         Employee employee3 = Singletons.EMPLOYEE_SERVICE.addEmployee(
-                "royemployee1234_3",
+                "employee3",
                 "admin1234",
-                "roy dadon"
+                "employee3"
                 , "0543535345",
                 5211111111L,
                 holon.getId()
