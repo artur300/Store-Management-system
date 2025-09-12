@@ -3,6 +3,7 @@ package com.myshopnet.server;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.myshopnet.controller.*;
+import com.myshopnet.models.Employee;
 import com.myshopnet.utils.GsonSingleton;
 import com.myshopnet.utils.Singletons;
 
@@ -124,8 +125,33 @@ public class RequestHandler {
                     Long employeeNumber = json.get("employeeNumber").getAsLong();
                     String username = json.get("username").getAsString();
                     String password = json.get("password").getAsString();
+                    String fullName = json.get("fullName").getAsString();
+                    String phoneNumber = json.get("phoneNumber").getAsString();
 
-                    response = employeeController.addEmployee(currentUserId, accountNumber, branchId,employeeType, employeeNumber, username, password);
+                    response = employeeController.addEmployee(currentUserId, fullName, phoneNumber, accountNumber, branchId, employeeType, employeeNumber, username, password);
+                    break;
+                }
+
+                case "getAllEmployees": {
+                    String currentUserId = json.get("currentUserId").getAsString();
+
+                    response = employeeController.getAllEmployees(currentUserId);
+                    break;
+                }
+
+                case "updateEmployee": {
+                    String currentUserId = json.get("currentUserId").getAsString();
+                    Employee updated = gson.fromJson(json.get("employee").getAsJsonObject(), Employee.class);
+
+                    response = employeeController.updateEmployee(currentUserId, updated);
+                    break;
+                }
+
+                case "deleteEmployee": {
+                    String currentUserId = json.get("currentUserId").getAsString();
+                    String employeeId = json.get("employeeId").getAsString();
+
+                    response = employeeController.deleteEmployee(currentUserId, employeeId);
                     break;
                 }
 

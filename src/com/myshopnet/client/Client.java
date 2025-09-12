@@ -172,6 +172,7 @@ public class Client {
             if (response != null && response.get("success").getAsBoolean()) {
                 UIUtils.showSuccess("Logged out successfully!");
                 UIUtils.clearScreen();
+                Auth.setCurrentUserType(UserTypeLoggedIn.NONE);
 
                 Singletons.REGISTER_MENU.show();
             }

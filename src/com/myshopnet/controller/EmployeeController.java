@@ -23,8 +23,8 @@ public class EmployeeController {
     private BranchService branchService = com.myshopnet.utils.Singletons.BRANCH_SERVICE;
     private UserAccountService userAccountService = com.myshopnet.utils.Singletons.USER_ACCOUNT_SERVICE;
 
-    public String addEmployee(String currentUserID, Long accountNumber, String branchId,
-                               String employeeType,Long employeeNumber,String username,String password)
+    public String addEmployee(String currentUserID, String fullName, String phoneNumber, Long accountNumber, String branchId,
+                              String employeeType, Long employeeNumber, String username, String password)
     {
         Response response = new Response();
 
@@ -39,7 +39,7 @@ public class EmployeeController {
                 throw new SecurityException("No permission to access this operation");
             }
 
-            Employee employee = employeeService.addEmployee(username, password,
+            Employee employee = employeeService.addEmployee(username, password, fullName, phoneNumber,
                     accountNumber, branchId, EmployeeType.valueOf(employeeType), employeeNumber);
             UserAccount userAccount = userAccountService.getUserAccount(employee.getUserId());
 
@@ -87,6 +87,62 @@ public class EmployeeController {
         } catch (Exception e) {
             response.setSuccess(false);
             response.setMessage("Failed to set employees");
+        }
+        return gson.toJson(response);
+    }
+
+    public String getAllEmployees(String currentUserID) {
+        Response response = new Response();
+
+        try {
+            UserAccount currentUserAccount = userAccountService.getUserAccount(currentUserID);
+
+            if ( currentUserAccount == null || !(currentUserAccount.getUser() instanceof Admin)){
+                throw new SecurityException("User is not Admin");
+            }
+            response.setSuccess(true);
+            response.setMessage(gson.toJson(employeeService.getAll()));
+        } catch (Exception e) {
+            response.setSuccess(false);
+            response.setMessage(e.getMessage());
+        }
+        return gson.toJson(response);
+    }
+
+    public String updateEmployee(String currentUserID, Employee updated) {
+        Response response = new Response();
+
+        try {
+            UserAccount currentUserAccount = userAccountService.getUserAccount(currentUserID);
+
+            if ( currentUserAccount == null || !(currentUserAccount.getUser() instanceof Admin)){
+                throw new SecurityException("User is not Admin");
+            }
+
+            Employee saved = employeeService.update(updated.getUserId(), updated);
+            response.setSuccess(true);
+            response.setMessage(gson.toJson(saved));
+        } catch (Exception e) {
+            response.setSuccess(false);
+            response.setMessage(e.getMessage());
+        }
+        return gson.toJson(response);
+    }
+
+    public String deleteEmployee(String currentUserID, String employeeId) {
+        Response response = new Response();
+
+        try {
+            UserAccount currentUserAccount = userAccountService.getUserAccount(currentUserID);
+            if ( currentUserAccount == null || !(currentUserAccount.getUser() instanceof Admin)){
+                throw new SecurityException("User is not Admin");
+            }
+            employeeService.delete(employeeId);
+            response.setSuccess(true);
+            response.setMessage("Employee deleted");
+        } catch (Exception e) {
+            response.setSuccess(false);
+            response.setMessage(e.getMessage());
         }
         return gson.toJson(response);
     }

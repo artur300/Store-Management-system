@@ -90,7 +90,7 @@ public class Server {
                         }
                     }
                     catch (IOException e) {
-                        logger.log(new LogEvent(LogType.REQUEST_RECIEVED, "Client disconnected"));
+                        logger.log(new LogEvent(LogType.REQUEST_RECIEVED, "logout=" + usernameLoggedIn));
 
                         if (isLoggedIn && !usernameLoggedIn.isBlank()) {
                             logOutUser(usernameLoggedIn);

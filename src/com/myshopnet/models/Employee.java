@@ -2,15 +2,20 @@ package com.myshopnet.models;
 
 public class Employee implements User {
     protected Role role;
+    private String fullName;
     private String userId;
+    private String phoneNumber;
     private Long accountNumber;
     private String branchId;
     private EmployeeType employeeType;
     private Long employeeNumber;
     private EmployeeStatus employeeStatus;
 
-    public Employee(String id, Long accountNumber, String branchId, EmployeeType employeeType, Long employeeNumber) {
+    public Employee(String id, String fullName, String phoneNumber,
+                    Long accountNumber, String branchId, EmployeeType employeeType, Long employeeNumber) {
         this.userId = id;
+        this.fullName = fullName;
+        this.phoneNumber = phoneNumber;
         this.accountNumber = accountNumber;
         this.branchId = branchId;
         this.employeeType = employeeType;
@@ -72,5 +77,12 @@ public class Employee implements User {
     public void setEmployeeNumber(Long employeeNumber) {
         this.employeeNumber = employeeNumber;
     }
-}
 
+    public String getFullName(){return fullName;}
+
+    public void setFullName(String fullName){this.fullName = fullName;}
+
+    public String getPhoneNumber(){ return phoneNumber;}
+
+    public void setPhoneNumber(String phoneNumber){this.phoneNumber = phoneNumber;}
+}

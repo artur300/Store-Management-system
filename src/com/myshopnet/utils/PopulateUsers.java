@@ -17,16 +17,48 @@ public class PopulateUsers {
                 "HOLON"
         );
 
-        Employee employee1 = Singletons.EMPLOYEE_SERVICE.addEmployee("royemployee1234", "admin1234",
-       12345L, tlv.getId(), EmployeeType.CASHIER, 1234L);
+        Employee employee1 = Singletons.EMPLOYEE_SERVICE.addEmployee(
+                "royemployee1234_1",
+                "admin1234",
+                "roy dadon"
+                , "0543535345",
+                5211111111L,
+                haifa.getId()
+                , EmployeeType.SHIFT_MANAGER
+                ,
+                123L);
 
-        Employee employee2 = Singletons.EMPLOYEE_SERVICE.addEmployee("royemployee1234_2", "admin1234",
-                123457L, haifa.getId(), EmployeeType.SELLER, 1234L);
+        Employee employee2 = Singletons.EMPLOYEE_SERVICE.addEmployee(
+                "royemployee1234_2",
+                "admin1234",
+                "roy dadon"
+                , "0543535345",
+                5211111111L,
+                tlv.getId()
+                , EmployeeType.SHIFT_MANAGER
+                ,
+                123L);
 
-        Employee employee3 = Singletons.EMPLOYEE_SERVICE.addEmployee("royemployee1234_3", "admin1234",
-                123457L, holon.getId(), EmployeeType.SELLER, 1234L);
+        Employee employee3 = Singletons.EMPLOYEE_SERVICE.addEmployee(
+                "royemployee1234_3",
+                "admin1234",
+                "roy dadon"
+                , "0543535345",
+                5211111111L,
+                holon.getId()
+                , EmployeeType.SHIFT_MANAGER
+                ,
+                123L);
 
-        Singletons.AUTH_SERVICE.registerAccount("admin", "admin1234",
-                new Admin("1234", 1L, holon.getId(), EmployeeType.SHIFT_MANAGER, 123L));
+        Singletons.AUTH_SERVICE.registerAccount(
+                "admin",
+                "admin1234",
+                new Admin("1234",
+                        "Admin",
+                        "052-11111111",
+                        1L,
+                        holon.getId(),
+                        EmployeeType.SHIFT_MANAGER,
+                        123L));
     }
 }

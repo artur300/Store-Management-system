@@ -20,15 +20,16 @@ public class EmployeeService {
     private final BranchService branchService = Singletons.BRANCH_SERVICE;
     private final AuthService authService = Singletons.AUTH_SERVICE;
 
-    public Employee addEmployee(String username, String password, Long accountNumber, String branchId, EmployeeType employeeType, Long employeeNumber) {
+    public Employee addEmployee(String username, String password,
+            String fullName, String phoneNumber, Long accountNumber, String branchId, EmployeeType employeeType, Long employeeNumber) {
         Branch branch = branchRepository.get(branchId);
 
         if (branch == null) {
             throw new EntityNotFoundException("Branch not found");
         }
 
-        Employee employee = new Employee(UUID.randomUUID().toString(),
-                accountNumber, branchId, employeeType, employeeNumber);
+        Employee employee = new Employee(UUID.randomUUID().toString(), fullName,
+                phoneNumber , accountNumber, branchId, employeeType, employeeNumber);
         authService.registerAccount(username, password, employee);
 
         return employee;
@@ -52,5 +53,12 @@ public class EmployeeService {
     public List<Employee> getAll() {
         return employeeRepository.getAll();
     }
+
+    public Employee update(String id, Employee updated)
+    {
+        return employeeRepository.update(id, updated);
+    }
+
+    public void delete(String id){ employeeRepository.delete(id); }
 }
 
