@@ -388,10 +388,10 @@ public class AdminMenu implements Menu {
         map.put("currentUserId", Auth.getUsername());
         map.put("fullName", fullName);
         map.put("phoneNumber", phoneNumber);
-        map.put("accountNumber", String.valueOf(accountNumber));
+        map.put("accountNumber", accountNumber);
         map.put("branchId", branchId);
         map.put("employeeType", employeeType);
-        map.put("employeeNumber", String.valueOf(employeeNumber));
+        map.put("employeeNumber", employeeNumber);
         map.put("username", username);
         map.put("password", password);
 
@@ -482,7 +482,7 @@ public class AdminMenu implements Menu {
     }
 
 
-    private void renderEmployeesTable(JsonArray employees) {
+    public void renderEmployeesTable(JsonArray employees) {
         List<String[]> rows = new ArrayList<>();
         for (JsonElement el : employees) {
             JsonObject e = el.getAsJsonObject();

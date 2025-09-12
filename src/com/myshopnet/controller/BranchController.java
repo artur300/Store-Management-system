@@ -93,7 +93,22 @@ public class BranchController {
         return gson.toJson(response);
     }
 
+    public String checkIfProductInStockInBranch(String branchId, String sku, Long quantity) {
+        Response response = new Response();
 
+        try {
+            boolean inStock = branchService.checkIfProductInStockInBranch(branchId, sku, quantity);
+
+            response.setSuccess(true);
+            response.setMessage(gson.toJson(inStock));
+        }
+        catch (Exception e) {
+            response.setSuccess(false);
+            response.setMessage(e.getMessage());
+        }
+
+        return gson.toJson(response);
+    }
 
     public String createBranch(String userId, String branchName) {
         Response response = new Response();

@@ -13,6 +13,8 @@ import com.myshopnet.errors.EntityNotFoundException;
 import com.myshopnet.utils.GsonSingleton;
 import com.myshopnet.utils.Singletons;
 
+import java.util.List;
+
 public class ProductController {
     private Gson gson = GsonSingleton.getInstance();
     private ProductService productService = Singletons.PRODUCT_SERVICE;
@@ -36,6 +38,23 @@ public class ProductController {
 
             response.setSuccess(true);
             response.setMessage(gson.toJson(product));
+        }
+        catch (Exception e) {
+            response.setSuccess(false);
+            response.setMessage(e.getMessage());
+        }
+
+        return gson.toJson(response);
+    }
+
+    public String getAllProducts() {
+        Response response = new Response();
+
+        try {
+            List<Product> products = productService.getAllProducts();
+
+            response.setSuccess(true);
+            response.setMessage(gson.toJson(products));
         }
         catch (Exception e) {
             response.setSuccess(false);

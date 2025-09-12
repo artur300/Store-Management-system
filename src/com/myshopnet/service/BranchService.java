@@ -5,6 +5,7 @@ import com.myshopnet.errors.EntityNotFoundException;
 import com.myshopnet.models.*;
 import com.myshopnet.repository.BranchRepository;
 import com.myshopnet.repository.EmployeeRepository;
+import com.myshopnet.repository.ProductRepository;
 import com.myshopnet.repository.UserAccountRepository;
 import com.myshopnet.utils.Singletons;
 
@@ -18,6 +19,7 @@ public class BranchService implements EmployeeStatusObserver {
     private AuthService authService = Singletons.AUTH_SERVICE;
     private BranchRepository branchRepository = Singletons.BRANCH_REPO;
     private ChatService chatService = Singletons.CHAT_SERVICE;
+    private ProductRepository productRepository = Singletons.PRODUCT_REPO;
 
     public BranchService() {
         this.branchRepository = new BranchRepository();
@@ -80,7 +82,25 @@ public class BranchService implements EmployeeStatusObserver {
         chatService.createChat(employeeAvailableToChat, userAccountWaitingToChat);
     }
 
-    public UserAccount findAvailableEmployee(Branch branch) {
+    public Boolean checkIfProductInStockInBranch(String branchId, String sku, Long quantity) {
+        boolean inStock = false;
+
+        Branch branch =  branchRepository.get(branchId);
+        Product product = productRepository.get(sku);
+
+        if (branch == null) {
+            throw new EntityNotFoundException("Branch");
+        }
+
+        if (product == null) {
+            throw new EntityNotFoundException("Product");
+        }
+
+        inStock = branch.getProductsStock().getStockOfProducts().get(product) - quantity >= 0;
+        return inStock;
+    }
+
+        public UserAccount findAvailableEmployee(Branch branch) {
         UserAccount userAccount = null;
         List<Employee> employeesOfBranch = getAllEmployeesInBranch(branch.getId()).stream()
                 .filter(employee -> employee.getEmployeeStatus().equals(EmployeeStatus.AVAILABLE))

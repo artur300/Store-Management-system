@@ -104,7 +104,6 @@ public class ChatMenu implements Menu {
         String userId = Auth.getUsername();
         requestMap.put("userId", userId);
 
-        // Load branches to choose from
         Request request = new Request("getAllBranches", Singletons.GSON.toJson(requestMap));
         JsonObject response = Singletons.CLIENT.sendRequest(request);
 

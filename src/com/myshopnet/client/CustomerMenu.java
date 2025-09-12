@@ -1,16 +1,21 @@
 package com.myshopnet.client;
 
-import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import com.myshopnet.client.models.Product;
 import com.myshopnet.client.utils.UIUtils;
 
 import java.util.*;
 
 public class CustomerMenu implements Menu {
     private Scanner scanner;
+    private Map<String, Product> cart;
 
     public CustomerMenu() {
         this.scanner = Singletons.CLIENT.getScanner();
+        this.cart = new HashMap<>();
     }
 
     public void show() {
@@ -19,8 +24,9 @@ public class CustomerMenu implements Menu {
             UIUtils.printEmptyLine();
 
             UIUtils.printMenuOption(1, "View customer plan");
-            UIUtils.printMenuOption(2, "Purchase new clothes");
+            UIUtils.printMenuOption(2, "Add items to cart");
             UIUtils.printMenuOption(3, "View purchase history");
+            UIUtils.printMenuOption(4, "View cart");
             UIUtils.printMenuOption(0, "Log out");
 
             UIUtils.printMenuFooter();
@@ -32,10 +38,12 @@ public class CustomerMenu implements Menu {
                     showCustomerPlanDetails();
                     break;
                 case 2:
-                    processCustomerPurchase();
+                    addItemsToCart();
                     break;
                 case 3:
                     viewPurchaseHistory();
+                case 4:
+                    viewCart();
                 case 0:
                     Singletons.CLIENT.logout();
                     return;
@@ -46,28 +54,64 @@ public class CustomerMenu implements Menu {
         }
     }
 
-    private void displayCustomerDetails(String response) {
-        try {
-            String[] parts = response.split("\\|");
-            if (parts.length > 1) {
-                String[] customerData = parts[1].split(":");
-                if (customerData.length >= 4) {
-                    UIUtils.printLine("Customer ID: " + customerData[0]);
-                    UIUtils.printLine("Full Name: " + customerData[1]);
-                    UIUtils.printLine("Phone: " + customerData[2]);
-                    UIUtils.printLine("Type: " + customerData[3]);
+    private void viewCart() {
+        renderCartMenu();
 
-                    if (customerData.length > 4) {
-                        UIUtils.printLine("Purchase Plan: " + customerData[4]);
-                    }
-                    if (customerData.length > 5) {
-                        UIUtils.printLine("Promotions: " + customerData[5]);
-                    }
+        UIUtils.printEmptyLine();
+
+        if (!cart.isEmpty()) {
+            UIUtils.printMenuOption(1, "Buy clothes");
+        }
+        UIUtils.printMenuOption(2, "Go back");
+
+        UIUtils.printMenuFooter();
+
+        int choice = UIUtils.getIntInput(scanner);
+
+        switch (choice) {
+            case 1:
+                buy();
+                break;
+            case 2:
+                show();
+                break;
+            default:
+                UIUtils.showError("Invalid choice. Please try again.");
+                UIUtils.waitForEnter(scanner);
+        }
+    }
+
+    private void buy() {
+        Map<String, String> requestMap = new HashMap<>();
+
+        for (Map.Entry<String, Product> productEntry : cart.entrySet()) {
+            String sku = productEntry.getKey();
+            Integer quantity = productEntry.getValue().getQuantity();
+            String branchId = productEntry.getValue().getBranchId();
+
+            requestMap.put("sku", sku);
+            requestMap.put("quantity", quantity.toString());
+            requestMap.put("branchId", branchId);
+
+            Request request = new Request("checkIfProductInStockInBranch", Singletons.GSON.toJson(requestMap));
+            JsonObject response = Singletons.CLIENT.sendRequest(request);
+
+            if (response.get("status").getAsBoolean()) {
+                if (!response.get("message").getAsBoolean()) {
+                    throw new RuntimeException("The product is not in stock.");
                 }
             }
-        } catch (Exception e) {
-            UIUtils.showError("Error displaying customer details: " + e.getMessage());
+            else {
+                throw new RuntimeException("Can't perform buying proccess");
+            }
+
+            requestMap = new HashMap<>();
         }
+
+        //perform order now
+
+
+        cart = new HashMap<>();
     }
 
     private void showCustomerPlanDetails() {
@@ -92,68 +136,151 @@ public class CustomerMenu implements Menu {
         UIUtils.waitForEnter(scanner);
     }
 
-    private void displayPurchaseHistory(String response) { // legacy not used
-        try {
-            String[] parts = response.split("\\|");
-            if (parts.length > 1) {
-                List<String[]> rows = new ArrayList<>();
-                double totalSpent = 0;
+    private void addItemsToCart() {
+        UIUtils.printMenuHeader("ADD NEW ITEMS");
 
-                for (int i = 1; i < parts.length; i++) {
-                    String[] purchaseData = parts[i].split(":");
-                    if (purchaseData.length >= 5) {
-                        rows.add(new String[]{
-                                purchaseData[0], // Date
-                                purchaseData[1], // Product
-                                purchaseData[2], // Quantity
-                                "$" + purchaseData[3], // Amount
-                                "$" + purchaseData[4]  // Discount
-                        });
-                        totalSpent += Double.parseDouble(purchaseData[3]);
-                    }
-                }
+       try {
+           String branchIdChosen = getBranchPick();
+           Product product = getProductPick(branchIdChosen);
+           Integer quantity = UIUtils.getIntInput(scanner);
 
-                String[] headers = {"Date", "Product", "Quantity", "Amount", "Discount"};
-                UIUtils.printTable(headers, rows);
-                UIUtils.showInfo("Total purchases: " + rows.size() + ", Total spent: $" + String.format("%.2f", totalSpent));
-            } else {
-                UIUtils.printLine("No purchase history found");
-            }
-        } catch (Exception e) {
-            UIUtils.showError("Error displaying purchase history: " + e.getMessage());
-        }
+           if (quantity <= 0) {
+               throw new RuntimeException("Invalid quantity. Please try again.");
+           }
+
+           if (branchIdChosen == null) {
+               throw new RuntimeException("Invalid branchId. Please try again.");
+           }
+
+           if (product == null) {
+               throw new RuntimeException("Invalid productId. Please try again.");
+           }
+
+           cart.put(product.getSku(), product);
+           UIUtils.printLine("Successfully added " + product.getSku() + " to the cart. Press enter to continue.");
+           UIUtils.waitForEnter(scanner);
+       }
+       catch (Exception e) {
+           UIUtils.showError(e.getMessage());
+       }
     }
 
-    private void processCustomerPurchase() {
-        UIUtils.printMenuHeader("PROCESS CUSTOMER PURCHASE");
 
-        String customerId = UIUtils.getStringInput(scanner, "Customer ID: ");
-        String productId = UIUtils.getStringInput(scanner, "Product ID: ");
-        String quantityStr = UIUtils.getStringInput(scanner, "Quantity: ");
+    private String getBranchPick() {
+        Map<String, String> req = new HashMap<>();
+        List<String> branchesId = new ArrayList<>();
+        req.put("userId", Auth.getUsername());
 
-        try {
-            int quantity = Integer.parseInt(quantityStr);
+        Request request = new Request("getAllBranches", Singletons.GSON.toJson(req));
+        JsonObject response = Singletons.CLIENT.sendRequest(request);
 
-            JsonObject data = new JsonObject();
-            data.addProperty("branchId", Auth.getCurrentUser().get("branchId").getAsString());
-            data.addProperty("customerId", customerId);
-            JsonObject products = new JsonObject();
-            products.addProperty(productId, quantity);
-            data.add("products", products);
-
-            Request request = new Request("performOrder", Singletons.GSON.toJson(data));
-            JsonObject response =  Singletons.CLIENT.sendRequest(request);
-
-            if (response != null && response.has("success") && response.get("success").getAsBoolean()) {
-                UIUtils.showSuccess("Order performed successfully");
-            } else {
-                String error = response != null && response.has("message") ? response.get("message").getAsString() : "Connection error";
-                UIUtils.showError(error);
-            }
-        } catch (NumberFormatException e) {
-            UIUtils.showError("Invalid quantity format");
+        if (response != null && !response.get("success").getAsBoolean()) {
+            String error = response != null ? response.get("message").getAsString() : "Connection error";
+            UIUtils.showError(error);
+            UIUtils.waitForEnter(scanner);
+            return null;
         }
 
-        UIUtils.waitForEnter(scanner);
+        if (response == null) {
+            UIUtils.showError("Response is null");
+            UIUtils.waitForEnter(scanner);
+            return null;
+        }
+
+        JsonArray branches = JsonParser.parseString(response.get("message").getAsString()).getAsJsonArray();
+        int i = 1;
+        for (JsonElement el: branches){
+            JsonObject b = el.getAsJsonObject();
+            branchesId.add(b.get("id").getAsString());
+            UIUtils.printMenuOption(i++, b.get("name").getAsString());
+        }
+
+        UIUtils.printLine("Enter the branch you want to purchase from: ");
+        int choice = UIUtils.getIntInput(scanner);
+
+        if (choice < 0 || choice > branchesId.size()) {
+            UIUtils.showError("Invalid choice. Please try again.");
+            return null;
+        }
+
+        return branchesId.get(choice);
+    }
+
+    private Product getProductPick(String branchIdChosen) {
+        List<Product> productsActual = new ArrayList<>();
+        Request request = new Request("getAllProducts", null);
+        JsonObject response = Singletons.CLIENT.sendRequest(request);
+
+        if (response != null && !response.get("success").getAsBoolean()) {
+            String error = response.get("message").getAsString();
+            UIUtils.showError(error);
+            UIUtils.waitForEnter(scanner);
+            return null;
+        }
+
+        if (response == null) {
+            UIUtils.showError("Response is null");
+            UIUtils.waitForEnter(scanner);
+            return null;
+        }
+
+        JsonArray products = JsonParser.parseString(response.get("message").getAsString()).getAsJsonArray();
+        int i = 1;
+        for (JsonElement el : products) {
+            JsonObject b = el.getAsJsonObject();
+
+            Product product = new Product(
+                    b.get("sku").getAsString(),
+                    b.get("name").getAsString(),
+                    b.get("price").getAsDouble(),
+                    branchIdChosen,
+                    0
+            );
+
+            productsActual.add(product);
+            UIUtils.printMenuOption(i++, String.format("%s. %s (%s) - $%s", i, b.get("name").getAsString(),
+                    b.get("sku").getAsString() , b.get("price").getAsString()));
+        }
+
+        UIUtils.printLine("Enter the branch you want to purchase from: ");
+        int choice = UIUtils.getIntInput(scanner);
+
+        if (choice < 0 || choice > productsActual.size()) {
+            UIUtils.showError("Invalid choice. Please try again.");
+            return null;
+        }
+
+        return productsActual.get(choice);
+    }
+
+    private void renderCartMenu() {
+        List<String[]> rows = new ArrayList<>();
+        Double total = 0.0, discountTotal = 0.0;
+
+        for (Product p : cart.values()) {
+            total += p.getPrice();
+
+            rows.add(new String[] { p.getSku(), p.getName(), String.valueOf(p.getQuantity()), String.valueOf(p.getPrice())});
+        }
+
+        String[] headers = {"Product SKU", "Product Name", "Quantity", "Product Price"};
+        UIUtils.printTable(headers, rows);
+        UIUtils.showInfo("Total price before discount: " + total);
+
+        String customerType = Auth.getCurrentUser().get("customerType").getAsString();
+
+        switch (customerType) {
+            case "New Customer":
+                discountTotal = total * 0.95;
+                break;
+            case "Returning Customer":
+                discountTotal = total - 10 < 0 ? 0 : total - 10;
+                break;
+           case "VIP Customer":
+               discountTotal = total * 0.80;
+               break;
+        }
+
+        UIUtils.showInfo("Total price after discount: " + discountTotal);
     }
 }

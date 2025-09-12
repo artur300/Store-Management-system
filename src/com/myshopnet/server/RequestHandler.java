@@ -1,7 +1,6 @@
 package com.myshopnet.server;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonObject;
+import com.google.gson.*;
 import com.myshopnet.controller.*;
 import com.myshopnet.models.Employee;
 import com.myshopnet.utils.GsonSingleton;
@@ -169,17 +168,33 @@ public class RequestHandler {
                     break;
                 }
 
+                case "checkIfProductInStockInBranch": {
+                    String sku = json.get("sku").getAsString();
+                    Long quantity = json.get("quantity").getAsLong();
+                    String branchId = json.get("branchId").getAsString();
+
+                    response = branchController.checkIfProductInStockInBranch(branchId, sku, quantity);
+                    break;
+                }
+
                 case "performOrder": {
                     String branchId = json.get("branchId").getAsString();
                     String customerId = json.get("customerId").getAsString();
-                    JsonObject productsJson = json.getAsJsonObject("products");
-                    Map<String, Long> productsMap = new HashMap<>();
+                    JsonArray productsJson = JsonParser.parseString(json.get("products").getAsString()).getAsJsonArray();
+                    Map<String, Long> productsStock = new HashMap<>();
 
-                    for (String key : productsJson.keySet()) {
-                        productsMap.put(key, productsJson.get(key).getAsLong());
+                    for (JsonElement el : productsJson) {
+                        JsonObject product = el.getAsJsonObject();
+
+                        productsStock.put(product.get("productSku").getAsString(), product.get("quantity").getAsLong());
                     }
 
-                    response = orderController.performOrder(productsMap, branchId, customerId);
+                    response = orderController.performOrder(productsStock, branchId, customerId);
+                    break;
+                }
+
+                case "getAllProducts": {
+                    response = productController.getAllProducts();
                     break;
                 }
 
