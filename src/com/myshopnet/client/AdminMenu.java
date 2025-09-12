@@ -42,9 +42,11 @@ public class AdminMenu implements Menu {
                     Singletons.BRANCH_MENU.show();
                     break;
                 case 4:
-                    Singletons.LOGIN_MENU.show();
+                    Singletons.LOG_MENU.show();
+                    break;
                 case 5:
                     manageEmployees();
+                    break;
                 case 0:
                     Singletons.CLIENT.logout();
                     return;
@@ -88,21 +90,18 @@ public class AdminMenu implements Menu {
 
     private String getBranchByBranchId(String branchId) {
         Map<String, String> requestMap = new HashMap<>();
-        String userId = Auth.getCurrentUser().get("userId").getAsString();
         String name = null;
 
         requestMap.put("branchId", branchId);
-        requestMap.put("userId", userId);
+        requestMap.put("userId", Auth.getUsername());
 
         Request request = new Request("getBranchByBranchId", Singletons.GSON.toJson(requestMap));
         JsonObject responseBranch = Singletons.CLIENT.sendRequest(request);
 
         if (responseBranch.get("success").getAsBoolean()) {
-            JsonObject branchObject = responseBranch.getAsJsonObject("message");
-
+            JsonObject branchObject = JsonParser.parseString(responseBranch.get("message").getAsString()).getAsJsonObject();
             name = branchObject.get("name").getAsString();
-        }
-        else {
+        } else {
             UIUtils.showError("Failed to get branch by id: " + branchId);
         }
 
@@ -177,7 +176,7 @@ public class AdminMenu implements Menu {
 
     private void viewAllEmployees(){
         Map<String, String> map = new HashMap<>();
-        map.put("currentUserId", Auth.getCurrentUser().get("userId").getAsString());
+        map.put("currentUserId", Auth.getUsername());
 
         Request request = new Request("getAllEmployees", Singletons.GSON.toJson(map));
         JsonObject response = Singletons.CLIENT.sendRequest(request);
@@ -194,7 +193,7 @@ public class AdminMenu implements Menu {
 
     private void viewEmployeeByBranch() {
         Map<String, String> req = new HashMap<>();
-        req.put("userId", Auth.getCurrentUser().get("userId").getAsString());
+        req.put("userId", Auth.getUsername());
 
         Request request = new Request("getAllBranches", Singletons.GSON.toJson(req));
         JsonObject response = Singletons.CLIENT.sendRequest(request);
@@ -206,7 +205,7 @@ public class AdminMenu implements Menu {
             return;
         }
 
-        JsonArray branches = response.getAsJsonArray("message");
+        JsonArray branches = JsonParser.parseString(response.get("message").getAsString()).getAsJsonArray();
         List<String []> rows = new ArrayList<>();
         for (JsonElement el: branches){
             JsonObject b = el.getAsJsonObject();
@@ -245,7 +244,7 @@ public class AdminMenu implements Menu {
         String password = UIUtils.getStringInput(scanner, "Password (for login): ");
 
         Map<String, String> map = new HashMap<>();
-        map.put("currentUserId", Auth.getCurrentUser().get("userId").getAsString());
+        map.put("currentUserId", Auth.getUsername());
         map.put("fullName", fullName);
         map.put("phoneNumber", phoneNumber);
         map.put("accountNumber", String.valueOf(accountNumber));
@@ -258,7 +257,7 @@ public class AdminMenu implements Menu {
         Request request = new Request("addEmployee", Singletons.GSON.toJson(map));
         JsonObject response = Singletons.CLIENT.sendRequest(request);
 
-        if (response != null && response.get("message").getAsBoolean()){
+        if (response != null && response.get("success").getAsBoolean()){
             UIUtils.showSuccess("Employee added successfully!");
         } else {
             String error = response != null ? response.get("message").getAsString() : "Connection error";
@@ -307,7 +306,7 @@ public class AdminMenu implements Menu {
         updated.addProperty("role", current.get("role").getAsString()); // keep role
 
         JsonObject payload = new JsonObject();
-        payload.addProperty("currentUserId", Auth.getCurrentUser().get("userId").getAsString());
+        payload.addProperty("currentUserId", Auth.getUsername());
         payload.add("employee", updated);
 
         JsonObject resp = Singletons.CLIENT.sendRequest(new Request("updateEmployee", Singletons.GSON.toJson(payload)));
@@ -324,10 +323,10 @@ public class AdminMenu implements Menu {
     private void deleteEmployee() {
         UIUtils.printMenuHeader("DELETE EMPLOYEE");
 
-        String employeeId = UIUtils.getStringInput(scanner, "Employee ID to delete: ");
+        String employeeId = UIUtils.getStringInput(scanner, "Employee full name to delete: ");
 
         Map<String, String> map = new HashMap<>();
-        map.put("currentUserId", Auth.getCurrentUser().get("userId").getAsString());
+        map.put("currentUserId", Auth.getUsername());
         map.put("employeeId", employeeId);
 
         JsonObject resp = Singletons.CLIENT.sendRequest(new Request("deleteEmployee", Singletons.GSON.toJson(map)));
@@ -351,12 +350,13 @@ public class AdminMenu implements Menu {
             String phone = e.has("phoneNumber") && !e.get("phoneNumber").isJsonNull() ? e.get("phoneNumber").getAsString() : "";
             String accountNumber = String.valueOf(e.get("accountNumber").getAsLong());
             String branchId = e.get("branchId").getAsString();
+            String branchName = getBranchByBranchId(e.get("branchId").getAsString());
             String employeeType = e.get("employeeType").getAsString();
             String employeeNumber = String.valueOf(e.get("employeeNumber").getAsLong());
             String employeeStatus = e.get("employeeStatus").getAsString();
-            rows.add(new String[]{id, fullName, phone, accountNumber, branchId, employeeType, employeeNumber, employeeStatus});
+            rows.add(new String[]{id, fullName, phone, accountNumber, branchName, branchId, employeeType, employeeNumber, employeeStatus});
         }
-        String[] headers = {"ID", "Full Name", "Phone", "Account #", "Branch", "Type", "Emp #", "Status"};
+        String[] headers = {"ID", "Full Name", "Phone", "Account #", "BranchName" ,"BranchID", "Type", "Emp #", "Status"};
         UIUtils.printTable(headers, rows);
         UIUtils.showInfo("Total employees: " + rows.size());
     }

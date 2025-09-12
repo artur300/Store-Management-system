@@ -17,14 +17,35 @@ public class EmployeeRepository implements Repository<Employee> {
 
     @Override
     public Employee update(String id, Employee employee) {
-        Data.getAllAccounts().get(id).setUser(employee);
+        UserAccount account = Data.getAllAccounts().get(id);
+        if (account == null){
+            account = Data.getAllAccounts().values().stream()
+                    .filter(ua ->ua.getUser() != null && ua.getUser().getUserId().equals(id))
+                    .findFirst()
+                    .orElse(null);
+        }
 
-        return (Employee) Data.getAllAccounts().get(id).getUser();
+        if (account == null){
+            throw new IllegalArgumentException("Employee account not found for id: " + id);
+        }
+
+        account.setUser(employee);
+        return (Employee) account.getUser();
     }
 
     @Override
     public void delete(String id) {
-        Data.getAllAccounts().remove(id);
+        String keyToRemove = Data.getAllAccounts().entrySet().stream()
+                .filter(e -> e.getValue().getUser() != null && e.getValue().getUser().getUserId().equals(id))
+                .map(e-> e.getKey())
+                .findFirst()
+                .orElse(null);
+
+        if (keyToRemove != null){
+            Data.getAllAccounts().remove(keyToRemove);
+        } else { // if it's id
+            Data.getAllAccounts().remove(id);
+        }
     }
 
     @Override
