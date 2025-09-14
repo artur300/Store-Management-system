@@ -8,17 +8,17 @@ import java.util.List;
 public class ChatRepository implements Repository<Chat> {
     @Override
     public Chat create(Chat chat) {
-        return Data.getOngoingChats().put(chat.getId(), chat);
+        // תיקון: להחזיר את האובייקט החדש (לא את הערך הישן של put)
+        Data.getOngoingChats().put(chat.getId(), chat);
+        return chat;
     }
 
     @Override
     public Chat update(String id, Chat chat) {
         Chat chatToReturn = null;
-
         if (Data.getOngoingChats().containsKey(id)) {
             chatToReturn = Data.getOngoingChats().put(id, chat);
         }
-
         return chatToReturn;
     }
 
@@ -37,3 +37,4 @@ public class ChatRepository implements Repository<Chat> {
         return Data.getOngoingChats().values().stream().toList();
     }
 }
+

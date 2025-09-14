@@ -4,12 +4,6 @@ import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.Date;
 
-// Utility class with helper methods for the chat system.
-// - sys(text): Formats a system message with a timestamp.
-// - broadcastSys(): Sends a system message to all given users.
-// - log(): Prints a log message with the current date and time.
-// Marked as 'final' with a private constructor so it cannot be instantiated.
-
 public final class ChatUtils {
     private static final SimpleDateFormat TS = new SimpleDateFormat("HH:mm");
 

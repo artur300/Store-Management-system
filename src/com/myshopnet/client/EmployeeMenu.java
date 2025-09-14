@@ -10,10 +10,13 @@ public class EmployeeMenu implements Menu {
     private Scanner scanner;
 
     public EmployeeMenu() {
-        this.scanner =  Singletons.CLIENT.getScanner();
+        this.scanner = Singletons.CLIENT.getScanner();
     }
 
     public void show() {
+        // ברגע שנכנסים לתפריט עובד -> ננסה להגדיר אותו כ-AVAILABLE
+        setEmployeeAvailable();
+
         while (true) {
             UIUtils.printMenuHeader("EMPLOYEE MENU");
 
@@ -38,8 +41,10 @@ public class EmployeeMenu implements Menu {
                     break;
                 case 3:
                     Singletons.STOCK_MENU.show();
+                    break;
                 case 4:
                     viewOrdersFromBranch();
+                    break;
                 case 0:
                     Singletons.CLIENT.logout();
                     return;
@@ -50,8 +55,31 @@ public class EmployeeMenu implements Menu {
         }
     }
 
-    private void viewOrdersFromBranch() {
+    /**
+     * מגדיר את העובד הנוכחי כ-AVAILABLE בשרת
+     */
+    private void setEmployeeAvailable() {
+        try {
+            JsonObject data = new JsonObject();
+            // שולחים userId ולא username
+            data.addProperty("userId", Auth.getCurrentUser().get("userId").getAsString());
+            data.addProperty("status", "AVAILABLE");
 
+            Request request = new Request("updateEmployeeStatus", data.toString());
+            JsonObject response = Singletons.CLIENT.sendRequest(request);
+
+            if (response != null && response.has("success") && response.get("success").getAsBoolean()) {
+                UIUtils.showInfo("You are now AVAILABLE for chat.");
+            } else {
+                UIUtils.showError("Could not set you as AVAILABLE.");
+            }
+        } catch (Exception e) {
+            UIUtils.showError("Error setting status: " + e.getMessage());
+        }
+    }
+
+    private void viewOrdersFromBranch() {
+        // עדיין לא ממומש
     }
 
     private void startChat() {

@@ -6,7 +6,8 @@ import com.myshopnet.models.Branch;
 import com.myshopnet.models.Employee;
 import com.myshopnet.models.EmployeeType;
 
-public class PopulateUsers {
+public class
+PopulateUsers {
     public static void populate() {
         Branch tlv = Singletons.BRANCH_SERVICE.createNewBranch(
                 "TLV"

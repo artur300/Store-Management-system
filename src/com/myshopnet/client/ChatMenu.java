@@ -1,198 +1,185 @@
 package com.myshopnet.client;
+
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-
 import com.google.gson.JsonParser;
 import com.myshopnet.client.utils.UIUtils;
 
 import java.util.*;
-import java.util.concurrent.*;
 
 public class ChatMenu implements Menu {
-    private Scanner scanner;
-    private boolean inChat = false;
-    private String currentChatId = null;
-    private ExecutorService chatExecutor;
+    private final Scanner scanner;
 
+    // מצב הצ'אט
+    private volatile boolean inChat = false;
+    private volatile String currentChatId = null;
+
+    // תיאום עם push
     private volatile boolean waitingForChat = false;
-
-    private final PushClient pushClient = new PushClient();
-    private volatile boolean pushRunning = false;
+    private volatile String pendingChatId = null; // chat שהשרת יצר ואמור להיפתח
 
     public ChatMenu() {
         this.scanner = Singletons.CLIENT.getScanner();
-        this.chatExecutor = Executors.newSingleThreadExecutor();
     }
 
-    public void show() {
-        ensurePushSubscribed();
+    // ===== Hooks שמקבל מ-Client דרך ה-Push =====
+    @Override
+    public void onChatCreated(String chatId) {
+        pendingChatId = chatId;
+        waitingForChat = false;
+        System.out.println("\n[Notification] Chat is ready.");
+    }
 
+    @Override
+    public void onIncomingMessage(String chatId, String sender, String msg) {
+        if (inChat && Objects.equals(chatId, currentChatId)) {
+            System.out.println("\n[" + sender + "]: " + msg);
+        }
+    }
+
+    // ===== תצוגת תפריט =====
+    @Override
+    public void show() {
         while (true) {
+            // אם יש צ'אט בהמתנה ולא בתוך צ'אט – נפתח עכשיו
+            if (!inChat && pendingChatId != null) {
+                String id = pendingChatId;
+                pendingChatId = null;
+                startChatSession(id);
+                continue;
+            }
+
             UIUtils.printMenuHeader("CHAT SYSTEM");
             UIUtils.printLine("Inter-branch communication");
             UIUtils.printEmptyLine();
 
             UIUtils.printMenuOption(1, "Start New Chat");
-            if (Auth.getCurrentUser().get("employeeType").getAsString().equals("SHIFT_MANAGER")) {
-                UIUtils.printMenuOption(2, "Join Existing Chat");
-            }
             UIUtils.printMenuOption(0, "Back to Main Menu");
-
             UIUtils.printMenuFooter();
 
             int choice = UIUtils.getIntInput(scanner);
 
             switch (choice) {
-                case 1:
-                    startNewChat();
-                    break;
-                case 2:
-                    if (Auth.getCurrentUser().get("employeeType").getAsString().equals("SHIFT_MANAGER")) {
-                        joinExistingChat();
-                    }
-                    break;
-                case 0:
-                    return;
-                default:
-                    UIUtils.showError("Invalid choice. Please try again.");
-                    UIUtils.waitForEnter(scanner);
+                case 1 -> startNewChat();
+                case 0 -> { return; }
+                default -> UIUtils.showErrorAndWait(scanner, "Invalid choice. Please try again.");
             }
         }
     }
 
-    private void ensurePushSubscribed(){
-        if (pushRunning) return;
-        try {
-            String userId = Auth.getUsername();
-            pushClient.start(userId, evt -> {
-                try {
-                    if (evt == null || !evt.has("type")) return;
-                    String type = evt.get("type").getAsString();
-
-                    if ("chatCreated".equalsIgnoreCase(type)){
-                        String chatId = evt.get("chatId").getAsString();
-                        waitingForChat = false;
-                        if (!inChat) {
-                            UIUtils.showSuccess("A chat session is now available. Opening chat..");
-                            startChatSession(chatId);
-                        }
-                    }
-                } catch (Exception ignored) {   }
-            });
-            pushRunning = true;
-        } catch (Exception error) {
-            pushRunning = false;
-        }
-    }
-
     private void startNewChat() {
-        if (inChat){
-            UIUtils.showError("You are already in a chat session.");
-            UIUtils.waitForEnter(scanner);
-            return;
-        }
-        if (waitingForChat){
-            UIUtils.showInfo("You already have a ppending chat request in the queue. please wait for a notification.");
-            UIUtils.waitForEnter(scanner);
+        if (inChat) {
+            UIUtils.showErrorAndWait(scanner, "You are already in a chat session.");
             return;
         }
 
         Map<String, String> requestMap = new HashMap<>();
         UIUtils.printMenuHeader("START NEW CHAT");
 
-        String userId = Auth.getUsername();
+        String userId = Auth.getCurrentUser().get("userId").getAsString();
         requestMap.put("userId", userId);
 
         Request request = new Request("getAllBranches", Singletons.GSON.toJson(requestMap));
         JsonObject response = Singletons.CLIENT.sendRequest(request);
 
         if (response == null) {
-            UIUtils.showError("Connection error while loading branches");
+            UIUtils.showErrorAndWait(scanner, "Connection error while loading branches");
             return;
         }
 
         if (response.get("success").getAsBoolean()) {
-            String chosenBranchId = displayAvailableBranches(JsonParser.parseString(response.get("message").getAsString()).getAsJsonArray());;
+            String chosenBranchId = displayAvailableBranches(JsonParser.parseString(response.get("message").getAsString()).getAsJsonArray());
+            if (chosenBranchId == null) return;
 
-            if (chosenBranchId != null) {
-                Map<String, String> requestMapToChat = new HashMap<>();
-                requestMapToChat.put("userIdRequesting", userId);
-                requestMapToChat.put("branchId", chosenBranchId);
+            Map<String, String> requestMapToChat = new HashMap<>();
+            requestMapToChat.put("userIdRequesting", userId);
+            requestMapToChat.put("branchId", chosenBranchId);
 
-                Request requestToChat = new Request("startChat", Singletons.GSON.toJson(requestMapToChat));
-                JsonObject chatResponse = Singletons.CLIENT.sendRequest(requestToChat);
+            Request requestToChat = new Request("startChat", Singletons.GSON.toJson(requestMapToChat));
+            JsonObject chatResponse = Singletons.CLIENT.sendRequest(requestToChat);
 
-                if (chatResponse != null && chatResponse.get("success").getAsBoolean()) {
-                    try {
-                        if (chatResponse.get("message").isJsonObject()) {
-                            JsonObject chatObj = chatResponse.getAsJsonObject("message");
-                            String chatId = chatObj.get("id").getAsString();
-                            UIUtils.showSuccess("Chat started! ID: " + chatId);
-                            startChatSession(chatId);
+            if (chatResponse != null && chatResponse.has("success") && chatResponse.get("success").getAsBoolean()) {
+                try {
+                    if (chatResponse.get("message").isJsonObject()) {
+                        // פתיחה מידית (שרת כבר מצא עובד זמין)
+                        JsonObject chatObj = chatResponse.getAsJsonObject("message");
+                        String chatId = chatObj.get("id").getAsString();
+                        pendingChatId = chatId;
+                        waitingForChat = false;
+                        startChatSession(chatId);
+                    } else {
+                        // נכנסנו לתור
+                        String msg = chatResponse.get("message").getAsString();
+                        if (msg != null && msg.toLowerCase().contains("queue")) {
+                            waitingForChat = true;
+                            UIUtils.showInfo("All employees are busy. Waiting for a free agent...");
+                            waitForChatAndOpen();
                         } else {
-                            String msg = chatResponse.get("message").getAsString();
-                            if (msg != null && msg.toLowerCase().contains("queue")) {
-                                UIUtils.showInfo("All employees are busy. You were added to the queue. You'll get a notification when available.");
-                            } else {
-                                UIUtils.showInfo(msg);
-                            }
+                            UIUtils.showInfoAndWait(scanner, msg);
                         }
-                    } catch (Exception ex) {
-                        try {
-                            String msgStr = chatResponse.get("message").getAsString();
-                            JsonObject chatObj = Singletons.GSON.fromJson(msgStr, JsonObject.class);
-                            if (chatObj != null && chatObj.has("id")) {
-                                String chatId = chatObj.get("id").getAsString();
-                                UIUtils.showSuccess("Chat started! ID: " + chatId);
-                                startChatSession(chatId);
-                                return;
-                            }
-                        } catch (Exception ignore) { }
-                        UIUtils.showError("Unexpected response from server.");
                     }
-                } else {
-                    String err = (chatResponse != null && chatResponse.has("message")) ? chatResponse.get("message").getAsString() : "Connection error";
-                    UIUtils.showError(err);
+                } catch (Exception ex) {
+                    UIUtils.showErrorAndWait(scanner, "Unexpected response from server.");
                 }
+            } else {
+                String err = (chatResponse != null && chatResponse.has("message"))
+                        ? chatResponse.get("message").getAsString()
+                        : "Connection error";
+                UIUtils.showErrorAndWait(scanner, err);
             }
         } else {
-            UIUtils.showError(response.has("message") ? response.get("message").getAsString() : "Failed to load branches");
+            UIUtils.showErrorAndWait(scanner,
+                    response.has("message") ? response.get("message").getAsString() : "Failed to load branches");
         }
     }
 
     private String displayAvailableBranches(JsonArray branches) {
         try {
-            while(true) {
+            while (true) {
                 List<String> branchIds = new ArrayList<>();
 
                 if (!branches.isEmpty()) {
                     int i = 0;
-
                     for (JsonElement row : branches) {
                         JsonObject rowObject = row.getAsJsonObject();
-
                         branchIds.add(rowObject.get("id").getAsString());
                         UIUtils.printMenuOption(i + 1, rowObject.get("name").getAsString());
-
                         i++;
                     }
-
+                    UIUtils.printMenuFooter();
                     int choice = UIUtils.getIntInput(scanner);
-
                     if (choice < 1 || choice > branchIds.size()) {
-                        UIUtils.showError("Invalid choice. Please try again.");
+                        UIUtils.showErrorAndWait(scanner, "Invalid choice. Please try again.");
+                        continue;
                     }
-
                     return branchIds.get(choice - 1);
+                } else {
+                    UIUtils.showInfoAndWait(scanner, "No branches found.");
+                    return null;
                 }
             }
+        } catch (Exception e) {
+            UIUtils.showErrorAndWait(scanner, "Error displaying branches: " + e.getMessage());
         }
-        catch (Exception e) {
-            UIUtils.showError("Error displaying branches: " + e.getMessage());
-        }
-
         return null;
+    }
+
+    // מחכה לאירוע chatCreated ואז פותח — רץ באותו חוט, לא קורא קלט בזמן ההמתנה
+    private void waitForChatAndOpen() {
+        UIUtils.printEmptyLine();
+        UIUtils.printLine("Waiting for available agent...");
+        UIUtils.printLine("(Press Ctrl+C to cancel)");
+        UIUtils.printBottomBorder();
+
+        while (waitingForChat && pendingChatId == null) {
+            try { Thread.sleep(150); } catch (InterruptedException ignored) {}
+        }
+        if (pendingChatId != null) {
+            String id = pendingChatId;
+            pendingChatId = null;
+            startChatSession(id);
+        }
     }
 
     private void startChatSession(String chatId) {
@@ -201,63 +188,42 @@ public class ChatMenu implements Menu {
 
         UIUtils.clearScreen();
         UIUtils.printBorder();
-        UIUtils.printTitle("CHAT SESSION - " + chatId);
-        UIUtils.printBorder();
-        UIUtils.printLine("Type '/exit' to leave chat, '/history' for chat history");
+        UIUtils.printTitle("CHAT SESSION");
+        UIUtils.printLine("Chat ID: " + chatId);
+        UIUtils.printLine("Type '/exit' to leave chat, '/history' for chat history (not implemented)");
         UIUtils.printBottomBorder();
 
-        chatExecutor.submit(new MessageReceiver());
-
-        // Main chat loop
         while (inChat) {
             System.out.print("You: ");
             String message = scanner.nextLine();
+            if (message == null) continue;
+            message = message.trim();
+            if (message.isEmpty()) continue;
 
-            if (message.equals("/exit")) {
+            if ("/exit".equalsIgnoreCase(message)) {
                 exitChat();
                 break;
-            } else if (message.equals("/history")) {
+            } else if ("/history".equalsIgnoreCase(message)) {
                 showCurrentChatHistory();
                 continue;
             }
 
-            if (!message.trim().isEmpty()) {
-                UIUtils.showInfo("Sending chat messages is not implemented in this client yet.");
+            JsonObject data = new JsonObject();
+            data.addProperty("chatId", currentChatId);
+            data.addProperty("senderId", Auth.getCurrentUser().get("userId").getAsString());
+            data.addProperty("message", message);
+
+            Request req = new Request("sendMessage", data.toString());
+            JsonObject res = Singletons.CLIENT.sendRequest(req);
+
+            if (res == null || !res.has("success") || !res.get("success").getAsBoolean()) {
+                System.out.println("(!) Failed to send message"
+                        + (res != null && res.has("message") ? (": " + res.get("message").getAsString()) : "."));
             }
         }
 
         this.inChat = false;
         this.currentChatId = null;
-    }
-
-    private class MessageReceiver implements Runnable {
-        @Override
-        public void run() {
-            while (inChat) {
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                    break;
-                } catch (Exception ignored) {}
-            }
-        }
-    }
-
-    private void displayNewMessages(String response) {
-        try {
-            // Expected format: NEW_MESSAGES|sender:timestamp:message|...
-            String[] parts = response.split("\\|");
-            for (int i = 1; i < parts.length; i++) {
-                String[] messageData = parts[i].split(":", 3);
-                if (messageData.length >= 3) {
-                    System.out.println(messageData[0] + " [" + messageData[1] + "]: " + messageData[2]);
-                    System.out.print("You: ");
-                }
-            }
-        } catch (Exception e) {
-            System.err.println("Error displaying messages: " + e.getMessage());
-        }
     }
 
     private void exitChat() {
@@ -268,74 +234,10 @@ public class ChatMenu implements Menu {
             Request req = new Request("endChat", Singletons.GSON.toJson(data));
             Singletons.CLIENT.sendRequest(req);
         } catch (Exception ignored) {}
-        inChat = false;
-        UIUtils.showInfo("You have left the chat.");
+        System.out.println("You have left the chat.");
     }
 
     private void showCurrentChatHistory() {
-        UIUtils.showInfo("Chat history view is not implemented in this client.");
-    }
-
-    private void joinExistingChat() {
-        if (!Auth.getCurrentUser().get("employeeType").getAsString().equals("SHIFT_MANAGER")) {
-            UIUtils.showError("Only shift managers can join existing chats");
-            UIUtils.waitForEnter(scanner);
-            return;
-        }
-        UIUtils.printMenuHeader("JOIN EXISTING CHAT");
-        UIUtils.showInfo("Joining existing chats is not implemented in this client.");
-        UIUtils.waitForEnter(scanner);
-    }
-
-    private void viewPendingRequests() {
-        UIUtils.printMenuHeader("PENDING CHAT REQUESTS");
-        UIUtils.showInfo("Pending requests view is not implemented in this client.");
-        UIUtils.waitForEnter(scanner);
-    }
-
-    private void respondToPendingRequest(String requestId) {
-        UIUtils.showInfo("Responding to requests is not implemented in this client.");
-    }
-
-    private void viewChatHistory() {
-        UIUtils.printMenuHeader("CHAT HISTORY");
-        UIUtils.showInfo("Chat history is not implemented in this client.");
-        UIUtils.waitForEnter(scanner);
-    }
-
-    private void displayActiveChats(String response) {
-        UIUtils.showInfo("Not implemented.");
-    }
-
-    private void displayPendingRequests(JsonObject response) {
-        UIUtils.showInfo("Not implemented.");
-    }
-
-    private void displayChatHistoryList(JsonObject response) {
-        UIUtils.showInfo("Not implemented.");
-    }
-
-    private void viewSpecificChatHistory(String chatId) {
-        UIUtils.showInfo("Not implemented.");
-    }
-
-    private void saveChatHistory(String chatId, String chatData) {
-        UIUtils.showInfo("Not implemented.");
-    }
-
-
-
-    public void cleanup() {
-        if (chatExecutor != null && !chatExecutor.isShutdown()) {
-            chatExecutor.shutdown();
-            try {
-                if (!chatExecutor.awaitTermination(5, TimeUnit.SECONDS)) {
-                    chatExecutor.shutdownNow();
-                }
-            } catch (InterruptedException e) {
-                chatExecutor.shutdownNow();
-                Thread.currentThread().interrupt();
-            }
-        }
+        System.out.println("(history not implemented)");
     }
 }

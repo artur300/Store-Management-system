@@ -39,5 +39,7 @@ public class OrderRepository implements Repository<Order> {
     public List<Order> getAll() {
         return Data.getOrders().values().stream().toList();
     }
+
+
 }
 

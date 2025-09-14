@@ -1,13 +1,12 @@
 package com.myshopnet.client;
 
-import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.myshopnet.client.models.UserTypeLoggedIn;
 import com.myshopnet.client.utils.UIUtils;
 
 import java.io.*;
-import java.net.*;
+import java.net.Socket;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
@@ -19,10 +18,13 @@ public class Client {
     private Socket socket;
     private BufferedReader in;
     private PrintWriter out;
-    private Scanner scanner;
+    private final Scanner scanner;
     private UserTypeLoggedIn currentUserType = UserTypeLoggedIn.NONE;
     private boolean isConnected = false;
-    private PushClient pushClient = new PushClient();
+
+    // Push
+    private final PushClient pushClient = new PushClient();
+    private boolean pushRunning = false;
 
     public Client() {
         this.scanner = new Scanner(System.in);
@@ -62,49 +64,77 @@ public class Client {
 
     private void loginProcess() {
         Singletons.REGISTER_MENU.show();
-
         if (Auth.getCurrentUser() == null) {
             return;
         }
 
-        Auth.setCurrentUserType(UserTypeLoggedIn.valueOf(Auth.getCurrentUser().get("role").getAsString()));
-        String userId = Auth.getCurrentUser().get("userId").getAsString();
+        Auth.setCurrentUserType(
+                UserTypeLoggedIn.valueOf(Auth.getCurrentUser().get("role").getAsString())
+        );
 
-        pushClient.start(userId, evt -> {
-            try {
-                String type = evt.has("type") ? evt.get("type").getAsString() : "";
-                if ("chatCreated".equals(type)) {
-                    String chatId = evt.get("chatId").getAsString();
-                    System.out.println("\n[Notification] A chat is ready for you. Chat ID: " + chatId);
-                    System.out.print("Press Enter to continue...");
-                }
-            } catch (Exception ignored) { }
-        });
+        // סטטוס ראשוני ל-AVAILABLE (אפשר גם userId – השרת תומך בשניהם)
+        JsonObject data = new JsonObject();
+        data.addProperty("username", Auth.getUsername());
+        data.addProperty("status", "AVAILABLE");
+
+        Request statusRequest = new Request("updateEmployeeStatus", data.toString());
+        JsonObject statusResponse = sendRequest(statusRequest);
+
+        if (statusResponse != null && statusResponse.has("success") && statusResponse.get("success").getAsBoolean()) {
+            UIUtils.showSuccess("You are now AVAILABLE for chat.");
+        } else {
+            UIUtils.showError("Could not set you as AVAILABLE.");
+        }
+
+        // <<< הנה הנקודה החשובה: רישום ל-push אחרי login >>>
+        ensurePushSubscribed();
 
         showMenuAccordingToUser();
+    }
+
+    private void ensurePushSubscribed() {
+        if (pushRunning || Auth.getCurrentUser() == null) return;
+
+        try {
+            String userId = Auth.getCurrentUser().get("userId").getAsString();
+            pushClient.start(userId, evt -> {
+                try {
+                    if (evt == null || !evt.has("type")) return;
+                    String type = evt.get("type").getAsString();
+
+                    if ("chatCreated".equalsIgnoreCase(type)) {
+                        String chatId = evt.get("chatId").getAsString();
+                        // מנווטים לאירוע ב-ChatMenu (דרך ה-hook בממשק Menu)
+                        Singletons.CHAT_MENU.onChatCreated(chatId);
+
+                    } else if ("newMessage".equalsIgnoreCase(type)) {
+                        String chatId = evt.get("chatId").getAsString();
+                        String sender = evt.get("sender").getAsString();
+                        String msg = evt.get("message").getAsString();
+                        // מנווטים לאירוע הודעה נכנסת
+                        Singletons.CHAT_MENU.onIncomingMessage(chatId, sender, msg);
+                    }
+                } catch (Exception ignored) {}
+            });
+            pushRunning = true;
+        } catch (Exception e) {
+            System.err.println("Failed to subscribe to push: " + e.getMessage());
+            pushRunning = false;
+        }
     }
 
     public void showMenuAccordingToUser() {
         Auth.setCurrentUserType(UserTypeLoggedIn.valueOf(Auth.getCurrentUser().get("role").getAsString()));
 
         switch (Auth.getCurrentUserType()) {
-            case ADMIN:
-                Singletons.ADMIN_MENU.show();
-                break;
-
-            case EMPLOYEE:
-                Singletons.EMPLOYEE_MENU.show();
-                break;
-
-            case CUSTOMER:
-                Singletons.CUSTOMER_MENU.show();
-                break;
+            case ADMIN -> Singletons.ADMIN_MENU.show();
+            case EMPLOYEE -> Singletons.EMPLOYEE_MENU.show();
+            case CUSTOMER -> Singletons.CUSTOMER_MENU.show();
         }
     }
 
     private void showMainMenu() {
-        MainMenu menuHandler = new MainMenu();
-        menuHandler.show();
+        Singletons.MAIN_MENU.show();
     }
 
     public UserTypeLoggedIn getCurrentUserType() {
@@ -118,19 +148,15 @@ public class Client {
             out.flush();
 
             String responseData = in.readLine();
-
             if (responseData == null) {
                 System.err.println("Server closed the connection.");
                 isConnected = false;
                 return null;
             }
-
             if (responseData.trim().isEmpty()) {
                 return new JsonObject();
             }
-
             return JsonParser.parseString(responseData).getAsJsonObject();
-
         } catch (IOException e) {
             System.err.println("Communication error: " + e.getMessage());
             isConnected = false;
@@ -153,7 +179,9 @@ public class Client {
 
     private void cleanup() {
         try {
-            if (pushClient != null) pushClient.stop();
+            // עצירת push
+            try { pushClient.stop(); } catch (Exception ignored) {}
+
             if (out != null) out.close();
             if (in != null) in.close();
             if (socket != null) socket.close();
@@ -166,7 +194,6 @@ public class Client {
     public void logout() {
         if (Auth.getCurrentUser() != null) {
             Map<String, String> requestMap = new HashMap<>();
-
             requestMap.put("username", Auth.getUsername());
             Request request = new Request("logout", Singletons.GSON.toJson(requestMap));
             JsonObject response = sendRequest(request);
@@ -175,10 +202,8 @@ public class Client {
                 UIUtils.showSuccess("Logged out successfully!");
                 UIUtils.clearScreen();
                 Auth.setCurrentUserType(UserTypeLoggedIn.NONE);
-
                 Singletons.REGISTER_MENU.show();
-            }
-            else {
+            } else {
                 String error = response != null ? response.get("message").getAsString() : "Can't log out";
                 UIUtils.showError(error);
             }

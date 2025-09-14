@@ -37,5 +37,8 @@ public class CustomerRepository implements Repository<Customer> {
     public List<Customer> getAll() {
         return Data.getCustomers().values().stream().toList();
     }
+
+
+
 }
 

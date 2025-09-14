@@ -36,16 +36,16 @@ public class RequestHandler {
                     String username = json.get("username").getAsString();
                     String password = json.get("password").getAsString();
 
-                    response = authController.login(username,password);
+                    response = authController.login(username, password);
                     break;
                 }
 
-                case "register":{
+                case "register": {
                     String username = json.get("username").getAsString();
                     String password = json.get("password").getAsString();
                     String userId = json.get("userId").getAsString();
 
-                    response = authController.register(username,password, userId);
+                    response = authController.register(username, password, userId);
                     break;
                 }
 
@@ -263,13 +263,74 @@ public class RequestHandler {
                     break;
                 }
 
+                case "updateEmployeeStatus": {
+                    System.out.println("===== [DEBUG] Entered updateEmployeeStatus case =====");
+                    System.out.println("[DEBUG] Raw JSON: " + json);
+
+                    try {
+                        String username = json.has("username") ? json.get("username").getAsString() : null;
+                        String userId   = json.has("userId")   ? json.get("userId").getAsString()   : null;
+                        String status   = json.has("status")   ? json.get("status").getAsString()   : null;
+
+                        System.out.println("[DEBUG] Parsed input -> username=" + username + ", userId=" + userId + ", status=" + status);
+
+                        if ((username == null && userId == null) || status == null) {
+                            response = gson.toJson(new Response(false, "Missing username/userId or status in request"));
+                            System.out.println("[ERROR] Missing data. Response=" + response);
+                            break;
+                        }
+
+                        // שליפת החשבון לפי מה שיש
+                        var userAccount = (username != null)
+                                ? Singletons.USER_ACCOUNT_REPO.getByUsername(username)
+                                : Singletons.USER_ACCOUNT_REPO.getByUserId(userId);
+
+                        System.out.println("[DEBUG] userAccount from repo = " + userAccount);
+
+                        if (userAccount == null) {
+                            response = gson.toJson(new Response(false, "User not found"));
+                            System.out.println("[ERROR] User not found. Response=" + response);
+                            break;
+                        }
+
+                        com.myshopnet.models.EmployeeStatus newStatus =
+                                com.myshopnet.models.EmployeeStatus.valueOf(status);
+
+                        System.out.println("[DEBUG] Converting status to enum: " + newStatus);
+
+                        Singletons.EMPLOYEE_SERVICE.changeStatus(userAccount, newStatus);
+                        System.out.println("[DEBUG] Status changed successfully");
+
+                        response = gson.toJson(new Response(true, "Status updated to " + status));
+                        System.out.println("[DEBUG] Final Response=" + response);
+
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                        response = gson.toJson(new Response(false, "Failed to update status: " + ex.getMessage()));
+                        System.out.println("[DEBUG] Response after exception=" + response);
+                    }
+
+                    System.out.println("===== [DEBUG] Exiting updateEmployeeStatus case =====");
+                    break;
+                }
+
+
+                case "sendMessage": {
+                    String chatId = json.get("chatId").getAsString();
+                    String senderId = json.get("senderId").getAsString();
+                    String message = json.get("message").getAsString();
+
+                    response = chatController.sendMessage(chatId, senderId, message);
+                    break;
+                }
+
+
                 default:
                     response = gson.toJson(new Response(false, "Unknown action: " + action));
             }
 
             return response;
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             return gson.toJson(new Response(false, "Error: " + e.getMessage()));
         }
     }

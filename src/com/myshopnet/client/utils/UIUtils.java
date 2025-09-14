@@ -23,16 +23,19 @@ public class UIUtils {
     }
 
     public static void printTitle(String title) {
-        int padding = (CONSOLE_WIDTH - title.length() - 2) / 2;
-        System.out.println("║" + " ".repeat(padding) + title +
-                " ".repeat(CONSOLE_WIDTH - title.length() - padding - 2) + "║");
+        int len = Math.min(title.length(), CONSOLE_WIDTH - 2);
+        String t = title.substring(0, len);
+        int padding = Math.max(0, (CONSOLE_WIDTH - t.length() - 2) / 2);
+        System.out.println("║" + " ".repeat(padding) + t +
+                " ".repeat(Math.max(0, CONSOLE_WIDTH - t.length() - padding - 2)) + "║");
     }
 
     public static void printLine(String text) {
-        if (text.length() > CONSOLE_WIDTH - 4) {
-            text = text.substring(0, CONSOLE_WIDTH - 7) + "...";
+        String t = text;
+        if (t.length() > CONSOLE_WIDTH - 4) {
+            t = t.substring(0, CONSOLE_WIDTH - 7) + "...";
         }
-        System.out.println("║ " + text + " ".repeat(CONSOLE_WIDTH - text.length() - 3) + "║");
+        System.out.println("║ " + t + " ".repeat(CONSOLE_WIDTH - t.length() - 3) + "║");
     }
 
     public static void printEmptyLine() {
@@ -91,6 +94,17 @@ public class UIUtils {
         scanner.nextLine();
     }
 
+    // === עזר לשימוש נוח ===
+    public static void showErrorAndWait(Scanner scanner, String message) {
+        showError(message);
+        waitForEnter(scanner);
+    }
+
+    public static void showInfoAndWait(Scanner scanner, String message) {
+        showInfo(message);
+        waitForEnter(scanner);
+    }
+
     public static void printTable(String[] headers, List<String[]> rows) {
         if (headers == null || rows == null) return;
 
@@ -104,11 +118,9 @@ public class UIUtils {
             }
         }
 
-        // Print headers
         printTableRow(headers, widths);
         printTableSeparator(widths);
 
-        // Print rows
         for (String[] row : rows) {
             printTableRow(row, widths);
         }

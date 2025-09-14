@@ -12,6 +12,7 @@ public class Chat {
     private final String id;
     private final Map<String, UserAccount> usersInChat;
     private final StringBuffer buffer;
+    private List<ChatMessage> messages = new ArrayList<>();
 
     public Chat(String id) {
         this.id = id;
@@ -20,13 +21,23 @@ public class Chat {
     }
 
     public String getId() { return id; }
-
     public Map<String, UserAccount> getUsersInChat() {
         return usersInChat;
     }
-
     public StringBuffer getBuffer() {
         return buffer;
+    }
+
+    public void addMessage(ChatMessage message) {
+        messages.add(message);
+    }
+
+    public List<ChatMessage> getMessages() {
+        return messages;
+    }
+
+    public Set<String> getParticipantIds() {
+        return usersInChat.keySet(); // userId של כל המשתתפים
     }
 }
 

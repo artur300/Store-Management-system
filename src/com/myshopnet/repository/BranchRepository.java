@@ -37,5 +37,6 @@ public class BranchRepository implements Repository<Branch> {
     public List<Branch> getAll() {
         return Data.getBranches().values().stream().toList();
     }
+
 }
 
