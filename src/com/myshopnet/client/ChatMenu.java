@@ -43,13 +43,12 @@ public class ChatMenu implements Menu {
     public void onIncomingMessage(String chatId, String sender, String msg) {
         if (inChat && Objects.equals(chatId, currentChatId)) {
             String myId = Auth.getCurrentUser().get("userId").getAsString();
-            if (myId.equals(sender)) {
-                // PATCH: לא להציג echo של הודעות שנשלחו על-ידי עצמי
-                return;
-            }
-            System.out.println("\n[" + sender + "]: " + msg);
+            String label = myId.equals(sender) ? "Me" : "Partner"; // 👈 במקום userId ארוך
+            if (myId.equals(sender)) return; // כבר קיים אצלך – לא מציגים echo
+            System.out.println("\n[" + label + "]: " + msg);
         }
     }
+
 
     // ===== תצוגת תפריט =====
     @Override
