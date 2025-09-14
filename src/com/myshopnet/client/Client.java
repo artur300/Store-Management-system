@@ -72,22 +72,9 @@ public class Client {
                 UserTypeLoggedIn.valueOf(Auth.getCurrentUser().get("role").getAsString())
         );
 
-        // סטטוס ראשוני ל-AVAILABLE (אפשר גם userId – השרת תומך בשניהם)
-        JsonObject data = new JsonObject();
-        data.addProperty("username", Auth.getUsername());
-        data.addProperty("status", "AVAILABLE");
-
-        Request statusRequest = new Request("updateEmployeeStatus", data.toString());
-        JsonObject statusResponse = sendRequest(statusRequest);
-
-        if (statusResponse != null && statusResponse.has("success") && statusResponse.get("success").getAsBoolean()) {
-            UIUtils.showSuccess("You are now AVAILABLE for chat.");
-        } else {
-            UIUtils.showError("Could not set you as AVAILABLE.");
-        }
-
-        // <<< הנה הנקודה החשובה: רישום ל-push אחרי login >>>
-        ensurePushSubscribed();
+        // PATCH: אין שליחת AVAILABLE כאן (נמנע כפילות ומרוץ).
+        // נרשמים לפוש עכשיו, כדי שלא נפספס chatCreated.
+        ensurePushSubscribed(); // PATCH
 
         showMenuAccordingToUser();
     }
@@ -128,7 +115,7 @@ public class Client {
 
         switch (Auth.getCurrentUserType()) {
             case ADMIN -> Singletons.ADMIN_MENU.show();
-            case EMPLOYEE -> Singletons.EMPLOYEE_MENU.show();
+            case EMPLOYEE -> Singletons.EMPLOYEE_MENU.show(); // כאן יישלח AVAILABLE יחיד עם userId
             case CUSTOMER -> Singletons.CUSTOMER_MENU.show();
         }
     }

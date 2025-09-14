@@ -298,6 +298,22 @@ public class RequestHandler {
 
                         System.out.println("[DEBUG] Converting status to enum: " + newStatus);
 
+                        // PATCH: אל תהפוך ל-AVAILABLE אם למשתמש יש צ'אט פעיל
+                        String uidForCheck = userAccount.getUser().getUserId();
+                        try {
+                            if (newStatus == com.myshopnet.models.EmployeeStatus.AVAILABLE
+                                    && Singletons.CHAT_SERVICE.hasActiveChat(uidForCheck)) {
+                                String msg = "Still BUSY (active chat)";
+                                response = gson.toJson(new Response(true, msg));
+                                System.out.println("[DEBUG] Ignoring AVAILABLE; user " + uidForCheck + " is in active chat");
+                                System.out.println("===== [DEBUG] Exiting updateEmployeeStatus case =====");
+                                break;
+                            }
+                        } catch (Exception e) {
+                            System.out.println("[WARN] hasActiveChat check failed: " + e.getMessage());
+                        }
+                        // END PATCH
+
                         Singletons.EMPLOYEE_SERVICE.changeStatus(userAccount, newStatus);
                         System.out.println("[DEBUG] Status changed successfully");
 
@@ -314,7 +330,6 @@ public class RequestHandler {
                     break;
                 }
 
-
                 case "sendMessage": {
                     String chatId = json.get("chatId").getAsString();
                     String senderId = json.get("senderId").getAsString();
@@ -323,7 +338,6 @@ public class RequestHandler {
                     response = chatController.sendMessage(chatId, senderId, message);
                     break;
                 }
-
 
                 default:
                     response = gson.toJson(new Response(false, "Unknown action: " + action));
@@ -335,3 +349,4 @@ public class RequestHandler {
         }
     }
 }
+

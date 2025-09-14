@@ -225,5 +225,22 @@ public class ChatService {
             System.out.println("[DEBUG] broadcastMessage -> notified participant=" + participantId);
         }
     }
+
+
+    // PATCH: quick check for active chat participation
+    public boolean hasActiveChat(String userId) {
+        try {
+            for (var chat : com.myshopnet.utils.Singletons.CHAT_REPO.getAll()) {
+                if (chat != null && chat.getParticipantIds() != null && chat.getParticipantIds().contains(userId)) {
+                    System.out.println("[DEBUG] hasActiveChat -> userId=" + userId + " found in chatId=" + chat.getId());
+                    return true;
+                }
+            }
+        } catch (Exception e) {
+            System.out.println("[WARN] hasActiveChat exception: " + e.getMessage());
+        }
+        return false;
+    }
+
 }
 

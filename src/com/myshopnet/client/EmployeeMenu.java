@@ -18,6 +18,15 @@ public class EmployeeMenu implements Menu {
         setEmployeeAvailable();
 
         while (true) {
+
+            // PATCH: אם הגיע push של chatCreated בזמן שאני כאן,
+            // קופצים ל-ChatMenu.show() כדי לפתוח את הצ'אט ב-thread הראשי (אותו Scanner).
+            if (Singletons.CHAT_MENU.hasPendingChatToOpen()) {
+                Singletons.CHAT_MENU.show();
+                // כשנחזור משם, נמשיך את הלולאה כאן
+                continue;
+            }
+
             UIUtils.printMenuHeader("EMPLOYEE MENU");
 
             UIUtils.printEmptyLine();
@@ -62,8 +71,11 @@ public class EmployeeMenu implements Menu {
         try {
             JsonObject data = new JsonObject();
             // שולחים userId ולא username
-            data.addProperty("userId", Auth.getCurrentUser().get("userId").getAsString());
+            String uid = Auth.getCurrentUser().get("userId").getAsString();
+            data.addProperty("userId", uid);
             data.addProperty("status", "AVAILABLE");
+
+            System.out.println("[CLIENT] setEmployeeAvailable -> userId=" + uid);
 
             Request request = new Request("updateEmployeeStatus", data.toString());
             JsonObject response = Singletons.CLIENT.sendRequest(request);

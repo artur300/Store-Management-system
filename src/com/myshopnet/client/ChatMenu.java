@@ -25,15 +25,28 @@ public class ChatMenu implements Menu {
 
     // ===== Hooks שמקבל מ-Client דרך ה-Push =====
     @Override
-    public void onChatCreated(String chatId) {
+    public synchronized void onChatCreated(String chatId) {
         pendingChatId = chatId;
         waitingForChat = false;
         System.out.println("\n[Notification] Chat is ready.");
+
+        // PATCH: לא פותחים כאן צ'אט על חוט נפרד (כדי לא להתנגש עם Scanner)!
+        // הפתיחה תתבצע מלולאה ראשית ב-ChatMenu.show() או מ-EmployeeMenu.show().
+    }
+
+    // PATCH: מאפשר ללולאת התפריט לזהות שיש צ'אט שמוכן להיפתח
+    public synchronized boolean hasPendingChatToOpen() {
+        return !inChat && pendingChatId != null;
     }
 
     @Override
     public void onIncomingMessage(String chatId, String sender, String msg) {
         if (inChat && Objects.equals(chatId, currentChatId)) {
+            String myId = Auth.getCurrentUser().get("userId").getAsString();
+            if (myId.equals(sender)) {
+                // PATCH: לא להציג echo של הודעות שנשלחו על-ידי עצמי
+                return;
+            }
             System.out.println("\n[" + sender + "]: " + msg);
         }
     }
@@ -42,11 +55,11 @@ public class ChatMenu implements Menu {
     @Override
     public void show() {
         while (true) {
-            // אם יש צ'אט בהמתנה ולא בתוך צ'אט – נפתח עכשיו
+            // אם יש צ'אט בהמתנה ולא בתוך צ'אט – נפתח עכשיו (תמיד על ה-thread הראשי)
             if (!inChat && pendingChatId != null) {
                 String id = pendingChatId;
                 pendingChatId = null;
-                startChatSession(id);
+                startChatSession(id); // קריאות Scanner מתבצעות כאן בלבד
                 continue;
             }
 
@@ -107,6 +120,7 @@ public class ChatMenu implements Menu {
                         String chatId = chatObj.get("id").getAsString();
                         pendingChatId = chatId;
                         waitingForChat = false;
+                        // פתיחה על ה-thread הראשי (באותה מתודה)
                         startChatSession(chatId);
                     } else {
                         // נכנסנו לתור
@@ -114,7 +128,7 @@ public class ChatMenu implements Menu {
                         if (msg != null && msg.toLowerCase().contains("queue")) {
                             waitingForChat = true;
                             UIUtils.showInfo("All employees are busy. Waiting for a free agent...");
-                            waitForChatAndOpen();
+                            waitForChatAndOpen(); // גם כאן הפתיחה מתבצעת על אותו thread
                         } else {
                             UIUtils.showInfoAndWait(scanner, msg);
                         }
@@ -178,7 +192,7 @@ public class ChatMenu implements Menu {
         if (pendingChatId != null) {
             String id = pendingChatId;
             pendingChatId = null;
-            startChatSession(id);
+            startChatSession(id); // פתיחה כאן, עדיין על ה-thread הראשי
         }
     }
 
@@ -195,7 +209,14 @@ public class ChatMenu implements Menu {
 
         while (inChat) {
             System.out.print("You: ");
-            String message = scanner.nextLine();
+            String message;
+            try {
+                message = scanner.nextLine();
+            } catch (Exception e) {
+                // הגנה רכה: אם קרה משהו עם ה-Scanner, יוצאים מהצ'אט
+                System.out.println("\n(Input was interrupted. Leaving chat.)");
+                break;
+            }
             if (message == null) continue;
             message = message.trim();
             if (message.isEmpty()) continue;
@@ -241,3 +262,4 @@ public class ChatMenu implements Menu {
         System.out.println("(history not implemented)");
     }
 }
+
