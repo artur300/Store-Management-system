@@ -106,6 +106,25 @@ public class RequestHandler {
                     break;
                 }
 
+                case "deleteCustomer": {
+                    String currentUserId = json.get("userId").getAsString();
+                    String username = json.get("username").getAsString();
+
+                    response = customerController.deleteCustomer(currentUserId, username);
+                    break;
+                }
+
+                case "updateCustomer": {
+                    String currentUserId = json.get("userId").getAsString();
+                    String username = json.get("username").getAsString();
+                    String fullName = json.get("fullName").getAsString();
+                    String passportId = json.get("passportId").getAsString();
+                    String phoneNumber = json.get("phoneNumber").getAsString();
+
+                    response = customerController.updateCustomer(currentUserId, username, fullName, passportId, phoneNumber);
+                    break;
+                }
+
                 case "getCustomer": {
                     String customerId = json.get("customerId").getAsString();
 
@@ -233,6 +252,13 @@ public class RequestHandler {
                     String userId = json.get("userId").getAsString();
 
                     response = authController.viewPasswordPolicy(userId);
+                    break;
+                }
+
+                case "viewCustomerPlan": {
+                    String userId = json.get("userId").getAsString();
+
+                    response = customerController.getCustomerPlan(userId);
                     break;
                 }
 

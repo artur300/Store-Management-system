@@ -36,12 +36,16 @@ public class CustomerMenu implements Menu {
             switch (choice) {
                 case 1:
                     showCustomerPlanDetails();
+                    break;
                 case 2:
                     addItemsToCart();
+                    break;
                 case 3:
                     viewPurchaseHistory();
+                    break;
                 case 4:
                     viewCart();
+                    break;
                 case 0:
                     Singletons.CLIENT.logout();
                     return;
@@ -155,18 +159,22 @@ public class CustomerMenu implements Menu {
 
     private void showCustomerPlanDetails() {
         String planDetails = "";
-        switch (Auth.getCurrentUser().get("customerType").getAsString()) {
-            case "New Customer":
-                planDetails = "Welcome Plan: 5% discount";
-                break;
-            case "Returning Customer":
-                planDetails = "Loyalty Plan: 10 usd coupon";
-                break;
-            case "VIP Customer":
-                planDetails = "VIP Plan: 20% discount";
-                break;
+        Map<String, String> requestMap = new HashMap<>();
+
+        requestMap.put("userId", Auth.getUsername());
+
+        Request request = new Request("viewCustomerPlan", Singletons.GSON.toJson(requestMap));
+        JsonObject response = Singletons.CLIENT.sendRequest(request);
+
+        if (response != null && response.get("success").getAsBoolean()) {
+            planDetails = response.get("message").getAsString();
+            UIUtils.showInfo("Customer Plan: " + planDetails);
         }
-        UIUtils.showInfo("Customer Plan: " + planDetails);
+        else if (response != null && !response.get("success").getAsBoolean()) {
+            UIUtils.showError(response.get("message").getAsString());
+        }
+
+        show();
     }
 
     private void viewPurchaseHistory() {

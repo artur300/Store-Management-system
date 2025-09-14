@@ -1,10 +1,7 @@
 package com.myshopnet.utils;
 
 import com.myshopnet.controller.ProductController;
-import com.myshopnet.models.Admin;
-import com.myshopnet.models.Branch;
-import com.myshopnet.models.Employee;
-import com.myshopnet.models.EmployeeType;
+import com.myshopnet.models.*;
 
 public class
 PopulateUsers {
@@ -17,6 +14,14 @@ PopulateUsers {
         );
         Branch holon = Singletons.BRANCH_SERVICE.createNewBranch(
                 "HOLON"
+        );
+
+        Customer customer1 = Singletons.CUSTOMER_SERVICE.createCustomer(
+                "customer1",
+                "admin1234",
+                "roy dadon",
+                "23141412",
+                "4324232304234"
         );
 
         Employee employee1 = Singletons.EMPLOYEE_SERVICE.addEmployee(
@@ -69,7 +74,6 @@ PopulateUsers {
                 "T-Shirt",
                 "SHIRTS",
                 "50");
-
     }
 
 }

@@ -108,4 +108,10 @@ public class PasswordPolicy {
         return new PasswordPolicy(4, 10,
                 2, 6, false);
     }
+
+    @Override
+    public String toString() {
+        return String.format("Minimum Alphabetic: %s, Maximum alphabetic: %s, Minimum numeric: %s, Maxmimum numeric: %s, Require special characters: %s",
+                minimumAlphabeticCharacters, maximumAlphabeticCharacters, minimumNumericCharacters, maximumNumericCharacters, includeSigns);
+    }
 }

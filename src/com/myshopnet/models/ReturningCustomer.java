@@ -18,5 +18,10 @@ public class ReturningCustomer extends Customer {
     public Role getRole() {
         return role;
     }
+
+    @Override
+    public String toString() {
+        return "Customer plan: 10USD Coupon on whole purchase!";
+    }
 }
 

@@ -831,9 +831,14 @@ import java.util.*;
 
 public class LogMenu implements Menu {
     private Scanner scanner;
+    private Menu menuToGoBack;
 
     public LogMenu() {
         this.scanner = Singletons.CLIENT.getScanner();
+    }
+
+    public void setMenuToGoBack(Menu menuToGoBack) {
+        this.menuToGoBack = menuToGoBack;
     }
 
     public void show() {

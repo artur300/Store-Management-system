@@ -3,9 +3,9 @@ package com.myshopnet.models;
 public abstract class Customer implements User {
     protected final Role role = Role.CUSTOMER;
     private final String userId;
-    private final String passportId;
-    private final String fullName;
-    private final String phone;
+    private String passportId;
+    private String fullName;
+    private String phone;
     protected CustomerType customerType;
 
     protected Customer(String id, String passpoortId, String fullName, String phone, CustomerType customerType) {
@@ -44,7 +44,18 @@ public abstract class Customer implements User {
         return customerType;
     }
 
-    /** מחיר סופי לפי סוג הלקוח */
     public abstract double calcBuyingStrategy(double baseTotal);
+
+    public void setPassportId(String passportId) {
+        this.passportId = passportId;
+    }
+
+    public void setFullName(String fullName) {
+        this.fullName = fullName;
+    }
+
+    public void setPhone(String phone) {
+        this.phone = phone;
+    }
 }
 

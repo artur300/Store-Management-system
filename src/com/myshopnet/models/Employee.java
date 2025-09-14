@@ -25,7 +25,7 @@ public class Employee implements User, EmployeeStatusSubject {
         this.branchId = branchId;
         this.employeeType = employeeType;
         this.employeeNumber = employeeNumber;
-        this.employeeStatus = EmployeeStatus.AVAILABLE;
+        this.employeeStatus = EmployeeStatus.BUSY;
         this.role = Role.EMPLOYEE;
     }
 

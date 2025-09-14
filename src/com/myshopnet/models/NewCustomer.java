@@ -14,4 +14,9 @@ public class NewCustomer extends Customer {
     public Role getRole() {
         return role;
     }
+
+    @Override
+    public String toString() {
+        return "Customer plan: 5% discount on the whole purchase!";
+    }
 }

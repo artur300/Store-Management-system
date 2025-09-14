@@ -44,7 +44,7 @@ public class PasswordPolicyMenu implements Menu {
                 updatePasswordPolicy();
                 break;
             case 0:
-
+                goBackMenu.show();
                 return;
             default:
                 UIUtils.showError("Invalid choice. Please try again.");
@@ -61,7 +61,10 @@ public class PasswordPolicyMenu implements Menu {
         JsonObject response = Singletons.CLIENT.sendRequest(request);
 
         if (response != null && response.get("success").getAsBoolean()) {
-            displayPasswordPolicy(response);
+            UIUtils.showInfo(response.get("message").getAsString());
+            UIUtils.waitForEnter(scanner);
+
+            show();
         } else {
             UIUtils.showError("Failed to retrieve password policy");
         }
@@ -105,7 +108,7 @@ public class PasswordPolicyMenu implements Menu {
         if (minNumeric.trim().isEmpty()) minNumeric = "8";
         if (maxNumeric.trim().isEmpty()) maxNumeric = "8";
 
-        String userId = Auth.getCurrentUser().get("userId").getAsString();
+        String userId = Auth.getUsername();
 
         requestMap.put("userId", userId);
         requestMap.put("minChars", minAlphabetic);
@@ -119,6 +122,8 @@ public class PasswordPolicyMenu implements Menu {
 
         if (response != null && response.get("success").getAsBoolean()) {
             UIUtils.showSuccess("Password policy updated successfully!");
+
+            show();
         } else {
             String error = response != null ? response.get("message").getAsString() : "Connection error";
             UIUtils.showError(error);

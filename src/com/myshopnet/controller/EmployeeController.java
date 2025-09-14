@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import com.myshopnet.data.Data;
 import com.myshopnet.logs.LogEvent;
 import com.myshopnet.logs.LogType;
+import com.myshopnet.models.EmployeeStatus;
 import com.myshopnet.models.EmployeeType;
 import com.myshopnet.service.EmployeeService;
 import com.myshopnet.service.AuthService;
@@ -17,6 +18,7 @@ import com.myshopnet.errors.EntityNotFoundException;
 import com.myshopnet.utils.GsonSingleton;
 import com.myshopnet.utils.Singletons;
 
+import java.util.IllegalFormatException;
 import java.util.List;
 
 public class EmployeeController {

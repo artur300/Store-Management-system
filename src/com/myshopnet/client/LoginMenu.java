@@ -35,6 +35,19 @@ public class LoginMenu implements Menu {
             loginRequest.put("username", username);
             loginRequest.put("password", password);
 
+            if (username.isEmpty() || password.isEmpty() || username.isBlank() || password.isBlank()) {
+                attempts++;
+
+                String errorMsg = "Invalid username or password";
+                UIUtils.showError(errorMsg + " (Attempt " + attempts + "/" + maxAttempts + ")");
+
+                if (attempts < maxAttempts) {
+                    UIUtils.waitForEnter(scanner);
+                }
+
+                continue;
+            }
+
             Request request = new Request("login", Singletons.GSON.toJson(loginRequest));
             JsonObject response =  Singletons.CLIENT.sendRequest(request);
 

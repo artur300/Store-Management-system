@@ -1,9 +1,11 @@
 package com.myshopnet.service;
 
+import com.myshopnet.auth.UserAccount;
 import com.myshopnet.errors.EntityNotFoundException;
 import com.myshopnet.models.*;
 import com.myshopnet.repository.CustomerRepository;
 import com.myshopnet.repository.OrderRepository;
+import com.myshopnet.repository.UserAccountRepository;
 import com.myshopnet.utils.Singletons;
 
 import java.util.List;
@@ -13,6 +15,7 @@ public class CustomerService {
     private OrderRepository orderRepository = Singletons.ORDER_REPO;
     private CustomerRepository customerRepository = Singletons.CUSTOMER_REPO;
     private AuthService authService = Singletons.AUTH_SERVICE;
+    private UserAccountRepository userAccountRepository = Singletons.USER_ACCOUNT_REPO;
 
     public Customer createCustomer(String username, String password, String fullName, String passportId, String phoneNumber) {
         Customer newCustomer = new NewCustomer(UUID.randomUUID().toString(), passportId, phoneNumber, fullName);
@@ -33,15 +36,31 @@ public class CustomerService {
         return customerRepository.getAll();
     }
 
-    public Customer updateCustomer(String customerId, Customer updatedCustomer) {
-        Customer existingCustomer = customerRepository.get(customerId);
-        if (existingCustomer == null) {
-            throw new EntityNotFoundException("Customer");
-        }
-        customerRepository.update(customerId, updatedCustomer);
-        return updatedCustomer;
+    public void deleteCustomer(UserAccount customer) {
+        customerRepository.delete(customer.getUsername());
     }
 
+    public Customer updateCustomer(String username,String fullName, String passportId, String phoneNumber) {
+        UserAccount userAccount = userAccountRepository.get(username);
+
+        if (userAccount == null) {
+            throw new EntityNotFoundException("Customer");
+        }
+
+        if (!(userAccount.getUser() instanceof Customer)) {
+            throw new EntityNotFoundException("Customer");
+        }
+
+        ((Customer)(userAccount.getUser())).setFullName(fullName);
+        ((Customer)(userAccount.getUser())).setPassportId(passportId);
+        ((Customer)(userAccount.getUser())).setPhone(phoneNumber);
+
+        return customerRepository.update(username, (Customer) userAccount.getUser());
+    }
+
+    public String getCustomerPlan(UserAccount userAccount) {
+        return userAccount.getUser().toString();
+    }
 
     public void checkCustomerStatus(String customerId) {
         Customer customer = customerRepository.get(customerId);

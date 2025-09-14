@@ -21,8 +21,8 @@ public class BranchMenu implements Menu {
         return menuToGoBack;
     }
 
-    public Menu setMenuToGoBack(Menu menuToGoBack) {
-        return menuToGoBack;
+    public void setMenuToGoBack(Menu menuToGoBack) {
+        this.menuToGoBack = menuToGoBack;
     }
 
     @Override
@@ -32,11 +32,6 @@ public class BranchMenu implements Menu {
 
         UIUtils.printMenuOption(1, "View Branch Info");
         UIUtils.printMenuOption(2, "Manage Branch Stock");
-
-        if (Auth.getCurrentUserType().equals(UserTypeLoggedIn.ADMIN)) {
-            UIUtils.printMenuOption(3, "Add New Branch");
-            UIUtils.printMenuOption(4, "Delete a Branch");
-        }
 
         UIUtils.printMenuOption(0, "Back");
 
@@ -50,17 +45,9 @@ public class BranchMenu implements Menu {
                 break;
             case 2:
                 Singletons.STOCK_MENU.show();
-            case 3:
-                if (Auth.getCurrentUserType().equals(UserTypeLoggedIn.ADMIN)) {
-                    addNewBranch();
-                }
-                break;
-            case 4:
-                if (Auth.getCurrentUserType().equals(UserTypeLoggedIn.ADMIN)) {
-                    deleteBranch();
-                }
                 break;
             case 0:
+                menuToGoBack.show();
                 return;
             default:
                 UIUtils.showError("Invalid choice. Please try again.");
@@ -114,15 +101,4 @@ public class BranchMenu implements Menu {
             UIUtils.showError("Error displaying branches: " + e.getMessage());
         }
     }
-
-    private void addNewBranch() {
-        UIUtils.showInfo("Add new branch functionality");
-        UIUtils.waitForEnter(scanner);
-    }
-
-    private void deleteBranch() {
-        UIUtils.showInfo("Update branch information");
-        UIUtils.waitForEnter(scanner);
-    }
-
 }

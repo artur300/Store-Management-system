@@ -18,5 +18,10 @@ public class VipCustomer extends Customer {
     public Role getRole() {
         return role;
     }
+
+    @Override
+    public String toString() {
+        return "Customer plan: 20% discount on the whole purchase!";
+    }
 }
 

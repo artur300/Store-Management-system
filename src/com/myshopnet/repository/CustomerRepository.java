@@ -25,7 +25,7 @@ public class CustomerRepository implements Repository<Customer> {
 
     @Override
     public void delete(String id) {
-        Data.getCustomers().remove(id);
+        Data.getAllAccounts().remove(id);
     }
 
     @Override
@@ -35,7 +35,10 @@ public class CustomerRepository implements Repository<Customer> {
 
     @Override
     public List<Customer> getAll() {
-        return Data.getCustomers().values().stream().toList();
+        return Data.getAllAccounts().values().stream()
+                .filter(userAccount -> (userAccount.getUser() instanceof Customer))
+                .map(userAccount -> (Customer) userAccount.getUser())
+                .toList();
     }
 
 

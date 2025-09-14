@@ -1,8 +1,10 @@
 package com.myshopnet.controller;
 import com.google.gson.Gson;
 import com.myshopnet.auth.UserAccount;
+import com.myshopnet.errors.EntityNotFoundException;
 import com.myshopnet.logs.LogEvent;
 import com.myshopnet.logs.LogType;
+import com.myshopnet.models.Admin;
 import com.myshopnet.server.Response;
 import com.myshopnet.service.AuthService;
 import com.myshopnet.service.CustomerService;
@@ -47,6 +49,106 @@ public class CustomerController {
         } catch (Exception e) {
             response.setSuccess(false);
             response.setMessage(e.getMessage());
+        }
+
+        return gson.toJson(response);
+    }
+
+    public String deleteCustomer(String currentUserId, String customerId) {
+        Response response = new Response();
+
+        try {
+            UserAccount userAccount = userAccountService.getUserAccount(currentUserId);
+
+            if (userAccount == null) {
+                throw new EntityNotFoundException("Admin");
+            }
+
+            if (!(userAccount.getUser() instanceof Admin)) {
+                throw new SecurityException("You are not allowed to delete a customer");
+            }
+
+            UserAccount customerToDelete = userAccountService.getUserAccount(customerId);
+
+            if (customerToDelete == null) {
+                throw new EntityNotFoundException("Customer");
+            }
+
+            if (!(customerToDelete.getUser() instanceof Customer)) {
+                throw new SecurityException("Selected user is not a customer");
+            }
+
+            customerService.deleteCustomer(customerToDelete);
+
+            response.setSuccess(true);
+            response.setMessage("Deleted Customer Successfully");
+        }
+        catch (Exception e) {
+            response.setSuccess(false);
+            response.setMessage(e.getMessage());
+        }
+
+        return gson.toJson(response);
+    }
+
+    public String updateCustomer(String currentUserId, String username,String fullName, String passportId, String phoneNumber) {
+        Response response = new Response();
+
+        try {
+            UserAccount userAccount = userAccountService.getUserAccount(currentUserId);
+
+            if (userAccount == null) {
+                throw new EntityNotFoundException("Admin");
+            }
+
+            if (!(userAccount.getUser() instanceof Admin)) {
+                throw new SecurityException("You are not allowed to delete a customer");
+            }
+
+            UserAccount customerToEdit = userAccountService.getUserAccount(username);
+
+            if (customerToEdit == null) {
+                throw new EntityNotFoundException("Customer");
+            }
+
+            if (!(customerToEdit.getUser() instanceof Customer)) {
+                throw new SecurityException("Selected user is not a customer");
+            }
+
+            customerService.updateCustomer(username, fullName, passportId, phoneNumber);
+
+            response.setSuccess(true);
+            response.setMessage("Deleted Customer Successfully");
+        }
+        catch (Exception e) {
+            response.setSuccess(false);
+            response.setMessage(e.getMessage());
+        }
+
+        return gson.toJson(response);
+    }
+
+    public String getCustomerPlan(String userId) {
+        Response response = new Response();
+
+        try {
+            UserAccount userAccount = userAccountService.getUserAccount(userId);
+
+            if (userAccount == null) {
+                throw new EntityNotFoundException("Customer");
+            }
+
+            if(!(userAccount.getUser() instanceof Customer)) {
+                throw new SecurityException("User is not a Customer");
+            }
+
+            response.setSuccess(true);
+            response.setMessage(customerService.getCustomerPlan(userAccount));
+        }
+        catch (Exception e) {
+            response.setSuccess(false);
+            response.setMessage(e.getMessage());
+            e.printStackTrace();
         }
 
         return gson.toJson(response);

@@ -3,10 +3,15 @@ package com.myshopnet.controller;
 import com.google.gson.Gson;
 import com.myshopnet.auth.PasswordPolicy;
 import com.myshopnet.auth.UserAccount;
+import com.myshopnet.logs.LogEvent;
+import com.myshopnet.logs.LogType;
 import com.myshopnet.models.Admin;
+import com.myshopnet.models.Employee;
+import com.myshopnet.models.EmployeeStatus;
 import com.myshopnet.models.User;
 import com.myshopnet.server.Response;
 import com.myshopnet.service.AuthService;
+import com.myshopnet.service.EmployeeService;
 import com.myshopnet.service.UserAccountService;
 import com.myshopnet.utils.GsonSingleton;
 import com.myshopnet.utils.Singletons;
@@ -15,6 +20,7 @@ public class AuthController {
     private Gson gson = GsonSingleton.getInstance();
     private AuthService authService = Singletons.AUTH_SERVICE;
     private UserAccountService userAccountService = Singletons.USER_ACCOUNT_SERVICE;
+    private EmployeeService employeeService = Singletons.EMPLOYEE_SERVICE;
 
     public String login(String username, String password) {
         Response response = new Response();
@@ -22,12 +28,17 @@ public class AuthController {
         try {
             UserAccount userAccount = authService.loginUser(username, password);
 
+            if (userAccount.getUser() instanceof Employee) {
+                employeeService.changeStatus(userAccount, EmployeeStatus.AVAILABLE);
+            }
+
             response.setSuccess(true);
             response.setMessage(gson.toJson(userAccount));
         }
         catch (Exception e) {
             response.setSuccess(false);
             response.setMessage(e.getMessage());
+            e.printStackTrace();
         }
 
         return gson.toJson(response);
@@ -55,9 +66,13 @@ public class AuthController {
         Response response = new Response();
 
         try {
-            UserAccount user = userAccountService.getUserAccount(username);
+            UserAccount userAccount = userAccountService.getUserAccount(username);
 
-            authService.logout(user);
+            authService.logout(userAccount);
+
+            if (userAccount.getUser() instanceof Employee) {
+                employeeService.changeStatus(userAccount, EmployeeStatus.BUSY);
+            }
 
             response.setSuccess(true);
             response.setMessage("Logged out successfully");
@@ -88,10 +103,10 @@ public class AuthController {
                 throw new SecurityException("User not admin");
             }
 
-            PasswordPolicy passwordPolicy = authService.viewPasswordPolicy();
+            String passwordPolicy = authService.viewPasswordPolicy();
 
             response.setSuccess(true);
-            response.setMessage(gson.toJson(passwordPolicy));
+            response.setMessage(passwordPolicy);
         }
         catch (Exception e) {
             response.setSuccess(false);
