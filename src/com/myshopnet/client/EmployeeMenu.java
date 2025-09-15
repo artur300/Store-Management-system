@@ -1,8 +1,12 @@
 package com.myshopnet.client;
 
 import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import com.myshopnet.AppState;
 import com.myshopnet.client.utils.UIUtils;
+
 
 import java.util.*;
 
@@ -14,11 +18,9 @@ public class EmployeeMenu implements Menu {
     }
 
     public void show() {
-        // ברגע שנכנסים לתפריט עובד -> ננסה להגדיר אותו כ-AVAILABLE
-        setEmployeeAvailable();
-
-        while (true) {
+        while(!AppState.chatActive) {
             UIUtils.printMenuHeader("EMPLOYEE MENU");
+            UIUtils.printLine((((AdminMenu)Singletons.ADMIN_MENU).getBranchByBranchId(Auth.getCurrentUser().get("branchId").getAsString())));
 
             UIUtils.printEmptyLine();
 
@@ -37,7 +39,7 @@ public class EmployeeMenu implements Menu {
                     startChat();
                     break;
                 case 2:
-                    viewAllCustomers();
+                    ((AdminMenu)Singletons.ADMIN_MENU).viewAllCustomers();
                     break;
                 case 3:
                     Singletons.STOCK_MENU.show();
@@ -55,71 +57,89 @@ public class EmployeeMenu implements Menu {
         }
     }
 
-    /**
-     * מגדיר את העובד הנוכחי כ-AVAILABLE בשרת
-     */
-    private void setEmployeeAvailable() {
-        try {
-            JsonObject data = new JsonObject();
-            // שולחים userId ולא username
-            data.addProperty("userId", Auth.getCurrentUser().get("userId").getAsString());
-            data.addProperty("status", "AVAILABLE");
-
-            Request request = new Request("updateEmployeeStatus", data.toString());
-            JsonObject response = Singletons.CLIENT.sendRequest(request);
-
-            if (response != null && response.has("success") && response.get("success").getAsBoolean()) {
-                UIUtils.showInfo("You are now AVAILABLE for chat.");
-            } else {
-                UIUtils.showError("Could not set you as AVAILABLE.");
-            }
-        } catch (Exception e) {
-            UIUtils.showError("Error setting status: " + e.getMessage());
-        }
-    }
-
     private void viewOrdersFromBranch() {
-        // עדיין לא ממומש
+
     }
 
     private void startChat() {
-        Singletons.CHAT_MENU.show();
-    }
+        Map<String, String> requestToStartChat = new HashMap<>();
+        String branchIdChosen = getBranchPick();
+        String currentUserId = Auth.getUsername();
 
-    private void viewAllCustomers() {
-        UIUtils.printMenuHeader("ALL CUSTOMERS");
+        requestToStartChat.put("userIdRequesting", currentUserId);
+        requestToStartChat.put("branchId", branchIdChosen);
 
-        Request request = new Request("getAllCustomers", "");
+        Request request = new Request("chatStart", Singletons.GSON.toJson(requestToStartChat));
+
         JsonObject response = Singletons.CLIENT.sendRequest(request);
 
-        if (response != null && response.has("success") && response.get("success").getAsBoolean()) {
-            displayCustomersDataJson(response.getAsJsonArray("message"));
-        } else {
-            UIUtils.showError("Failed to retrieve customer data");
-        }
+        if (response != null && response.get("success").getAsBoolean() && response.get("chatSuccess").getAsBoolean()) {
+            System.out.println("Found employee, joining chat");
 
-        UIUtils.waitForEnter(scanner);
+            try {
+                Thread.sleep(2000);
+            }
+            catch (InterruptedException e) {}
+
+            Auth.setCurrentChatId(response.get("chatId").getAsString());
+            Singletons.CHAT_CLIENT.startChat();
+        }
+        else if (response != null && response.get("success").getAsBoolean() && !response.get("chatSuccess").getAsBoolean()) {
+            UIUtils.showError(response.get("message").getAsString());
+            UIUtils.printLine("You have been added to the branch queue. You'll be notified when someone is available.");
+            UIUtils.waitForEnter(scanner);
+        }
+        else if (response != null && !response.get("success").getAsBoolean()) {
+            UIUtils.showError(response.get("message").getAsString());
+            UIUtils.waitForEnter(scanner);
+        }
     }
 
-    public void displayCustomersDataJson(JsonArray customerArray) {
-        try {
-            List<String[]> rows = new ArrayList<>();
-            for (var el : customerArray) {
-                JsonObject customer = el.getAsJsonObject();
-                rows.add(new String[]{
-                        customer.get("userId").getAsString(),
-                        customer.get("fullName").getAsString(),
-                        customer.get("phone").getAsString(),
-                        customer.get("role").getAsString()
-                });
-            }
-            String[] headers = {"Customer ID", "Full Name", "Phone Number", "Type"};
-            UIUtils.printTable(headers, rows);
-            UIUtils.showInfo("Total customers: " + rows.size());
-        } catch (Exception e) {
-            UIUtils.showError("Error displaying customers: " + e.getMessage());
+    private void endChat() {
+    }
+
+    private String getBranchPick() {
+        Map<String, String> req = new HashMap<>();
+        List<String> branchesId = new ArrayList<>();
+        req.put("userId", Auth.getUsername());
+
+        Request request = new Request("getAllBranches", Singletons.GSON.toJson(req));
+        JsonObject response = Singletons.CLIENT.sendRequest(request);
+
+        if (response != null && !response.get("success").getAsBoolean()) {
+            String error = response != null ? response.get("message").getAsString() : "Connection error";
+            UIUtils.showError(error);
+            UIUtils.waitForEnter(scanner);
+            return null;
         }
 
-        UIUtils.waitForEnter(scanner);
+        if (response == null) {
+            UIUtils.showError("Response is null");
+            UIUtils.waitForEnter(scanner);
+            return null;
+        }
+
+        JsonArray branches = JsonParser.parseString(response.get("message").getAsString()).getAsJsonArray();
+        int i = 1;
+        for (JsonElement el: branches){
+            JsonObject b = el.getAsJsonObject();
+
+            boolean sameBranchAsUserBranch = b.get("id").getAsString().equals(Auth.getCurrentUser().get("branchId").getAsString());
+
+            if (!sameBranchAsUserBranch) {
+                branchesId.add(b.get("id").getAsString());
+                UIUtils.printMenuOption(i++, b.get("name").getAsString());
+            }
+        }
+
+        UIUtils.printLine("Enter the branch you want chat with from: ");
+        int choice = UIUtils.getIntInput(scanner);
+
+        if (choice < 1 || choice > branchesId.size()) {
+            UIUtils.showError("Invalid choice. Please try again.");
+            return null;
+        }
+
+        return branchesId.get(choice - 1);
     }
 }

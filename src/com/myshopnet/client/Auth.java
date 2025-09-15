@@ -7,6 +7,7 @@ public class Auth {
     private static String username;
     private static UserTypeLoggedIn currentUserType = UserTypeLoggedIn.NONE;
     private static JsonObject currentUser;
+    private static String currentChatId;
 
     public static JsonObject getCurrentUser() {
         return currentUser;
@@ -30,5 +31,13 @@ public class Auth {
 
     public static UserTypeLoggedIn getCurrentUserType() {
         return currentUserType;
+    }
+
+    public static String getCurrentChatId() {
+        return currentChatId;
+    }
+
+    public static void setCurrentChatId(String currentChatId) {
+        Auth.currentChatId = currentChatId;
     }
 }

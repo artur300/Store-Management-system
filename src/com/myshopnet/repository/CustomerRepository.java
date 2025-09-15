@@ -40,8 +40,5 @@ public class CustomerRepository implements Repository<Customer> {
                 .map(userAccount -> (Customer) userAccount.getUser())
                 .toList();
     }
-
-
-
 }
 

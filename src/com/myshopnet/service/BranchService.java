@@ -21,29 +21,20 @@ public class BranchService implements EmployeeStatusObserver {
     private final ProductRepository productRepository = Singletons.PRODUCT_REPO;
 
     public BranchService() {
-        // אם תרצה, אפשר להשאיר; כל ה-Repositories עובדים מול Data סטטי ולכן זה לא שוברת כלום
         this.branchRepository = new BranchRepository();
-        System.out.println("[DEBUG] BranchService initialized, totalEmployees=" + employeeRepository.getAll().size());
-
         for (Employee e : employeeRepository.getAll()) {
             e.registerObserver(this);
         }
     }
 
-    // === תיקון קריטי ===
     @Override
     public void onStatusChanged(Employee employee, EmployeeStatus oldStatus, EmployeeStatus newStatus) {
-        System.out.println("[DEBUG] onStatusChanged -> employee=" + employee.getFullName()
-                + ", from=" + oldStatus + ", to=" + newStatus);
-
-        // כל פעם שעובד הופך ל-AVAILABLE ננסה לשדך לו ממתין מהתור
         if (newStatus == EmployeeStatus.AVAILABLE) {
             UserAccount ua = userAccountRepository.get(employee.getUserId());
             if (ua != null) {
                 try {
                     notifyAndPollWaitingEmployeeToChat(ua);
                 } catch (Exception ex) {
-                    System.out.println("[ERROR] onStatusChanged -> failed to match from queue: " + ex);
                     ex.printStackTrace();
                 }
             }
@@ -52,23 +43,19 @@ public class BranchService implements EmployeeStatusObserver {
 
     public Branch createNewBranch(String branchName) {
         Branch newBranch = new Branch(UUID.randomUUID().toString(), branchName);
-        System.out.println("[DEBUG] createNewBranch -> " + branchName + ", id=" + newBranch.getId());
         return branchRepository.create(newBranch);
     }
 
     public void deleteBranch(String id) {
-        System.out.println("[DEBUG] deleteBranch -> " + id);
         branchRepository.delete(id);
     }
 
     public List<Branch> getAllBranches() {
         List<Branch> all = branchRepository.getAll();
-        System.out.println("[DEBUG] getAllBranches -> found=" + all.size());
         return all;
     }
 
     public Branch getBranchById(String id) {
-        System.out.println("[DEBUG] getBranchById -> id=" + id);
         return branchRepository.get(id);
     }
 
@@ -76,14 +63,11 @@ public class BranchService implements EmployeeStatusObserver {
         List<Employee> employees = employeeRepository.getAll().stream()
                 .filter(e -> e.getBranchId().equals(branchId))
                 .collect(Collectors.toList());
-        System.out.println("[DEBUG] getAllEmployeesInBranch -> branchId=" + branchId + ", count=" + employees.size());
         return employees;
     }
 
     public void addEmployeeToWaitingBranchQueue(String branchId, UserAccount employeeRequesting) {
         Branch branch = branchRepository.get(branchId);
-        System.out.println("[DEBUG] addEmployeeToWaitingBranchQueue -> branch=" + branch.getName()
-                + ", employee=" + employeeRequesting.getUsername());
         branch.getEmployeesWaitingToChat().add(employeeRequesting);
     }
 
@@ -96,14 +80,8 @@ public class BranchService implements EmployeeStatusObserver {
 
         UserAccount userAccountWaitingToChat = branch.getEmployeesWaitingToChat().poll();
         if (userAccountWaitingToChat != null) {
-            System.out.println("[DEBUG] notifyAndPollWaitingEmployeeToChat -> available="
-                    + employeeAvailableToChat.getUsername()
-                    + ", waiting=" + userAccountWaitingToChat.getUsername());
-
-            // סדר פרמטרים לא משנה; נשתמש במבקש-ראשון לזיהוי ברור בלוגים
             Singletons.CHAT_SERVICE.createChat(userAccountWaitingToChat, employeeAvailableToChat);
         } else {
-            System.out.println("[DEBUG] notifyAndPollWaitingEmployeeToChat -> no waiting users in branch=" + branch.getName());
         }
     }
 
@@ -119,54 +97,28 @@ public class BranchService implements EmployeeStatusObserver {
         }
 
         boolean inStock = branch.getProductsStock().getStockOfProducts().get(product) - quantity >= 0;
-        System.out.println("[DEBUG] checkIfProductInStockInBranch -> branch=" + branch.getName()
-                + ", product=" + product.getName()
-                + ", quantity=" + quantity + ", inStock=" + inStock);
         return inStock;
     }
 
     public UserAccount findAvailableEmployee(Branch branch) {
-        List<Employee> employeesOfBranch = getAllEmployeesInBranch(branch.getId()).stream()
-                .filter(employee -> {
-                    UserAccount ua = userAccountRepository.get(employee.getUserId());
-                    return employee.getEmployeeStatus() == EmployeeStatus.AVAILABLE
-                            && ua != null
-                            && Singletons.AUTH_SERVICE.isLoggedIn(ua);
-                })
+        UserAccount availableEmployee = null;
+
+        List<UserAccount> allEmployesAvailable = userAccountRepository.getAll().stream()
+                .filter(userAccount -> userAccount.getUser() instanceof Employee)
+                .filter(userAccount -> (!((Employee) userAccount.getUser()).getBranchId().equals(branch.getId())) &&
+                        ((Employee)userAccount.getUser()).getEmployeeStatus().equals(EmployeeStatus.AVAILABLE))
                 .toList();
 
-        System.out.println("[DEBUG] findAvailableEmployee -> branch=" + branch.getName()
-                + ", availableLoggedInCount=" + employeesOfBranch.size());
-
-        if (!employeesOfBranch.isEmpty()) {
-            Employee chosen = employeesOfBranch.getFirst();
-            UserAccount ua = userAccountRepository.get(chosen.getUserId());
-            System.out.println("[DEBUG] Chosen logged-in employee=" + chosen.getFullName()
-                    + ", username=" + ua.getUsername());
-            return ua;
+        if (!allEmployesAvailable.isEmpty()) {
+            availableEmployee =  allEmployesAvailable.getFirst();
         }
 
-        return null;
+        return availableEmployee;
     }
 
     public UserAccount findAvailableEmployeeInOtherBranch(String requestingBranchId) {
-        System.out.println("[DEBUG] findAvailableEmployeeInOtherBranch -> excluding branchId=" + requestingBranchId);
+        Branch branch = branchRepository.get(requestingBranchId);
 
-        for (Branch branch : branchRepository.getAll()) {
-            if (!branch.getId().equals(requestingBranchId)) {
-                System.out.println("[DEBUG] Checking branch=" + branch.getName());
-                UserAccount available = findAvailableEmployee(branch);
-                if (available != null) {
-                    System.out.println("[DEBUG] ✅ Returning available employee from branch=" + branch.getName()
-                            + ", username=" + available.getUsername());
-                    return available;
-                } else {
-                    System.out.println("[DEBUG] No available employees in branch=" + branch.getName());
-                }
-            }
-        }
-
-        System.out.println("[DEBUG] ❌ No available employees in other branches");
-        return null;
+        return findAvailableEmployee(branch);
     }
 }

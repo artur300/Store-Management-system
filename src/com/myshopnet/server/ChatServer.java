@@ -1,382 +1,95 @@
 package com.myshopnet.server;
 
-import com.myshopnet.models.ChatColors;
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import com.myshopnet.client.ChatMenu;
+import com.myshopnet.data.Data;
+import com.myshopnet.logs.LogEvent;
+import com.myshopnet.logs.LogType;
+import com.myshopnet.logs.Logger;
 import com.myshopnet.models.Chat;
-import com.myshopnet.chat.SocketData;
-import com.myshopnet.chat.UserSession;
+import com.myshopnet.models.ChatMessage;
+import com.myshopnet.utils.GsonSingleton;
+import com.myshopnet.utils.Singletons;
 
-import java.io.IOException;
+import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Queue;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.ConcurrentMap;
+import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
-import static com.myshopnet.chat.ChatUtils.*;
 
 public class ChatServer {
-//    private static final int PORT = 7000;
-//    private static final List<String> ALLOWED = Arrays.asList("BOB","JACK","ALICE","EVA","MIKE","ADMIN");
-//    private static final ConcurrentMap<String, UserSession> sessionsByName = new ConcurrentHashMap<>();
-//    private static final CopyOnWriteArrayList<UserSession> allSessions     = new CopyOnWriteArrayList<>();
-//    private static final ConcurrentMap<String, Chat> rooms             = new ConcurrentHashMap<>();
-//    private static final ConcurrentMap<String, Queue<String>> pendingByTarget = new ConcurrentHashMap<>();
-//
-//    public static void main(String[] args) throws IOException {
-//        try (ServerSocket server = new ServerSocket(PORT)) {
-//            log("* Server up on " + PORT + ". Waiting for clients...");
-//            while (true) {
-//                Socket s = server.accept();
-//                new Thread(() -> handleClient(s)).start();
-//            }
-//        }
-//    }
-//
-//    private static void handleClient(Socket socket) {
-//        UserSession us = null;
-//        try {
-//            us = new UserSession(new SocketData(socket));
-//            allSessions.add(us);
-//            log("* Connection from " + us.addr());
-//
-//            negotiateName(us);
-//            broadcastSys(allSessions, us.name()+" joined. Type /menu for commands.");
-//            sendPresenceListTo(us);
-//
-//            String line;
-//            while ((line = us.in().readLine()) != null) {
-//                line = line.trim();
-//                if (line.isEmpty()) continue;
-//
-//                if (line.equalsIgnoreCase("goodbye") || line.equalsIgnoreCase("/quit")) {
-//                    us.out().println(sys("Goodbye!"));
-//                    break;
-//                }
-//
-//                if (line.startsWith("/")) {
-//                    handleCommand(us, line);
-//                } else {
-//                    // הודעה לצ'אט פעיל
-//                    if (us.activeRoomId() == null) {
-//                        us.out().println(sys("No active chat. Use /chat <USER> first."));
-//                    } else {
-//                        Chat room = rooms.get(us.activeRoomId());
-//                        if (room != null) {
-//                            room.say(us, line);
-//                        } else {
-//                            us.setActiveRoomId(null);
-//                            us.out().println(sys("Chat ended. Start a new one with /chat <USER>."));
-//                        }
-//                    }
-//                }
-//            }
-//
-//        } catch (Exception ignored) {
-//        } finally {
-//            if (us != null) cleanup(us);
-//            try { socket.close(); } catch (Exception ignored) {}
-//        }
-//    }
-//
-//    private static void handleCommand(UserSession us, String cmdLine) {
-//        if (cmdLine.startsWith("/")) cmdLine = cmdLine.substring(1);
-//
-//        String[] parts = cmdLine.split("\\s+", 2);
-//        String cmd = parts[0].toLowerCase();
-//
-//        String arg = "";
-//        if (parts.length > 1) arg = parts[1].trim();
-//
-//        switch (cmd) {
-//            case "menu": {
-//                us.out().println(sys(
-//                        ChatColors.YELLOW+"Available commands:\n" +
-//                                "  /menu            - Show this menu message\n" +
-//                                "  /list            - Show who is online\n" +
-//                                "  /whoami          - Show your name and status\n" +
-//                                "  /busy            - Mark yourself as busy\n" +
-//                                "  /free            - Mark yourself as free\n" +
-//                                "  /chat <USER>     - Start chat with a user\n" +
-//                                "  /leave           - Leave the current chat\n" +
-//                                "  /rooms           - List all active chat rooms\n" +
-//                                "  /join <ROOM>     - Join a room as supervisor\n" +
-//                                "  /quit            - Disconnect from server"+ChatColors.RESET
-//                ));
-//                break;
-//            }
-//            case "list": {
-//                sendPresenceListTo(us);
-//                break;
-//            }
-//            case "whoami": {
-//                String status = us.isBusy() ? "BUSY" : "FREE";
-//                String inChat = (us.activeRoomId() != null) ? " | in chat " + us.activeRoomId() : "";
-//                us.out().println(sys("You are " + us.name() + " | status: " + status + inChat));
-//                break;
-//            }
-//            case "busy": {
-//                setBusy(us, true);
-//                break;
-//            }
-//            case "free": {
-//                setBusy(us, false);
-//                break;
-//            }
-//            case "chat": {
-//                if (arg.isEmpty()) { us.out().println(sys("Usage: /chat <USER>")); break; }
-//                startChat(us, arg.toUpperCase());
-//                break;
-//            }
-//            case "leave": {
-//                leaveChat(us);
-//                break;
-//            }
-//            case "rooms": {
-//                listRooms(us);
-//                break;
-//            }
-//            case "join": {
-//                if (arg.isEmpty()) { us.out().println(sys("Usage: /join <CHAT_ID>")); break; }
-//                String roomKey = arg.trim().toLowerCase().replaceAll("\\s+", " ");
-//                joinAsSupervisor(us, roomKey);
-//                break;
-//            }
-//            case "quit": {
-//                us.out().println(sys("Goodbye!"));
-//                break;
-//            }
-//            default: {
-//                us.out().println(sys("Unknown command. Type /menu to see available commands."));
-//            }
-//        }
-//    }
-//
-//    private static void negotiateName(UserSession us) throws IOException {
-//        while (true) {
-//            us.out().println(sys("Enter username (allowed: " + ALLOWED + "):"));
-//            String name = us.in().readLine();
-//            if (name == null) throw new IOException("Client closed");
-//            name = name.trim().toUpperCase();
-//
-//            if (!ALLOWED.contains(name)) {
-//                us.out().println(sys(ChatColors.RED+"✖ Not allowed. Choose from: " + ALLOWED+ChatColors.RESET));
-//                continue;
-//            }
-//            if (sessionsByName.containsKey(name)) {
-//                us.out().println(sys(ChatColors.RED+"✖ Already logged in elsewhere."+ChatColors.RESET));
-//                continue;
-//            }
-//
-//            us.setName(name);
-//            sessionsByName.put(name, us);
-//            us.out().println(sys("Welcome, " + name + "!"));
-//
-//            notifyPending(name);
-//            break;
-//        }
-//    }
-//
-//    private static void sendPresenceListTo(UserSession us) {
-//        List<String> names = new ArrayList<>();
-//        for (UserSession s : allSessions) {
-//            if (s.name() != null) names.add(s.name() + (s.isBusy()?"(BUSY)":"(FREE)"));
-//        }
-//        us.out().println(sys("Online: " + names));
-//    }
-//
-//    private static void setBusy(UserSession us, boolean busy) {
-//        us.setBusy(busy);
-//        us.out().println(sys("Status set to " + (busy?"BUSY":"FREE")));
-//        if (!busy) notifyPending(us.name());
-//        broadcastPresence();
-//    }
-//
-//    private static void startChat(UserSession caller, String targetName) {
-//        if (caller.activeRoomId() != null) {
-//            caller.out().println(sys(ChatColors.RED+"✖ You are already in " + caller.activeRoomId() + ". Use /leave first."+ChatColors.RESET));
-//            return;
-//        }
-//        if (caller.name().equals(targetName)) {
-//            caller.out().println(sys(ChatColors.RED+"✖ You cannot chat with yourself."+ChatColors.RESET));
-//            return;
-//        }
-//        if (!ALLOWED.contains(targetName)) {
-//            caller.out().println(sys(ChatColors.RED+"✖ No such user: " + targetName + ChatColors.RESET));
-//            return;
-//        }
-//
-//        UserSession target = sessionsByName.get(targetName);
-//        if (target == null) {
-//            caller.out().println(sys(ChatColors.RED+"✖ " + targetName + " is offline. Added to their pending queue."+ChatColors.RESET));
-//            pendingByTarget.computeIfAbsent(targetName, k -> new ConcurrentLinkedQueue<>()).offer(caller.name());
-//            return;
-//        }
-//        if (target.isBusy() || target.activeRoomId()!=null) {
-//            caller.out().println(sys(targetName + " is busy. Added to their pending queue."));
-//            pendingByTarget.computeIfAbsent(targetName, k -> new ConcurrentLinkedQueue<>()).offer(caller.name());
-//            return;
-//        }
-//
-//        Chat room = Chat.create(caller, target);
-//        rooms.put(room.id(), room);
-//        caller.setActiveRoomId(room.id());
-//        target.setActiveRoomId(room.id());
-//        caller.setBusy(true); target.setBusy(true);
-//
-//        room.system("Chat " + room.id() + " opened between " + caller.name() + " and " + target.name());
-//        broadcastPresence();
-//    }
-//
-//    private static void leaveChat(UserSession us) {
-//        String rid = us.activeRoomId();
-//        if (rid == null) { us.out().println(sys("No active chat.")); return; }
-//
-//        Chat room = rooms.get(rid);
-//        if (room == null) {
-//            us.setActiveRoomId(null);
-//            us.setBusy(false);
-//            us.out().println(sys("Chat ended."));
-//            broadcastPresence();
-//            return;
-//        }
-//
-//        room.system(us.name() + " left the chat.");
-//        room.remove(us);
-//
-//        if (room.participantsCount() < 2) {
-//            for (UserSession other : room.participantsList()) {
-//                other.setActiveRoomId(null);
-//                other.setBusy(false);
-//                other.out().println(sys("Chat " + rid + " closed."));
-//                notifyPending(other.name());
-//            }
-//            for (UserSession sup : room.supervisorsList()) {
-//                sup.setActiveRoomId(null);
-//                sup.setBusy(false);
-//                sup.out().println(sys("Chat " + rid + " closed."));
-//            }
-//
-//            us.setActiveRoomId(null);
-//            us.setBusy(false);
-//            us.out().println(sys("Chat " + rid + " closed."));
-//            notifyPending(us.name());
-//
-//            rooms.remove(rid);
-//            broadcastPresence();
-//            return;
-//        }
-//
-//        us.setActiveRoomId(null);
-//        us.setBusy(false);
-//        us.out().println(sys("Left chat " + rid + "."));
-//        broadcastPresence();
-//        notifyPending(us.name());
-//    }
-//
-//    private static void listRooms(UserSession us) {
-//        if (rooms.isEmpty()) { us.out().println(sys("No active rooms.")); return; }
-//        StringBuilder sb = new StringBuilder("Active rooms:\n");
-//        for (Chat r : rooms.values()) {
-//            sb.append("- ").append(r.id()).append(" : ").append(r.participantsSummary()).append("\n");
-//        }
-//        us.out().println(sys(sb.toString().trim()));
-//    }
-//
-//    private static void joinAsSupervisor(UserSession sup, String roomId) {
-//        if (!"ADMIN".equals(sup.name())) {
-//            sup.out().println(sys(ChatColors.RED+"✖ Only ADMIN can join rooms."+ChatColors.RESET));
-//            return;
-//        }
-//        if (sup.activeRoomId() != null) {
-//            sup.out().println(sys(ChatColors.RED+"✖ You are already in " + sup.activeRoomId() + ". Use /leave first."+ChatColors.RESET));
-//            return;
-//        }
-//        Chat r = rooms.get(roomId);
-//        if (r == null) { sup.out().println(sys(ChatColors.RED+"✖ No such room."+ChatColors.RESET)); return; }
-//
-//        r.addSupervisor(sup);
-//        sup.setActiveRoomId(r.id());
-//        sup.setBusy(true);
-//        r.system("Supervisor " + sup.name() + " joined " + r.id());
-//        broadcastPresence();
-//    }
-//
-//    private static void notifyPending(String freedUser) {
-//        Queue<String> q = pendingByTarget.get(freedUser);
-//        if (q == null) return;
-//
-//        String requester;
-//        while ((requester = q.poll()) != null) {
-//            UserSession req = sessionsByName.get(requester);
-//            UserSession tgt = sessionsByName.get(freedUser);
-//            if (req == null || tgt == null) continue;
-//            if (tgt.isBusy() || tgt.activeRoomId()!=null) {
-//                q.offer(requester);
-//                break;
-//            }
-//            req.out().println(sys(freedUser + " is now free. Opening chat..."));
-//            startChat(req, freedUser);
-//            break;
-//        }
-//    }
-//
-//    private static void broadcastPresence() {
-//        String msg = presenceMessage();
-//        for (UserSession s : allSessions) {
-//            if (s.name()!=null) s.out().println(msg);
-//        }
-//    }
-//
-//    private static String presenceMessage() {
-//        List<String> lst = new ArrayList<>();
-//        for (UserSession s : allSessions) {
-//            if (s.name()!=null) {
-//                String status = s.isBusy() ? "(BUSY)" : "(FREE)";
-//                String roomInfo = (s.activeRoomId() != null) ? "[in " + s.activeRoomId() + "]" : "";
-//                lst.add(s.name() + status + roomInfo);
-//            }
-//        }
-//        return sys("Online: " + lst);
-//    }
-//
-//    private static void cleanup(UserSession us) {
-//        try {
-//            String name = us.name();
-//            if (name != null) sessionsByName.remove(name);
-//            allSessions.remove(us);
-//
-//            if (us.activeRoomId() != null) {
-//                Chat r = rooms.get(us.activeRoomId());
-//                if (r != null) {
-//                    r.system((name != null ? name : us.addr()) + " disconnected.");
-//                    r.remove(us);
-//
-//                    if (r.participantsCount() < 2) {
-//                        for (UserSession other : r.participantsList()) {
-//                            other.setActiveRoomId(null);
-//                            other.setBusy(false);
-//                            other.out().println(sys("Chat " + r.id() + " closed."));
-//                            notifyPending(other.name());
-//                        }
-//                        for (UserSession sup : r.supervisorsList()) {
-//                            sup.setActiveRoomId(null);
-//                            sup.setBusy(false);
-//                            sup.out().println(sys("Chat " + r.id() + " closed."));
-//                        }
-//                        rooms.remove(r.id());
-//                    }
-//                }
-//            }
-//
-//            us.setActiveRoomId(null);
-//            us.setBusy(false);
-//
-//            broadcastSys(allSessions, (name != null ? name : us.addr()) + " left.");
-//            broadcastPresence();
-//        } catch (Exception ignored) {}
-//    }
+    private final Logger logger = Singletons.LOGGER;
+    private static final int PORT = 8081;
+    private final Gson gson = GsonSingleton.getInstance();
+    private Map<String, List<PrintWriter>> chats;
+
+    public Map<String, List<PrintWriter>> getChats() {
+        return chats;
+    }
+
+    public void startListening() throws IOException {
+        try (ServerSocket server = new ServerSocket(PORT)) {
+            chats = new HashMap<>();
+            logger.log(new LogEvent(LogType.SERVER_LISTEN, "Chat Server up on " + PORT + ". Waiting for clients..."));
+
+            while (true) {
+                System.out.println("Waiting for messages to broadcast...");
+
+                Socket socket = server.accept();
+
+                logger.log(new LogEvent(LogType.REQUEST_RECIEVED, "Request from " + socket.getRemoteSocketAddress() + " recieved"));
+
+                new Thread(() -> {
+                    String requestData;
+
+                    try {
+                        BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+                        PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
+
+                        while (socket.isConnected() && (requestData = in.readLine()) != null) {
+                            System.out.println("INSIDE CHAT SERVER: " + socket.getRemoteSocketAddress());
+                            if (requestData.trim().isEmpty()) {
+                                continue;
+                            }
+
+                            try {
+                                JsonObject request = JsonParser.parseString(requestData).getAsJsonObject();
+
+                                if (request.has("chatId") && !request.has("userId") && !request.has("message")) {
+                                    System.out.println("Adding " + request.get("chatId").getAsString() + " to chat list");
+                                    addUserToChat(request.get("chatId").getAsString(), out);
+                                }
+                                else {
+
+                                    ChatMessage message = gson.fromJson(requestData, ChatMessage.class);
+                                    message.setTimestamp(System.currentTimeMillis());
+                                    RequestHandler.handleMessage(message);
+                                }
+                            } catch (Exception ex) {
+                                out.println("{\"error\":\"Invalid request\"}");
+                                out.flush();
+                                logger.log(new LogEvent(LogType.REQUEST_RECIEVED, "Bad request: " + ex.getMessage()));
+                            }
+                        }
+
+
+                    } catch (IOException e) {
+                        logger.log(new LogEvent(LogType.SERVER_LISTEN, e.getMessage()));
+                    }
+                }).start();
+            }
+        }
+    }
+
+    private void addUserToChat(String chatId, PrintWriter out) {
+        if (!chats.containsKey(chatId)) {
+            chats.put(chatId, new CopyOnWriteArrayList<>());
+        }
+        chats.get(chatId).add(out);
+    }
 }

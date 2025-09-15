@@ -110,6 +110,7 @@ public class EmployeeController {
         } catch (Exception e) {
             response.setSuccess(false);
             response.setMessage(e.getMessage());
+            e.printStackTrace();
         }
         return gson.toJson(response);
     }

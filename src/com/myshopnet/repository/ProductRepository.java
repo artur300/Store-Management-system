@@ -46,6 +46,4 @@ public class ProductRepository implements Repository<Product> {
     public List<Product> getAll() {
         return Data.getProducts().values().stream().toList();
     }
-
-
 }

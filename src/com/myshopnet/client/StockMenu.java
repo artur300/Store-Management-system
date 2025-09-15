@@ -3,6 +3,7 @@ package com.myshopnet.client;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.myshopnet.AppState;
 import com.myshopnet.client.utils.UIUtils;
 import com.myshopnet.models.Admin;
 
@@ -33,7 +34,7 @@ public class StockMenu implements Menu {
     }
 
     public void show() {
-        while (true) {
+        while(!AppState.chatActive) {
             UIUtils.printMenuHeader("STOCK MANAGEMENT");
             UIUtils.printLine("Branch: " + ((AdminMenu)Singletons.ADMIN_MENU).getBranchByBranchId(Auth.getCurrentUser().get("branchId").getAsString()));
             UIUtils.printEmptyLine();

@@ -1,8 +1,8 @@
 package com.myshopnet.client;
 
-import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.myshopnet.AppState;
 import com.myshopnet.client.models.UserTypeLoggedIn;
 import com.myshopnet.client.utils.UIUtils;
 
@@ -22,7 +22,7 @@ public class Client {
     private Scanner scanner;
     private UserTypeLoggedIn currentUserType = UserTypeLoggedIn.NONE;
     private boolean isConnected = false;
-    private PushClient pushClient = new PushClient();
+    private ChatClient chatClient = Singletons.CHAT_CLIENT;
 
     public Client() {
         this.scanner = new Scanner(System.in);
@@ -33,8 +33,19 @@ public class Client {
             connectToServer();
             showWelcomeScreen();
             loginProcess();
-            if (Auth.getCurrentUser() != null) {
-                showMainMenu();
+            while (isConnected) {
+                if (Auth.getCurrentUser() != null) {
+                    showMainMenu();
+                }
+                while (isConnected && AppState.chatActive) {
+                    try { Thread.sleep(200); } catch (InterruptedException e) { Thread.currentThread().interrupt(); }
+                }
+                if (!isConnected) {
+                    break;
+                }
+                if (Auth.getCurrentUser() == null) {
+                    break;
+                }
             }
         } catch (Exception e) {
             System.err.println("Error: " + e.getMessage());
@@ -69,25 +80,18 @@ public class Client {
         }
 
         Auth.setCurrentUserType(UserTypeLoggedIn.valueOf(Auth.getCurrentUser().get("role").getAsString()));
-        String userId = Auth.getCurrentUser().get("userId").getAsString();
+        String userId = Auth.getUsername();
 
-        pushClient.start(userId, evt -> {
-            try {
-                String type = evt.has("type") ? evt.get("type").getAsString() : "";
-                if ("chatCreated".equals(type)) {
-                    String chatId = evt.get("chatId").getAsString();
-                    System.out.println("\n[Notification] A chat is ready for you. Chat ID: " + chatId);
-                    System.out.print("Press Enter to continue...");
-                }
-            } catch (Exception ignored) { }
-        });
+        if (Auth.getCurrentUserType().equals(UserTypeLoggedIn.ADMIN) || Auth.getCurrentUserType().equals(UserTypeLoggedIn.EMPLOYEE)) {
+            chatClient.start(chatRequest -> {
+                chatClient.handleChatRequest(chatRequest);
+            });
+        }
 
         showMenuAccordingToUser();
     }
 
     public void showMenuAccordingToUser() {
-        Auth.setCurrentUserType(UserTypeLoggedIn.valueOf(Auth.getCurrentUser().get("role").getAsString()));
-
         switch (Auth.getCurrentUserType()) {
             case ADMIN:
                 Singletons.ADMIN_MENU.show();
@@ -139,11 +143,6 @@ public class Client {
         }
     }
 
-    public JsonObject sendRequest(String legacyRequest) {
-        System.err.println("[Legacy API] Ignored request: " + legacyRequest);
-        return null;
-    }
-
     public Scanner getScanner() {
         return scanner;
     }
@@ -154,7 +153,7 @@ public class Client {
 
     private void cleanup() {
         try {
-            if (pushClient != null) pushClient.stop();
+            if (chatClient != null) chatClient.stop();
             if (out != null) out.close();
             if (in != null) in.close();
             if (socket != null) socket.close();
@@ -175,6 +174,7 @@ public class Client {
             if (response != null && response.get("success").getAsBoolean()) {
                 UIUtils.showSuccess("Logged out successfully!");
                 UIUtils.clearScreen();
+                chatClient.stop();
                 loginProcess();
             }
             else {

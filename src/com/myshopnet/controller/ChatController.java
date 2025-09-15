@@ -2,7 +2,11 @@ package com.myshopnet.controller;
 
 import com.google.gson.Gson;
 import com.myshopnet.auth.UserAccount;
+import com.myshopnet.data.Data;
+import com.myshopnet.errors.EntityNotFoundException;
 import com.myshopnet.errors.InsufficientPermissionsException;
+import com.myshopnet.logs.LogEvent;
+import com.myshopnet.logs.LogType;
 import com.myshopnet.models.Chat;
 import com.myshopnet.models.ChatMessage;
 import com.myshopnet.models.Employee;
@@ -12,8 +16,12 @@ import com.myshopnet.service.ChatService;
 import com.myshopnet.service.UserAccountService;
 import com.myshopnet.utils.GsonSingleton;
 import com.myshopnet.utils.Singletons;
+import jdk.net.Sockets;
 
-import java.util.Optional;
+import java.io.OutputStream;
+import java.io.PrintWriter;
+import java.net.Socket;
+import java.util.*;
 
 public class ChatController {
     private final Gson gson = GsonSingleton.getInstance();
@@ -21,32 +29,56 @@ public class ChatController {
     private final AuthService authService = Singletons.AUTH_SERVICE;
     private final UserAccountService userAccountService = Singletons.USER_ACCOUNT_SERVICE;
 
-    public String startChat(String userIdRequesting, String branchId) {
-        Response response = new Response();
+    public String startChat(String userIdRequesting, String branchId, PrintWriter out) {
+        Map<String, Object> responseMap = new HashMap<>();
+
         try {
             UserAccount userAccount = userAccountService.getUserAccount(userIdRequesting);
 
-            if (userAccount != null &&
-                    authService.isLoggedIn(userAccount) &&
-                    userAccount.getUser() instanceof Employee) {
-
+            if (userAccount != null && authService.isLoggedIn(userAccount) && userAccount.getUser() instanceof Employee) {
                 Optional<Chat> chatOpt = chatService.requestToChatWithBranchEmployee(userAccount, branchId);
 
-                response.setSuccess(true);
                 if (chatOpt.isPresent()) {
-                    response.setMessage(gson.toJson(chatOpt.get()));
+                    responseMap.put("message", "Chat initiated, employee got notification");
+                    responseMap.put("chatId", chatOpt.get().getId());
+                    responseMap.put("chatSuccess", true);
                 } else {
-                    response.setMessage("All employees are busy, you are in the queue of branch " + branchId);
+                    responseMap.put("message", "All employees are busy, you are in the queue of branch " + branchId);
+                    responseMap.put("chatSuccess", false);
                 }
+
+                responseMap.put("success", true);
             } else {
                 throw new InsufficientPermissionsException("Not Employee or Admin");
             }
         } catch (Exception e) {
-            response.setSuccess(false);
-            response.setMessage(e.getMessage());
+            responseMap.put("success", false);
+            responseMap.put("message", e.getMessage());
         }
 
-        return gson.toJson(response);
+        return gson.toJson(responseMap);
+    }
+
+    public String initiateChat(String chatId) {
+        Map<String, Object> responseMap = new HashMap<>();
+
+        try {
+            Chat chat = chatService.getChat(chatId);
+
+            if (chat == null) {
+                throw new EntityNotFoundException("chat");
+            }
+
+            chatService.initiateChat(chat);
+
+            responseMap.put("success", true);
+        }
+        catch (Exception e) {
+            responseMap.put("success", false);
+            responseMap.put("message", e.getMessage());
+        }
+
+        return GsonSingleton.getInstance().toJson(responseMap);
     }
 
     public String endChat(String userIdEndingChat, String chatId) {
@@ -71,20 +103,20 @@ public class ChatController {
         return gson.toJson(response);
     }
 
-    // ✅ מתודה אחידה לשליחת הודעה
-    public String sendMessage(String chatId, String senderId, String message) {
-        Chat chat = Singletons.CHAT_REPO.get(chatId);
-        if (chat == null) {
-            return gson.toJson(new Response(false, "Chat not found"));
+    public void sendMessage(ChatMessage chatMessage) {
+        try {
+            Chat chat = Singletons.CHAT_REPO.get(chatMessage.getChatId());
+
+            if (chat == null) {
+                return;
+            }
+
+            chat.addMessage(chatMessage);
+            Singletons.LOGGER.log(new LogEvent(LogType.MESSAGE_RECEIVED, "MESSAGE RECIEVED: " + chatMessage));
+            Singletons.SERVER.sendMessage(Singletons.CHAT_SERVER.getChats().get(chatMessage.getChatId()), chatMessage);
         }
-
-        // יוצרים אובייקט הודעה
-        ChatMessage msg = new ChatMessage(senderId, message, System.currentTimeMillis());
-        chat.addMessage(msg);
-
-        // שולחים Push לכל המשתתפים
-        Singletons.CHAT_SERVICE.broadcastMessage(chatId, msg);
-
-        return gson.toJson(new Response(true, "Message sent"));
+        catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }

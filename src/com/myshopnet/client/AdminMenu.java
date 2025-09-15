@@ -1,20 +1,23 @@
 package com.myshopnet.client;
 
 import com.google.gson.*;
+import com.myshopnet.AppState;
 import com.myshopnet.client.utils.UIUtils;
 
 import java.util.*;
 import java.util.List;
 
 public class AdminMenu implements Menu {
+    private InputManager inputManager;
     private Scanner scanner;
 
     public AdminMenu() {
-        this.scanner = Singletons.CLIENT.getScanner();
+        this.scanner = new Scanner(System.in);
+        this.inputManager = InputManager.getInstance();
     }
 
     public void show() {
-        while (true) {
+        while (!AppState.chatActive) {
             UIUtils.printMenuHeader("ADMIN MENU");
             UIUtils.printLine("System administration tools");
             UIUtils.printEmptyLine();
@@ -60,7 +63,7 @@ public class AdminMenu implements Menu {
     }
 
     private void manageCustomers() {
-        while (true) {
+        while (!AppState.chatActive) {
             UIUtils.printMenuHeader("EMPLOYEE MANAGEMENT");
             UIUtils.printEmptyLine();
 
@@ -97,7 +100,7 @@ public class AdminMenu implements Menu {
         }
     }
 
-    private void viewAllCustomers() {
+    public void viewAllCustomers() {
         Map<String, String> map = new HashMap<>();
         map.put("currentUserId", Auth.getUsername());
 
@@ -292,7 +295,7 @@ public class AdminMenu implements Menu {
     }
 
     private void manageEmployees() {
-        while (true) {
+        while (!AppState.chatActive) {
             UIUtils.printMenuHeader("EMPLOYEE MANAGEMENT");
             UIUtils.printEmptyLine();
 
@@ -372,7 +375,6 @@ public class AdminMenu implements Menu {
         }
         UIUtils.printTable(new String[]{"Branch ID", "Name"}, rows);
 
-        //Select branch and view employes
         String branchId = UIUtils.getStringInput(scanner, "Enter Branch ID: ");
         Map<String, String> map = new HashMap<>();
         map.put("branchId", branchId);
@@ -431,7 +433,6 @@ public class AdminMenu implements Menu {
 
         String employeeId = UIUtils.getStringInput(scanner, "Employee ID to edit: ");
 
-        // Ask only the fields you want to change; empty input keeps old value
         String fullName = UIUtils.getStringInput(scanner, "Full Name (leave blank to keep): ");
         String phoneNumber = UIUtils.getStringInput(scanner, "Phone Number (leave blank to keep): ");
         String branchId = UIUtils.getStringInput(scanner, "Branch ID (leave blank to keep): ");
@@ -439,7 +440,6 @@ public class AdminMenu implements Menu {
         String employeeNumberStr = UIUtils.getStringInput(scanner, "Employee Number (blank to keep): ");
         String accountNumberStr = UIUtils.getStringInput(scanner, "Account Number (blank to keep): ");
 
-        // Fetch current employee
         Map<String, String> getMap = new HashMap<>();
         getMap.put("employeeId", employeeId);
         JsonObject getResp = Singletons.CLIENT.sendRequest(new Request("getEmployee", Singletons.GSON.toJson(getMap)));

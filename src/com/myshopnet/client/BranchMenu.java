@@ -4,6 +4,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.myshopnet.AppState;
 import com.myshopnet.client.models.UserTypeLoggedIn;
 import com.myshopnet.client.utils.UIUtils;
 
@@ -27,31 +28,33 @@ public class BranchMenu implements Menu {
 
     @Override
     public void show() {
-        UIUtils.printMenuHeader("BRANCH MANAGEMENT");
-        UIUtils.printEmptyLine();
+        while(!AppState.chatActive) {
+            UIUtils.printMenuHeader("BRANCH MANAGEMENT");
+            UIUtils.printEmptyLine();
 
-        UIUtils.printMenuOption(1, "View Branch Info");
-        UIUtils.printMenuOption(2, "Manage Branch Stock");
+            UIUtils.printMenuOption(1, "View Branch Info");
+            UIUtils.printMenuOption(2, "Manage Branch Stock");
 
-        UIUtils.printMenuOption(0, "Back");
+            UIUtils.printMenuOption(0, "Back");
 
-        UIUtils.printMenuFooter();
+            UIUtils.printMenuFooter();
 
-        int choice = UIUtils.getIntInput(scanner);
+            int choice = UIUtils.getIntInput(scanner);
 
-        switch (choice) {
-            case 1:
-                viewBranch();
-                break;
-            case 2:
-                Singletons.STOCK_MENU.show();
-                break;
-            case 0:
-                menuToGoBack.show();
-                return;
-            default:
-                UIUtils.showError("Invalid choice. Please try again.");
-                UIUtils.waitForEnter(scanner);
+            switch (choice) {
+                case 1:
+                    viewBranch();
+                    break;
+                case 2:
+                    Singletons.STOCK_MENU.show();
+                    break;
+                case 0:
+                    menuToGoBack.show();
+                    return;
+                default:
+                    UIUtils.showError("Invalid choice. Please try again.");
+                    UIUtils.waitForEnter(scanner);
+            }
         }
     }
 

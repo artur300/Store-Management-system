@@ -2,10 +2,16 @@ package com.myshopnet.server;
 
 import com.google.gson.*;
 import com.myshopnet.controller.*;
+import com.myshopnet.logs.LogEvent;
+import com.myshopnet.logs.LogType;
+import com.myshopnet.models.Chat;
+import com.myshopnet.models.ChatMessage;
 import com.myshopnet.models.Employee;
 import com.myshopnet.utils.GsonSingleton;
 import com.myshopnet.utils.Singletons;
 
+import java.io.OutputStream;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -22,6 +28,80 @@ public class RequestHandler {
     private static final ProductController productController = Singletons.PRODUCT_CONTROLLER;
     private static final UserAccountController userAccountController = Singletons.USER_ACCOUNT_CONTROLLER;
     private static final ChatController chatController = Singletons.CHAT_CONTROLLER;
+
+    public static void handleMessage(ChatMessage message) {
+        chatController.sendMessage(message);
+    }
+
+    public static String handleChat(Request request, PrintWriter out) {
+        String response = "";
+        String action = request.getAction();
+        String data = request.getData();
+
+        try {
+            JsonObject json = null;
+
+            if (!action.equals("chatMember")) {
+                json = JsonParser.parseString(data).getAsJsonObject();
+            }
+
+            switch (request.getAction()) {
+                case "chatStart": {
+                    String userIdRequesting = json.get("userIdRequesting").getAsString();
+                    String branchId = json.get("branchId").getAsString();
+
+                    response = chatController.startChat(userIdRequesting, branchId, out);
+                    break;
+                }
+
+                case "chatInitiate": {
+                    String chatId = json.get("chatId").getAsString();
+
+                    response = chatController.initiateChat(chatId);
+                    break;
+                }
+
+                case "chatDeclined": {
+                    String fromUser = json.get("fromUser").getAsString();
+                    String chatId = json.get("chatId").getAsString();
+
+                    response = chatController.endChat(fromUser, chatId);
+                    break;
+                }
+
+                case "chatMember": {
+                    String username = data;
+
+                    Server.getAllPrintWriters().put(username, out);
+                    Singletons.LOGGER.log(new LogEvent(LogType.REQUEST_RECIEVED, "User " + username + " added to chat listeners"));
+                    break;
+                }
+                case "chatSendMessage":
+                    ChatMessage chatMessage = gson.fromJson(data, ChatMessage.class);
+
+                    chatController.sendMessage(chatMessage);
+                    break;
+                case "leaveChat":
+
+                    break;
+                case "chatEnd": {
+                    String userId = json.get("userId").getAsString();
+                    String chatId = json.get("chatId").getAsString();
+
+                    response = chatController.endChat(userId, chatId);
+                    break;
+                }
+
+                default:
+                    response = gson.toJson(new Response(false, "Unknown action: " + action));
+            }
+
+            return response;
+        }
+        catch (Exception e) {
+            return gson.toJson(new Response(false, "Error: " + e.getMessage()));
+        }
+    }
 
     public static String handleRequest(Request request) {
         String response = "";
@@ -262,22 +342,6 @@ public class RequestHandler {
                     break;
                 }
 
-                case "startChat": {
-                    String userIdRequesting = json.get("userIdRequesting").getAsString();
-                    String branchId = json.get("branchId").getAsString();
-
-                    response = chatController.startChat(userIdRequesting, branchId);
-                    break;
-                }
-
-                case "endChat": {
-                    String userId = json.get("userId").getAsString();
-                    String chatId = json.get("chatId").getAsString();
-
-                    response = chatController.endChat(userId, chatId);
-                    break;
-                }
-
                 case "createProduct": {
                     String userId = json.get("userId").getAsString();
                     String productSku = json.get("productSku").getAsString();
@@ -288,68 +352,6 @@ public class RequestHandler {
                     response = productController.createProduct(userId, productSku, productName, productCategory, price);
                     break;
                 }
-
-                case "updateEmployeeStatus": {
-                    System.out.println("===== [DEBUG] Entered updateEmployeeStatus case =====");
-                    System.out.println("[DEBUG] Raw JSON: " + json);
-
-                    try {
-                        String username = json.has("username") ? json.get("username").getAsString() : null;
-                        String userId   = json.has("userId")   ? json.get("userId").getAsString()   : null;
-                        String status   = json.has("status")   ? json.get("status").getAsString()   : null;
-
-                        System.out.println("[DEBUG] Parsed input -> username=" + username + ", userId=" + userId + ", status=" + status);
-
-                        if ((username == null && userId == null) || status == null) {
-                            response = gson.toJson(new Response(false, "Missing username/userId or status in request"));
-                            System.out.println("[ERROR] Missing data. Response=" + response);
-                            break;
-                        }
-
-                        // שליפת החשבון לפי מה שיש
-                        var userAccount = (username != null)
-                                ? Singletons.USER_ACCOUNT_REPO.getByUsername(username)
-                                : Singletons.USER_ACCOUNT_REPO.getByUserId(userId);
-
-                        System.out.println("[DEBUG] userAccount from repo = " + userAccount);
-
-                        if (userAccount == null) {
-                            response = gson.toJson(new Response(false, "User not found"));
-                            System.out.println("[ERROR] User not found. Response=" + response);
-                            break;
-                        }
-
-                        com.myshopnet.models.EmployeeStatus newStatus =
-                                com.myshopnet.models.EmployeeStatus.valueOf(status);
-
-                        System.out.println("[DEBUG] Converting status to enum: " + newStatus);
-
-                        Singletons.EMPLOYEE_SERVICE.changeStatus(userAccount, newStatus);
-                        System.out.println("[DEBUG] Status changed successfully");
-
-                        response = gson.toJson(new Response(true, "Status updated to " + status));
-                        System.out.println("[DEBUG] Final Response=" + response);
-
-                    } catch (Exception ex) {
-                        ex.printStackTrace();
-                        response = gson.toJson(new Response(false, "Failed to update status: " + ex.getMessage()));
-                        System.out.println("[DEBUG] Response after exception=" + response);
-                    }
-
-                    System.out.println("===== [DEBUG] Exiting updateEmployeeStatus case =====");
-                    break;
-                }
-
-
-                case "sendMessage": {
-                    String chatId = json.get("chatId").getAsString();
-                    String senderId = json.get("senderId").getAsString();
-                    String message = json.get("message").getAsString();
-
-                    response = chatController.sendMessage(chatId, senderId, message);
-                    break;
-                }
-
 
                 default:
                     response = gson.toJson(new Response(false, "Unknown action: " + action));

@@ -1,12 +1,11 @@
 package com.myshopnet.auth;
 
-import com.google.gson.Gson;
 import com.myshopnet.models.User;
 import com.myshopnet.utils.PasswordUtil;
 
 public class UserAccount {
     private String username;
-    private String password;   // בפועל עדיף hash
+    private String password;
     private User user;
 
     public UserAccount(User user) {

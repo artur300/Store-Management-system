@@ -4,6 +4,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.myshopnet.AppState;
 import com.myshopnet.client.models.Product;
 import com.myshopnet.client.utils.UIUtils;
 
@@ -19,7 +20,7 @@ public class CustomerMenu implements Menu {
     }
 
     public void show() {
-        while (true) {
+        while(!AppState.chatActive) {
             UIUtils.printMenuHeader("CUSTOMER MENU");
             UIUtils.printEmptyLine();
 
@@ -215,8 +216,7 @@ public class CustomerMenu implements Menu {
        show();
     }
 
-
-    private String getBranchPick() {
+    public String getBranchPick() {
         Map<String, String> req = new HashMap<>();
         List<String> branchesId = new ArrayList<>();
         req.put("userId", Auth.getUsername());

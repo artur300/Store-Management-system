@@ -48,11 +48,13 @@ public class AuthService {
             throw new AuthException("Already Logged In");
         }
 
-        if (PasswordUtil.checkPassword(password, userAccount.getPassword())) {
+        if (!PasswordUtil.checkPassword(password, userAccount.getPassword())) {
+            throw new AuthException("User not found");
+        }
+        else {
             Data.getOnlineAccounts().put(userAccount.getUsername(), userAccount);
         }
 
-        LoggerImpl.getInstance().log(new LogEvent(LogType.LOGIN, "user=" + username));
         return userAccount;
     }
 

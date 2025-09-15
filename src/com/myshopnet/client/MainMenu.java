@@ -1,4 +1,5 @@
 package com.myshopnet.client;
+import com.myshopnet.AppState;
 import com.myshopnet.client.utils.UIUtils;
 
 import java.util.Scanner;
@@ -14,7 +15,7 @@ public class MainMenu implements Menu {
 
     public void show() {
         try {
-            while (keepRunning && Singletons.CLIENT.isConnected()) {
+            while (keepRunning && Singletons.CLIENT.isConnected() && !AppState.chatActive) {
                 displayMainMenu();
             }
         }

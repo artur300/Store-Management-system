@@ -826,6 +826,7 @@ public class LogHandler {
 */
 
 package com.myshopnet.client;
+import com.myshopnet.AppState;
 import com.myshopnet.client.utils.UIUtils;
 import java.util.*;
 
@@ -842,8 +843,10 @@ public class LogMenu implements Menu {
     }
 
     public void show() {
-        UIUtils.printMenuHeader("SYSTEM LOGS");
-        UIUtils.showInfo("Logs UI is not implemented in this client build.");
-        UIUtils.waitForEnter(scanner);
+        while(!AppState.chatActive) {
+            UIUtils.printMenuHeader("SYSTEM LOGS");
+            UIUtils.showInfo("Logs UI is not implemented in this client build.");
+            UIUtils.waitForEnter(scanner);
+        }
     }
 }

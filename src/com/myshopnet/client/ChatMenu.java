@@ -1,243 +1,82 @@
 package com.myshopnet.client;
-
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
+import com.myshopnet.AppState;
 import com.myshopnet.client.utils.UIUtils;
 
-import java.util.*;
+import java.util.Scanner;
 
-public class ChatMenu implements Menu {
+public class ChatMenu {
+    private final Client client;
+    private final String chatId;
+    private final String otherUserId;
     private final Scanner scanner;
 
-    // מצב הצ'אט
-    private volatile boolean inChat = false;
-    private volatile String currentChatId = null;
-
-    // תיאום עם push
-    private volatile boolean waitingForChat = false;
-    private volatile String pendingChatId = null; // chat שהשרת יצר ואמור להיפתח
-
-    public ChatMenu() {
-        this.scanner = Singletons.CLIENT.getScanner();
+    public ChatMenu(Client client, String chatId, String otherUserId) {
+        this.client = client;
+        this.chatId = chatId;
+        this.otherUserId = otherUserId;
+        this.scanner = client.getScanner();
     }
 
-    // ===== Hooks שמקבל מ-Client דרך ה-Push =====
-    @Override
-    public void onChatCreated(String chatId) {
-        pendingChatId = chatId;
-        waitingForChat = false;
-        System.out.println("\n[Notification] Chat is ready.");
-    }
-
-    @Override
-    public void onIncomingMessage(String chatId, String sender, String msg) {
-        if (inChat && Objects.equals(chatId, currentChatId)) {
-            System.out.println("\n[" + sender + "]: " + msg);
-        }
-    }
-
-    // ===== תצוגת תפריט =====
-    @Override
     public void show() {
-        while (true) {
-            // אם יש צ'אט בהמתנה ולא בתוך צ'אט – נפתח עכשיו
-            if (!inChat && pendingChatId != null) {
-                String id = pendingChatId;
-                pendingChatId = null;
-                startChatSession(id);
-                continue;
-            }
-
-            UIUtils.printMenuHeader("CHAT SYSTEM");
-            UIUtils.printLine("Inter-branch communication");
-            UIUtils.printEmptyLine();
-
-            UIUtils.printMenuOption(1, "Start New Chat");
-            UIUtils.printMenuOption(0, "Back to Main Menu");
-            UIUtils.printMenuFooter();
-
-            int choice = UIUtils.getIntInput(scanner);
+        int choice;
+        do {
+            UIUtils.clearScreen();
+            UIUtils.printBorder();
+            System.out.println("║                CHAT SESSION                ║");
+            UIUtils.printBorder();
+            System.out.println("1. Send Message");
+            System.out.println("2. End Chat");
+            System.out.println("0. Back");
+            choice = UIUtils.getIntInput(scanner);
 
             switch (choice) {
-                case 1 -> startNewChat();
-                case 0 -> { return; }
-                default -> UIUtils.showErrorAndWait(scanner, "Invalid choice. Please try again.");
+                case 1 -> sendMessage();
+                case 2 -> endChat();
             }
-        }
+        } while (!AppState.chatActive);
     }
 
-    private void startNewChat() {
-        if (inChat) {
-            UIUtils.showErrorAndWait(scanner, "You are already in a chat session.");
-            return;
-        }
+    private void sendMessage() {
+        System.out.print("Enter your message: ");
+        String msg = scanner.nextLine();
 
-        Map<String, String> requestMap = new HashMap<>();
-        UIUtils.printMenuHeader("START NEW CHAT");
+        Request req = new Request(
+                "sendMessage",
+                String.format("{\"chatId\":\"%s\",\"senderId\":\"%s\",\"receiverId\":\"%s\",\"message\":\"%s\"}",
+                        chatId,
+                        Auth.getCurrentUser().get("userId").getAsString(),
+                        otherUserId,
+                        msg
+                )
+        );
 
-        String userId = Auth.getCurrentUser().get("userId").getAsString();
-        requestMap.put("userId", userId);
-
-        Request request = new Request("getAllBranches", Singletons.GSON.toJson(requestMap));
-        JsonObject response = Singletons.CLIENT.sendRequest(request);
-
-        if (response == null) {
-            UIUtils.showErrorAndWait(scanner, "Connection error while loading branches");
-            return;
-        }
-
-        if (response.get("success").getAsBoolean()) {
-            String chosenBranchId = displayAvailableBranches(JsonParser.parseString(response.get("message").getAsString()).getAsJsonArray());
-            if (chosenBranchId == null) return;
-
-            Map<String, String> requestMapToChat = new HashMap<>();
-            requestMapToChat.put("userIdRequesting", userId);
-            requestMapToChat.put("branchId", chosenBranchId);
-
-            Request requestToChat = new Request("startChat", Singletons.GSON.toJson(requestMapToChat));
-            JsonObject chatResponse = Singletons.CLIENT.sendRequest(requestToChat);
-
-            if (chatResponse != null && chatResponse.has("success") && chatResponse.get("success").getAsBoolean()) {
-                try {
-                    if (chatResponse.get("message").isJsonObject()) {
-                        // פתיחה מידית (שרת כבר מצא עובד זמין)
-                        JsonObject chatObj = chatResponse.getAsJsonObject("message");
-                        String chatId = chatObj.get("id").getAsString();
-                        pendingChatId = chatId;
-                        waitingForChat = false;
-                        startChatSession(chatId);
-                    } else {
-                        // נכנסנו לתור
-                        String msg = chatResponse.get("message").getAsString();
-                        if (msg != null && msg.toLowerCase().contains("queue")) {
-                            waitingForChat = true;
-                            UIUtils.showInfo("All employees are busy. Waiting for a free agent...");
-                            waitForChatAndOpen();
-                        } else {
-                            UIUtils.showInfoAndWait(scanner, msg);
-                        }
-                    }
-                } catch (Exception ex) {
-                    UIUtils.showErrorAndWait(scanner, "Unexpected response from server.");
-                }
-            } else {
-                String err = (chatResponse != null && chatResponse.has("message"))
-                        ? chatResponse.get("message").getAsString()
-                        : "Connection error";
-                UIUtils.showErrorAndWait(scanner, err);
-            }
+        JsonObject res = client.sendRequest(req);
+        if (res != null && res.get("success").getAsBoolean()) {
+            UIUtils.showSuccess("Message sent!");
         } else {
-            UIUtils.showErrorAndWait(scanner,
-                    response.has("message") ? response.get("message").getAsString() : "Failed to load branches");
+            UIUtils.showError("Failed to send message: " +
+                    (res != null ? res.get("message").getAsString() : ""));
         }
+        UIUtils.waitForEnter(scanner);
     }
 
-    private String displayAvailableBranches(JsonArray branches) {
-        try {
-            while (true) {
-                List<String> branchIds = new ArrayList<>();
+    private void endChat() {
+        Request req = new Request(
+                "endChat",
+                String.format("{\"chatId\":\"%s\",\"userId\":\"%s\"}",
+                        chatId,
+                        Auth.getCurrentUser().get("userId").getAsString())
+        );
 
-                if (!branches.isEmpty()) {
-                    int i = 0;
-                    for (JsonElement row : branches) {
-                        JsonObject rowObject = row.getAsJsonObject();
-                        branchIds.add(rowObject.get("id").getAsString());
-                        UIUtils.printMenuOption(i + 1, rowObject.get("name").getAsString());
-                        i++;
-                    }
-                    UIUtils.printMenuFooter();
-                    int choice = UIUtils.getIntInput(scanner);
-                    if (choice < 1 || choice > branchIds.size()) {
-                        UIUtils.showErrorAndWait(scanner, "Invalid choice. Please try again.");
-                        continue;
-                    }
-                    return branchIds.get(choice - 1);
-                } else {
-                    UIUtils.showInfoAndWait(scanner, "No branches found.");
-                    return null;
-                }
-            }
-        } catch (Exception e) {
-            UIUtils.showErrorAndWait(scanner, "Error displaying branches: " + e.getMessage());
+        JsonObject res = client.sendRequest(req);
+        if (res != null && res.get("success").getAsBoolean()) {
+            UIUtils.showSuccess("Chat ended!");
+        } else {
+            UIUtils.showError("Failed to end chat: " +
+                    (res != null ? res.get("message").getAsString() : ""));
         }
-        return null;
-    }
-
-    // מחכה לאירוע chatCreated ואז פותח — רץ באותו חוט, לא קורא קלט בזמן ההמתנה
-    private void waitForChatAndOpen() {
-        UIUtils.printEmptyLine();
-        UIUtils.printLine("Waiting for available agent...");
-        UIUtils.printLine("(Press Ctrl+C to cancel)");
-        UIUtils.printBottomBorder();
-
-        while (waitingForChat && pendingChatId == null) {
-            try { Thread.sleep(150); } catch (InterruptedException ignored) {}
-        }
-        if (pendingChatId != null) {
-            String id = pendingChatId;
-            pendingChatId = null;
-            startChatSession(id);
-        }
-    }
-
-    private void startChatSession(String chatId) {
-        this.currentChatId = chatId;
-        this.inChat = true;
-
-        UIUtils.clearScreen();
-        UIUtils.printBorder();
-        UIUtils.printTitle("CHAT SESSION");
-        UIUtils.printLine("Chat ID: " + chatId);
-        UIUtils.printLine("Type '/exit' to leave chat, '/history' for chat history (not implemented)");
-        UIUtils.printBottomBorder();
-
-        while (inChat) {
-            System.out.print("You: ");
-            String message = scanner.nextLine();
-            if (message == null) continue;
-            message = message.trim();
-            if (message.isEmpty()) continue;
-
-            if ("/exit".equalsIgnoreCase(message)) {
-                exitChat();
-                break;
-            } else if ("/history".equalsIgnoreCase(message)) {
-                showCurrentChatHistory();
-                continue;
-            }
-
-            JsonObject data = new JsonObject();
-            data.addProperty("chatId", currentChatId);
-            data.addProperty("senderId", Auth.getCurrentUser().get("userId").getAsString());
-            data.addProperty("message", message);
-
-            Request req = new Request("sendMessage", data.toString());
-            JsonObject res = Singletons.CLIENT.sendRequest(req);
-
-            if (res == null || !res.has("success") || !res.get("success").getAsBoolean()) {
-                System.out.println("(!) Failed to send message"
-                        + (res != null && res.has("message") ? (": " + res.get("message").getAsString()) : "."));
-            }
-        }
-
-        this.inChat = false;
-        this.currentChatId = null;
-    }
-
-    private void exitChat() {
-        try {
-            JsonObject data = new JsonObject();
-            data.addProperty("userId", Auth.getCurrentUser().get("userId").getAsString());
-            data.addProperty("chatId", currentChatId);
-            Request req = new Request("endChat", Singletons.GSON.toJson(data));
-            Singletons.CLIENT.sendRequest(req);
-        } catch (Exception ignored) {}
-        System.out.println("You have left the chat.");
-    }
-
-    private void showCurrentChatHistory() {
-        System.out.println("(history not implemented)");
+        UIUtils.waitForEnter(scanner);
     }
 }
+

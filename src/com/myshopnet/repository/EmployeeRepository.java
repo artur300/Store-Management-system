@@ -43,7 +43,7 @@ public class EmployeeRepository implements Repository<Employee> {
 
         if (keyToRemove != null){
             Data.getAllAccounts().remove(keyToRemove);
-        } else { // if it's id
+        } else {
             Data.getAllAccounts().remove(id);
         }
     }
@@ -58,6 +58,7 @@ public class EmployeeRepository implements Repository<Employee> {
     @Override
     public List<Employee> getAll() {
         return Data.getAllAccounts().values().stream()
+                .filter(userAccount -> userAccount.getUser() instanceof Employee)
                 .map(userAccount -> (Employee) userAccount.getUser())
                 .toList();
     }

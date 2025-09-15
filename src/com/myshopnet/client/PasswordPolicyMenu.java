@@ -1,6 +1,7 @@
 package com.myshopnet.client;
 
 import com.google.gson.JsonObject;
+import com.myshopnet.AppState;
 import com.myshopnet.client.utils.UIUtils;
 
 import java.util.HashMap;
@@ -25,30 +26,32 @@ public class PasswordPolicyMenu implements Menu {
 
     @Override
     public void show() {
-        UIUtils.printMenuHeader("PASSWORD POLICY SETTINGS");
-        UIUtils.printEmptyLine();
+        while(!AppState.chatActive) {
+            UIUtils.printMenuHeader("PASSWORD POLICY SETTINGS");
+            UIUtils.printEmptyLine();
 
-        UIUtils.printMenuOption(1, "View Current Policy");
-        UIUtils.printMenuOption(2, "Update Password Policy");
-        UIUtils.printMenuOption(0, "Back");
+            UIUtils.printMenuOption(1, "View Current Policy");
+            UIUtils.printMenuOption(2, "Update Password Policy");
+            UIUtils.printMenuOption(0, "Back");
 
-        UIUtils.printMenuFooter();
+            UIUtils.printMenuFooter();
 
-        int choice = UIUtils.getIntInput(scanner);
+            int choice = UIUtils.getIntInput(scanner);
 
-        switch (choice) {
-            case 1:
-                viewPasswordPolicy();
-                break;
-            case 2:
-                updatePasswordPolicy();
-                break;
-            case 0:
-                goBackMenu.show();
-                return;
-            default:
-                UIUtils.showError("Invalid choice. Please try again.");
-                UIUtils.waitForEnter(scanner);
+            switch (choice) {
+                case 1:
+                    viewPasswordPolicy();
+                    break;
+                case 2:
+                    updatePasswordPolicy();
+                    break;
+                case 0:
+                    goBackMenu.show();
+                    return;
+                default:
+                    UIUtils.showError("Invalid choice. Please try again.");
+                    UIUtils.waitForEnter(scanner);
+            }
         }
     }
 
